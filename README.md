@@ -1,5 +1,6 @@
-![Corda](https://www.corda.net/wp-content/uploads/2016/11/fg005_corda_b.png)
+# Term Deposit Cordapp
+A Simple Corda app for organizing and facilitating term deposits.
 
-# Example CorDapp
+This Cordapp/distributed ledger model is based on the R3 Consortium's open-source Cordapp template, view https://github.com/corda/cordapp-template for further information.
 
-Welcome to the example CorDapp. This CorDapp is documented [here](http://docs.corda.net/tutorial-cordapp.html).
+All rights reserved by R3CEV.
