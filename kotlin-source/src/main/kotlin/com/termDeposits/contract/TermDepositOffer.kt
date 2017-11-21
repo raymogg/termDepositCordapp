@@ -4,6 +4,8 @@ import net.corda.core.contracts.*
 import net.corda.core.identity.AbstractParty
 import net.corda.core.identity.Party
 import net.corda.core.transactions.LedgerTransaction
+import net.corda.core.transactions.TransactionBuilder
+import java.time.LocalDateTime
 
 // *****************
 // * Contract Code *
@@ -20,10 +22,37 @@ open class TermDepositOfferContract : Contract {
         when (command.value) {
             is Commands.CreateTD -> requireThat {
                 //Requirements for creating a TD from a TDOffer
+                tx.inputStates.size == 1
+                tx.outputStates.size == 2 //One TDOffer state, one TD state
+                ((tx.outputStates[0] is TermDepositOfferState) || (tx.outputStates[1] is TermDepositOfferState) &&
+                        (tx.outputStates[0] is TermDepositState) || (tx.outputStates[1] is TermDepositState))
+                val TDTerms = listOf<String>()
+                val TDOTerms = listOf<String>()
+                //Validate the individual terms match
+                tx.outputStates.forEach {
+                    if (it is TermDepositState) {
+                        TDTerms.plus(it.startDate.toString())
+                        TDTerms.plus(it.endDate.toString())
+                        TDTerms.plus(it.interestPercent.toString())
+                        TDTerms.plus(it.institue.name.commonName.toString())
+                    } else if (it is TermDepositOfferState) {
+                        TDOTerms.plus(it.startDate.toString())
+                        TDOTerms.plus(it.endDate.toString())
+                        TDOTerms.plus(it.interestPercent.toString())
+                        TDOTerms.plus(it.institue.name.commonName.toString())
+                    }
+                }
+                TDTerms.equals(TDOTerms) //all terms should match
             }
 
             is Commands.Issue -> requireThat {
                 //Requirements for issuing a new TDOffer
+                tx.inputStates.isEmpty()
+                tx.outputStates.size == 1
+                val offerState = tx.outputStates.first() as TermDepositOfferState
+                //Individual requirements for offer states - e.g non negative values
+                offerState.startDate != offerState.endDate
+                offerState.interestPercent > 0
             }
         }
     }
@@ -32,6 +61,19 @@ open class TermDepositOfferContract : Contract {
     interface Commands : CommandData {
         class Issue : Commands
         class CreateTD : Commands
+    }
+
+    public fun generateIssue( builder: TransactionBuilder, startDate: LocalDateTime, endDate: LocalDateTime, interestPercent: Float,
+                              institue: Party, notary: Party) : TransactionBuilder{
+        val state = TransactionState(data = TermDepositOfferState(startDate, endDate, interestPercent, institue), notary = notary, contract = TERMDEPOSIT_OFFER_CONTRACT_ID)
+        builder.addOutputState(state)
+        builder.addCommand(TermDepositOfferContract.Commands.Issue(), institue.owningKey)
+        return builder
+    }
+
+    //TODO Should this actually be in the TD contract and not here?? - probably should under TD.Commands.Issue() -> ensure a TDOffer is provided as input and create the output of the TD
+    fun genereateCreateTD( builder: TransactionBuilder, TDOffer: StateAndRef<TermDepositOfferState>, selfReference: Party) {
+
     }
 }
 
@@ -45,6 +87,8 @@ open class TermDepositOfferContract : Contract {
  *
  * See flows for how a TD Offer is convereted to a TD - not that the state is reproduced so one TD offer can produce many
  * identical TD's.
+ *
+ * Potential other terms : minimum deposit amount, max deposit amount, fees - (todo would these be kept within contract or just in the attachment?)
  */
 data class TermDepositOfferState(val startDate: java.time.LocalDateTime, val endDate : java.time.LocalDateTime,
                                  val interestPercent: Float, val institue: Party) : ContractState {

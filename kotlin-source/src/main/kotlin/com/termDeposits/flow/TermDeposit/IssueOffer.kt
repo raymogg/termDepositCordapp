@@ -1,10 +1,15 @@
 package com.termDeposit.flow.TermDeposit
 
+import com.termDeposit.contract.TermDepositOfferContract
+import com.termDeposit.contract.TermDepositOfferState
+import net.corda.core.flows.FinalityFlow
 import net.corda.core.flows.FlowLogic
 import net.corda.core.flows.InitiatingFlow
 import net.corda.core.flows.StartableByRPC
 import net.corda.core.identity.Party
+import net.corda.core.internal.ResolveTransactionsFlow
 import net.corda.core.transactions.SignedTransaction
+import net.corda.core.transactions.TransactionBuilder
 import java.time.LocalDateTime
 
 
@@ -22,11 +27,22 @@ object IssueOffer {
     @InitiatingFlow
     @StartableByRPC
     class Initiator(val startDateTime: LocalDateTime, val endDate: LocalDateTime, val interestPercent: Float,
-                    val issuingInstitue: Party, val otherParty: List<Party>) : FlowLogic<Unit>() {//FlowLogic<SignedTransaction>() {
-        override fun call(): Unit {//SignedTransaction {
+                    val issuingInstitue: Party, val otherParties: List<Party>) : FlowLogic<Unit>() {//FlowLogic<SignedTransaction>() {
+        override fun call(): Unit { //SignedTransaction {
             //STEP 1: Create TDOffer
+            val notary = serviceHub.networkMapCache.notaryIdentities.single()
+            val tx = TransactionBuilder()
+            TermDepositOfferContract().generateIssue(tx, startDateTime, endDate, interestPercent, issuingInstitue, notary)
 
-            //STEP 2: Send TDOffer to all parties provided to the flow
+            //STEP 2: Start a flowSession w/ each party and commit this offer to the ledger (TODO does this mean the other party receieves this??)
+            otherParties.forEach {
+                val flowSession = initiateFlow(it)
+                val unnotarisedTX = serviceHub.signInitialTransaction(tx, serviceHub.myInfo.legalIdentities.first().owningKey)
+                subFlow(ResolveTransactionsFlow(unnotarisedTX, flowSession)) //This is required for notary validation to pass
+                //val unnotarisedTX = serviceHub.addSignature(tx, serviceHub.myInfo.legalIdentities.first().owningKey)
+                val finishedTX = subFlow(FinalityFlow(unnotarisedTX, setOf(it))) //This parties vault will receieve the txn data and state in their vault.
+            }
+
             return
         }
     }

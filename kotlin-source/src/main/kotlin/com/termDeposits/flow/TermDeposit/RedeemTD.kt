@@ -24,7 +24,9 @@ object RedeemTD {
     }
 
     @InitiatedBy(RedemptionInitiator::class)
-    class RedemptionAcceptor(val otherParty: Party) {
-
+    class RedemptionAcceptor(val otherParty: Party) : FlowLogic<Unit>() {
+        override fun call(): Unit {
+            TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+        }
     }
 }

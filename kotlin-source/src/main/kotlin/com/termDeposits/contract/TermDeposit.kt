@@ -4,7 +4,10 @@ import net.corda.core.contracts.*
 import net.corda.core.identity.AbstractParty
 import net.corda.core.identity.Party
 import net.corda.core.transactions.LedgerTransaction
+import net.corda.core.transactions.TransactionBuilder
+import net.corda.finance.contracts.asset.Cash
 import java.time.LocalDateTime
+import java.util.*
 
 // *****************
 // * Contract Code *
@@ -21,6 +24,10 @@ open class TermDepositContract : Contract {
         when (command.value) {
             is Commands.Issue -> requireThat {
                 //TD Issue verification
+                tx.outputStates.size == 2 //output should be a replica TDOffer state and the newly created TD State
+                tx.inputStates.size == 1 //input should be a single TDOffer state
+                tx.inputStates.first() is TermDepositOfferState
+
             }
 
             is Commands.Redeem -> requireThat {
@@ -39,6 +46,30 @@ open class TermDepositContract : Contract {
         class Rollover : Commands
         class Redeem : Commands
     }
+
+    fun generateIssue(builder: TransactionBuilder, TDOffer: StateAndRef<TermDepositOfferState>, selfReference: Party,
+                      notary: Party, depositAmount: Amount<Currency>) : TransactionBuilder {
+        val offerState = TDOffer.state.data
+        val TDState = TransactionState(data = TermDepositState(offerState.startDate, offerState.endDate, offerState.interestPercent, offerState.institue,
+                depositAmount), notary = notary, contract = TERMDEPOSIT_CONTRACT_ID)
+        builder.addOutputState(TDState)
+        builder.addInputState(TDOffer)
+        builder.addOutputState(TDOffer.state) //TODO Not sure this will work, may need to make a duplicate of this state (eg deep copy)
+        builder.addCommand(TermDepositContract.Commands.Issue(), offerState.institue.owningKey, selfReference.owningKey)
+        return builder
+    }
+
+    fun genereateRedeem(builder: TransactionBuilder, TDOffer: StateAndRef<TermDepositOfferState>, selfReference: Party,
+                        notary: Party) : TransactionBuilder {
+        //TODO
+        return builder
+    }
+
+    fun generateRolloever(builder: TransactionBuilder, TDOffer: StateAndRef<TermDepositOfferState>, selfReference: Party,
+                          notary: Party) : TransactionBuilder {
+        //TODO
+        return builder
+    }
 }
 
 /** Object used to define the states that a term deposit can be in
@@ -47,6 +78,8 @@ open class TermDepositContract : Contract {
  * is transitioned to exited, the TD state will become consumed in the vault - as it is no longer an active loan.
  */
 //TODO: Is internal state needed, or should it just be if the flow isnt finalized within timeout period the txn is reveresed (As corda normally does)
+//      if it is, will need to add to the TermDepositState below
+
 object internalState {
     val ordered = "Ordered"
     val tentative = "Tentative"
@@ -59,9 +92,10 @@ object internalState {
 // *********
 /** Term Deposit Contract State
  * Fields it has are a start and end date, current state (internal state) and offer details (or terms)
+ *
  */
 data class TermDepositState(val startDate: LocalDateTime, val endDate: LocalDateTime, val interestPercent: Float,
-                            val institue: Party) : ContractState {
+                            val institue: Party, val depositAmount: Amount<Currency>) : ContractState {
     override val participants: List<AbstractParty> get() = listOf()
 
     override fun toString(): String {
