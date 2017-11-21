@@ -16,15 +16,18 @@ import java.time.LocalDateTime
 
 object IssueOffer {
 
-    @InitiatingFlow
-    @StartableByRPC
     /** Initiator class for creating the TDOffers. For the purpose of this issue flow, there is no other party that
      * is required to do anything and hence this initiator is the only party involved in the flow
      */
-    class Initiator(val startDateTime: LocalDateTime:, val endDate: LocalDateTime, val interestPercent: Float,
-        val issuingInstitue: Party ,val otherParty: List<Party>) : FlowLogic<SignedTransaction>() {
-        //STEP 1: Create TDOffer
+    @InitiatingFlow
+    @StartableByRPC
+    class Initiator(val startDateTime: LocalDateTime, val endDate: LocalDateTime, val interestPercent: Float,
+                    val issuingInstitue: Party, val otherParty: List<Party>) : FlowLogic<Unit>() {//FlowLogic<SignedTransaction>() {
+        override fun call(): Unit {//SignedTransaction {
+            //STEP 1: Create TDOffer
 
-        //STEP 2: Send TDOffer to all parties provided to the flow
-
+            //STEP 2: Send TDOffer to all parties provided to the flow
+            return
+        }
+    }
 }

@@ -1,8 +1,10 @@
 package com.termDeposits.flow.TermDeposit
 
+import net.corda.core.flows.FlowLogic
 import net.corda.core.flows.InitiatingFlow
 import net.corda.core.flows.StartableByRPC
 import net.corda.core.identity.Party
+import net.corda.core.transactions.SignedTransaction
 import java.time.LocalDateTime
 
 
@@ -13,19 +15,22 @@ import java.time.LocalDateTime
 
 object IssueTD {
 
-    @InitiatingFlow
-    @StartableByRPC
     /** Initiator class for creating the TD. This will normally be a client of the TD Issuer who is creating a TD on behalf
      * of one of their clients.
      */
+    @InitiatingFlow
+    @StartableByRPC
     class Initiator(val startDateTime: LocalDateTime, val endDate: LocalDateTime, val interestPercent: Float,
-    val issuingInstitue: Party) : FlowLogic<SignedTransaction>() {
+    val issuingInstitue: Party) : FlowLogic<Unit>() {//FlowLogic<SignedTransaction>() {
+        override fun call(): Unit {//SignedTransaction {
+            //STEP 1: Retrieve TD Offer from vault with the provided terms
 
-        //STEP 1: Retrieve TD Offer from vault with the provided terms
+            //STEP 2: Build Txn with TDOffer as input and TDOffer + TDState as output
 
-        //STEP 2: Build Txn with TDOffer as input and TDOffer + TDState as output
+            //STEP 3: Send to the issuing institue for verification/acceptance
 
-        //STEP 3: Send to the issuing institue for verification/acceptance
+            return
+        }
     }
 
     class Acceptor(val otherParty: Party) {

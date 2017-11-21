@@ -1,9 +1,6 @@
 package com.termDeposit.contract
 
-import net.corda.core.contracts.CommandData
-import net.corda.core.contracts.Contract
-import net.corda.core.contracts.ContractState
-import net.corda.core.contracts.requireThat
+import net.corda.core.contracts.*
 import net.corda.core.identity.AbstractParty
 import net.corda.core.identity.Party
 import net.corda.core.transactions.LedgerTransaction
@@ -49,6 +46,7 @@ open class TermDepositContract : Contract {
  * and certain flows will require the internal state to be a certain value before they proceed. Once the internal state
  * is transitioned to exited, the TD state will become consumed in the vault - as it is no longer an active loan.
  */
+//TODO: Is internal state needed, or should it just be if the flow isnt finalized within timeout period the txn is reveresed (As corda normally does)
 object internalState {
     val ordered = "Ordered"
     val tentative = "Tentative"
