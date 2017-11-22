@@ -1,12 +1,19 @@
 package com.termDeposits.contract
 
+import com.termDeposit.schema.TDOSchemaV1
+import com.termDeposit.schema.TDSchemaV1
+import com.termDeposit.schema.TermDepositSchema
 import com.termDeposits.contract.TermDepositOffer
 import net.corda.core.contracts.*
 import net.corda.core.identity.AbstractParty
 import net.corda.core.identity.Party
+import net.corda.core.schemas.MappedSchema
+import net.corda.core.schemas.PersistentState
+import net.corda.core.schemas.QueryableState
 import net.corda.core.serialization.CordaSerializable
 import net.corda.core.transactions.LedgerTransaction
 import net.corda.core.transactions.TransactionBuilder
+import net.corda.core.utilities.toBase58String
 import net.corda.finance.contracts.asset.Cash
 import java.time.LocalDateTime
 import java.util.*
@@ -17,6 +24,7 @@ import java.util.*
 
 @CordaSerializable
 open class TermDeposit : Contract {
+
     companion object {
         @JvmStatic
         val TERMDEPOSIT_CONTRACT_ID = "com.termDeposits.contract.TermDeposit"
@@ -54,12 +62,14 @@ open class TermDeposit : Contract {
 
     fun generateIssue(builder: TransactionBuilder, TDOffer: StateAndRef<TermDepositOffer.State>, selfReference: Party,
                       notary: Party, depositAmount: Amount<Currency>): TransactionBuilder {
+        println("Notary in gen issue: $notary")
         val offerState = TDOffer.state.data
         val TDState = TransactionState(data = State(offerState.startDate, offerState.endDate, offerState.interestPercent, offerState.institue,
                 depositAmount), notary = notary, contract = TERMDEPOSIT_CONTRACT_ID)
         builder.addOutputState(TDState)
         builder.addInputState(TDOffer)
-        builder.addOutputState(TDOffer.state) //TODO Not sure this will work, may need to make a duplicate of this state (eg deep copy)
+        //builder.addOutputState(TDOffer.state) //TODO Not sure this will work, may need to make a duplicate of this state (eg deep copy)
+        builder.addOutputState(TransactionState(data = TDOffer.state.data.copy(), notary = notary, contract = TermDepositOffer.TERMDEPOSIT_OFFER_CONTRACT_ID))
         builder.addCommand(TermDeposit.Commands.Issue(), offerState.institue.owningKey, selfReference.owningKey)
         return builder
     }
@@ -101,8 +111,24 @@ open class TermDeposit : Contract {
      */
     @CordaSerializable
     data class State(val startDate: LocalDateTime, val endDate: LocalDateTime, val interestPercent: Float,
-                                val institue: Party, val depositAmount: Amount<Currency>) : ContractState {
+                                val institue: Party, val depositAmount: Amount<Currency>) : ContractState, QueryableState {
         override val participants: List<AbstractParty> get() = listOf()
+
+        override fun generateMappedObject(schema: MappedSchema): PersistentState {
+            return when (schema) {
+                is TDSchemaV1 -> TDSchemaV1.PersistentTDSchema(
+                        startDate = this.startDate,
+                        endDate = this.endDate,
+                        interest = this.interestPercent,
+                        institute = this.institue.owningKey.toBase58String()
+
+                )
+                else -> throw IllegalArgumentException("Unrecognised Schema $schema")
+            }
+        }
+
+        override fun supportedSchemas(): Iterable<MappedSchema> = setOf(TDSchemaV1)
+
 
         override fun toString(): String {
             return "Term Deposit: From $institue at $interestPercent% starting on $startDate and ending on $endDate"

@@ -7,6 +7,8 @@ import net.corda.core.flows.FlowLogic
 import net.corda.core.flows.InitiatingFlow
 import net.corda.core.flows.StartableByRPC
 import net.corda.core.identity.Party
+import net.corda.core.serialization.CordaSerializable
+import net.corda.core.transactions.SignedTransaction
 import net.corda.core.transactions.TransactionBuilder
 import java.time.LocalDateTime
 
@@ -16,7 +18,7 @@ import java.time.LocalDateTime
  * will simply be stored in their vault, and can be used to create an actual TD at any point by creating a copy of the offer
  * and calling the IssueTD flow with it as a input. */
 
-//@CordaSerializable
+@CordaSerializable
 object IssueOffer {
 
     /** Initiator class for creating the TDOffers. For the purpose of this issue flow, there is no other party that
@@ -25,25 +27,25 @@ object IssueOffer {
     @StartableByRPC
     @InitiatingFlow
     open class Initiator(val startDateTime: LocalDateTime, val endDate: LocalDateTime, val interestPercent: Float,
-                    val issuingInstitue: Party, val otherParties: List<Party>) : FlowLogic<Unit>() {//FlowLogic<SignedTransaction>() {
+                    val issuingInstitue: Party, val otherParty: Party) : FlowLogic<SignedTransaction>() {//FlowLogic<SignedTransaction>() {
         @Suspendable
-        override fun call(): Unit { //SignedTransaction {
+        override fun call(): SignedTransaction { //SignedTransaction {
             //STEP 1: Create TDOffer
             val notary = serviceHub.networkMapCache.notaryIdentities.single()
-            val tx = TransactionBuilder()
-            TermDepositOffer().generateIssue(tx, startDateTime, endDate, interestPercent, issuingInstitue, notary)
+            /*val tx = TransactionBuilder()
+            TermDepositOffer().generateIssue(tx, startDateTime, endDate, interestPercent, issuingInstitue, notary)*/
 
             //STEP 2: Start a flowSession w/ each party and commit this offer to the ledger (TODO does this mean the other party receieves this??)
-            otherParties.forEach {
-                val flowSession = initiateFlow(it)
-                val unnotarisedTX = serviceHub.signInitialTransaction(tx, serviceHub.myInfo.legalIdentities.first().owningKey)
-                //subFlow(ResolveTransactionsFlow(unnotarisedTX, flowSession)) //This is required for notary validation to pass
-                //val unnotarisedTX = serviceHub.addSignature(tx, serviceHub.myInfo.legalIdentities.first().owningKey)
-                val finishedTX = subFlow(FinalityFlow(unnotarisedTX, setOf(it))) //This parties vault will receieve the txn data and state in their vault.
-                println("Offer Issued to parties $otherParties for a TD at $interestPercent% by ${issuingInstitue.name}")
-            }
 
-            return
+            val tx = TransactionBuilder()
+            TermDepositOffer().generateIssue(tx, startDateTime, endDate, interestPercent, issuingInstitue, notary, otherParty)
+            val flowSession = initiateFlow(otherParty)
+            val unnotarisedTX = serviceHub.signInitialTransaction(tx)
+            //subFlow(ResolveTransactionsFlow(unnotarisedTX, flowSession)) //This is required for notary validation to pass
+            //val unnotarisedTX = serviceHub.addSignature(tx, serviceHub.myInfo.legalIdentities.first().owningKey)
+            println("Offer Issued to $otherParty for a TD at $interestPercent% by ${issuingInstitue.name}")
+            val finishedTX = subFlow(FinalityFlow(unnotarisedTX)) //This parties vault will receieve the txn data and state in their vault.
+            return finishedTX
         }
     }
 }

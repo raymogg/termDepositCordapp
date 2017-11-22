@@ -20,10 +20,10 @@ object TermDepositOfferSchema
 object TDOSchemaV1 : MappedSchema(
         schemaFamily = TermDepositOfferSchema.javaClass,
         version = 1,
-        mappedTypes = listOf(PersistentIOU::class.java)) {
+        mappedTypes = listOf(PersistentTDOSchema::class.java)) {
     @Entity
     @Table(name = "TDOffer_states")
-    class PersistentIOU(
+    class PersistentTDOSchema(
             @Column(name = "start_date")
             var startDate: LocalDateTime,
 

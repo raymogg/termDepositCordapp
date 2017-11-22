@@ -1,11 +1,18 @@
 package com.termDeposits.contract
 
+
+import com.termDeposit.schema.TDOSchemaV1
+import com.termDeposit.schema.TermDepositOfferSchema
 import net.corda.core.contracts.*
 import net.corda.core.identity.AbstractParty
 import net.corda.core.identity.Party
+import net.corda.core.schemas.MappedSchema
+import net.corda.core.schemas.PersistentState
+import net.corda.core.schemas.QueryableState
 import net.corda.core.serialization.CordaSerializable
 import net.corda.core.transactions.LedgerTransaction
 import net.corda.core.transactions.TransactionBuilder
+import net.corda.core.utilities.toBase58String
 import java.time.LocalDateTime
 
 // *****************
@@ -69,8 +76,8 @@ open class TermDepositOffer : Contract {
     }
 
     public fun generateIssue(builder: TransactionBuilder, startDate: LocalDateTime, endDate: LocalDateTime, interestPercent: Float,
-                             institue: Party, notary: Party): TransactionBuilder {
-        val state = TransactionState(data = State(startDate, endDate, interestPercent, institue), notary = notary, contract = TERMDEPOSIT_OFFER_CONTRACT_ID)
+                             institue: Party, notary: Party, receiver: Party): TransactionBuilder {
+        val state = TransactionState(data = TermDepositOffer.State(startDate, endDate, interestPercent, institue, receiver), notary = notary, contract = TERMDEPOSIT_OFFER_CONTRACT_ID)
         builder.addOutputState(state)
         builder.addCommand(TermDepositOffer.Commands.Issue(), institue.owningKey)
         return builder
@@ -97,12 +104,29 @@ open class TermDepositOffer : Contract {
      */
     @CordaSerializable
     data class State(val startDate: java.time.LocalDateTime, val endDate: java.time.LocalDateTime,
-                                     val interestPercent: Float, val institue: Party) : ContractState {
+                                     val interestPercent: Float, val institue: Party, override val owner: AbstractParty) : QueryableState, OwnableState {
 
-        override val participants: List<AbstractParty> get() = listOf()
+        override val participants: List<AbstractParty> get() = listOf(owner)
+
+        override fun withNewOwner(newOwner: AbstractParty): CommandAndState = CommandAndState(Commands.Issue(), copy(owner = newOwner))
 
         override fun toString(): String {
             return "Term Deposit Offer: From ${institue} at ${interestPercent}%"
+        }
+
+        override fun supportedSchemas(): Iterable<MappedSchema> = listOf(TDOSchemaV1)
+
+        override fun generateMappedObject(schema: MappedSchema): PersistentState {
+            return when (schema) {
+                is TDOSchemaV1 -> TDOSchemaV1.PersistentTDOSchema(
+                        startDate = this.startDate,
+                        endDate = this.endDate,
+                        interest = this.interestPercent,
+                        institute = this.institue.owningKey.toBase58String()
+
+                )
+                else -> throw IllegalArgumentException("Unrecognised Schema $schema")
+            }
         }
     }
 

@@ -19,15 +19,15 @@ object TermDepositSchema
 object TDSchemaV1 : MappedSchema(
         schemaFamily = TermDepositSchema.javaClass,
         version = 1,
-        mappedTypes = listOf(PersistentIOU::class.java)) {
+        mappedTypes = listOf(PersistentTDSchema::class.java)) {
     @Entity
     @Table(name = "TD_states")
-    class PersistentIOU(
+    class PersistentTDSchema(
             @Column(name = "start_date")
-            var startDate: String, //todo should this be stored as a string or as a LocalDateTime?
+            var startDate: LocalDateTime, //todo should this be stored as a string or as a LocalDateTime?
 
             @Column(name = "end_date")
-            var endDate: String,
+            var endDate: LocalDateTime,
 
             @Column(name = "interest")
             var interest: Float,

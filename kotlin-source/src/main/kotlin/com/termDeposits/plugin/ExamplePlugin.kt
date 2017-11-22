@@ -3,6 +3,7 @@ package com.termDeposits.plugin
 import com.example.api.ExampleApi
 import com.termDeposits.contract.*
 import com.termDeposits.flow.TermDeposit.IssueOffer
+import com.termDeposits.flow.TermDeposit.IssueTD
 import net.corda.core.messaging.CordaRPCOps
 import net.corda.core.serialization.SerializationWhitelist
 import net.corda.core.transactions.TransactionBuilder
@@ -32,7 +33,11 @@ class SerilizationPlugin: SerializationWhitelist {
     override val whitelist: List<Class<*>> = listOf(
             TermDeposit::class.java,
             TermDepositOffer::class.java,
+            TermDepositOffer.State::class.java,
+            TermDeposit.State::class.java,
             IssueOffer.Initiator::class.java,
+            IssueTD.Initiator::class.java,
+            IssueTD.Acceptor::class.java,
             TransactionBuilder::class.java,
             Boolean::class.java
     )
