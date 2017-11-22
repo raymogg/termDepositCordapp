@@ -24,9 +24,9 @@ object IssueOffer {
     /** Initiator class for creating the TDOffers. For the purpose of this issue flow, there is no other party that
      * is required to do anything and hence this initiator is the only party involved in the flow
      */
-    @InitiatingFlow
     @StartableByRPC
-    class Initiator(val startDateTime: LocalDateTime, val endDate: LocalDateTime, val interestPercent: Float,
+    @InitiatingFlow
+    open class OfferInitiator(val startDateTime: LocalDateTime, val endDate: LocalDateTime, val interestPercent: Float,
                     val issuingInstitue: Party, val otherParties: List<Party>) : FlowLogic<Unit>() {//FlowLogic<SignedTransaction>() {
         override fun call(): Unit { //SignedTransaction {
             //STEP 1: Create TDOffer

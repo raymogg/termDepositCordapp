@@ -35,7 +35,7 @@ class TDRetreivalFlow(val startDate: LocalDateTime, val endDate: LocalDateTime, 
         val filteredStates = offerStates.states.filter {
             it.state.data.endDate.isAfter(LocalDateTime.now()) && it.state.data.startDate == startDate &&
                     it.state.data.endDate == endDate &&  it.state.data.institue == offeringInstitute &&
-                    it.state.data.interestPercent == interest
+                    it.state.data.interestPercent == interest //it.state.data.internalState == state (Not implemented in the stsate yet)
         }
         return filteredStates
     }

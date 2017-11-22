@@ -50,10 +50,11 @@ object IssueTD {
     @InitiatedBy(Initiator::class)
     @StartableByRPC
     open class Acceptor(val counterPartySession: FlowSession) : FlowLogic<Unit>() {
-        //STEP 4: Receieve the transaction with the TD Offer and TD
         @Suspendable
         override fun call(): Unit {
+            //STEP 4: Receieve the transaction with the TD Offer and TD
             val tx = counterPartySession.receive<TransactionBuilder>()
+
             //STEP 5: Validate and accept txn
             tx.unwrap {
                 requireThat {
@@ -62,7 +63,7 @@ object IssueTD {
                 }
             }
 
-            //STEP 6: Sign transaction and commit to ledger
+            //STEP 6: Sign transaction and send back to other party
 
         }
     }

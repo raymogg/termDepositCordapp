@@ -99,6 +99,6 @@ data class TermDepositState(val startDate: LocalDateTime, val endDate: LocalDate
     override val participants: List<AbstractParty> get() = listOf()
 
     override fun toString(): String {
-        return "Term Deposit: From ${institue} at ${interestPercent}% starting on ${startDate} and ending on ${endDate}"
+        return "Term Deposit: From $institue at $interestPercent% starting on $startDate and ending on $endDate"
     }
 }

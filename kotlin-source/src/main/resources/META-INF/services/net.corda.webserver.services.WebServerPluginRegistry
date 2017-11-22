@@ -1,2 +1,4 @@
 # Register a ServiceLoader service extending from net.corda.webserver.services.WebServerPluginRegistry
+#com.termDeposits.plugin.ExamplePlugin
 com.example.plugin.ExamplePlugin
+
