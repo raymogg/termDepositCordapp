@@ -1,6 +1,7 @@
 package com.example.client
 
 import com.example.state.IOUState
+import com.termDeposits.contract.TermDepositOffer
 import net.corda.client.rpc.CordaRPCClient
 import net.corda.core.contracts.StateAndRef
 import net.corda.core.utilities.NetworkHostAndPort
@@ -19,7 +20,7 @@ fun main(args: Array<String>) {
 private class ExampleClientRPC {
     companion object {
         val logger: Logger = loggerFor<ExampleClientRPC>()
-        private fun logState(state: StateAndRef<IOUState>) = logger.info("{}", state.state.data)
+        private fun logState(state: StateAndRef<TermDepositOffer.State>) = logger.info("{}", state.state.data)
     }
 
     fun main(args: Array<String>) {
@@ -31,7 +32,8 @@ private class ExampleClientRPC {
         val proxy = client.start("user1", "test").proxy
 
         // Grab all signed transactions and all future signed transactions.
-        val (snapshot, updates) = proxy.vaultTrack(IOUState::class.java)
+        //val (snapshot, updates) = proxy.vaultTrack(IOUState::class.java)
+        val (snapshot, updates) = proxy.vaultTrack(TermDepositOffer.State::class.java)
 
         // Log the 'placed' IOU states and listen for new ones.
         snapshot.states.forEach { logState(it) }

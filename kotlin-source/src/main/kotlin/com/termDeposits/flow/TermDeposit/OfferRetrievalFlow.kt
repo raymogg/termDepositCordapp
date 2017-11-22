@@ -1,7 +1,7 @@
 package com.termDeposits.flow.TermDeposit
 
 import co.paralleluniverse.fibers.Suspendable
-import com.termDeposit.contract.TermDepositOfferState
+import com.termDeposits.contract.TermDepositOffer
 import net.corda.core.contracts.StateAndRef
 import net.corda.core.flows.FlowLogic
 import net.corda.core.identity.Party
@@ -19,12 +19,12 @@ import java.time.LocalDateTime
  */
 
 class OfferRetrievalFlow(val startDate: LocalDateTime, val endDate: LocalDateTime, val offeringInstitute: Party,
-                         val interest: Float): FlowLogic<List<StateAndRef<TermDepositOfferState>>>() {
+                         val interest: Float): FlowLogic<List<StateAndRef<TermDepositOffer.State>>>() {
     @Suspendable
-    override fun call(): List<StateAndRef<TermDepositOfferState>> {
+    override fun call(): List<StateAndRef<TermDepositOffer.State>> {
         //Query the vault for unconsumed states and then for Security loan states
         val criteria = QueryCriteria.VaultQueryCriteria(status = Vault.StateStatus.UNCONSUMED)
-        val offerStates = serviceHub.vaultService.queryBy<TermDepositOfferState>(criteria)
+        val offerStates = serviceHub.vaultService.queryBy<TermDepositOffer.State>(criteria)
         //Filter offer states to get the states we want
         val filteredStates = offerStates.states.filter {
             it.state.data.endDate.isAfter(LocalDateTime.now()) && it.state.data.startDate == startDate &&

@@ -1,8 +1,9 @@
 package com.termDeposits.flow.TermDeposit
 
 import co.paralleluniverse.fibers.Suspendable
-import com.termDeposit.contract.TermDepositContract
-import com.termDeposit.contract.TermDepositOfferState
+import com.termDeposits.contract.TermDeposit.Companion.TERMDEPOSIT_CONTRACT_ID
+import com.termDeposits.contract.TermDeposit
+import com.termDeposits.contract.TermDepositOffer
 import net.corda.core.contracts.Amount
 import net.corda.core.contracts.requireThat
 import net.corda.core.flows.*
@@ -38,7 +39,7 @@ object IssueTD {
 
             //STEP 2: Build Txn with TDOffer as input and TDOffer + TDState as output TODO Work in attachments and send client KYC data here
             val builder = TransactionBuilder()
-            val tx = TermDepositContract().generateIssue(builder,TDOffer,serviceHub.myInfo.legalIdentities.first(), notary, depositAmount)
+            val tx = TermDeposit().generateIssue(builder,TDOffer,serviceHub.myInfo.legalIdentities.first(), notary, depositAmount)
 
             //STEP 3: Send to the issuing institue for verification/acceptance
             val flow = initiateFlow(issuingInstitue)
@@ -59,7 +60,7 @@ object IssueTD {
             tx.unwrap {
                 requireThat {
                     //This state was actually issued by us
-                    it.inputStates().filterIsInstance<TermDepositOfferState>().first().institue == serviceHub.myInfo.legalIdentities.first()
+                    it.inputStates().filterIsInstance<TermDepositOffer.State>().first().institue == serviceHub.myInfo.legalIdentities.first()
                 }
             }
 

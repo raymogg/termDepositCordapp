@@ -1,8 +1,9 @@
-package com.termDeposit.contract
+package com.termDeposits.contract
 
 import net.corda.core.contracts.*
 import net.corda.core.identity.AbstractParty
 import net.corda.core.identity.Party
+import net.corda.core.serialization.CordaSerializable
 import net.corda.core.transactions.LedgerTransaction
 import net.corda.core.transactions.TransactionBuilder
 import java.time.LocalDateTime
@@ -11,31 +12,35 @@ import java.time.LocalDateTime
 // * Contract Code *
 // *****************
 // This is used to identify our contract when building a transaction
-val TERMDEPOSIT_OFFER_CONTRACT_ID = "com.termDeposit.TermDepositOffer"
 
-open class TermDepositOfferContract : Contract {
+@CordaSerializable
+open class TermDepositOffer : Contract {
+    companion object {
+        @JvmStatic
+        val TERMDEPOSIT_OFFER_CONTRACT_ID = "com.termDeposits.contract.TermDepositOffer"
+    }
     // A transaction is considered valid if the verify() function of the contract of each of the transaction's input
     // and output states does not throw an exception.
     override fun verify(tx: LedgerTransaction) {
         // Verification logic for each of the TDOffer commands
-        val command = tx.commands.requireSingleCommand<TermDepositOfferContract.Commands>()
+        val command = tx.commands.requireSingleCommand<TermDepositOffer.Commands>()
         when (command.value) {
             is Commands.CreateTD -> requireThat {
                 //Requirements for creating a TD from a TDOffer
                 tx.inputStates.size == 1
                 tx.outputStates.size == 2 //One TDOffer state, one TD state
-                ((tx.outputStates[0] is TermDepositOfferState) || (tx.outputStates[1] is TermDepositOfferState) &&
-                        (tx.outputStates[0] is TermDepositState) || (tx.outputStates[1] is TermDepositState))
+                ((tx.outputStates[0] is State) || (tx.outputStates[1] is State) &&
+                        (tx.outputStates[0] is TermDeposit.State) || (tx.outputStates[1] is TermDeposit.State))
                 val TDTerms = listOf<String>()
                 val TDOTerms = listOf<String>()
                 //Validate the individual terms match
                 tx.outputStates.forEach {
-                    if (it is TermDepositState) {
+                    if (it is TermDeposit.State) {
                         TDTerms.plus(it.startDate.toString())
                         TDTerms.plus(it.endDate.toString())
                         TDTerms.plus(it.interestPercent.toString())
                         TDTerms.plus(it.institue.name.commonName.toString())
-                    } else if (it is TermDepositOfferState) {
+                    } else if (it is State) {
                         TDOTerms.plus(it.startDate.toString())
                         TDOTerms.plus(it.endDate.toString())
                         TDOTerms.plus(it.interestPercent.toString())
@@ -49,7 +54,7 @@ open class TermDepositOfferContract : Contract {
                 //Requirements for issuing a new TDOffer
                 tx.inputStates.isEmpty()
                 tx.outputStates.size == 1
-                val offerState = tx.outputStates.first() as TermDepositOfferState
+                val offerState = tx.outputStates.first() as State
                 //Individual requirements for offer states - e.g non negative values
                 offerState.startDate != offerState.endDate
                 offerState.interestPercent > 0
@@ -63,39 +68,42 @@ open class TermDepositOfferContract : Contract {
         class CreateTD : Commands
     }
 
-    public fun generateIssue( builder: TransactionBuilder, startDate: LocalDateTime, endDate: LocalDateTime, interestPercent: Float,
-                              institue: Party, notary: Party) : TransactionBuilder{
-        val state = TransactionState(data = TermDepositOfferState(startDate, endDate, interestPercent, institue), notary = notary, contract = TERMDEPOSIT_OFFER_CONTRACT_ID)
+    public fun generateIssue(builder: TransactionBuilder, startDate: LocalDateTime, endDate: LocalDateTime, interestPercent: Float,
+                             institue: Party, notary: Party): TransactionBuilder {
+        val state = TransactionState(data = State(startDate, endDate, interestPercent, institue), notary = notary, contract = TERMDEPOSIT_OFFER_CONTRACT_ID)
         builder.addOutputState(state)
-        builder.addCommand(TermDepositOfferContract.Commands.Issue(), institue.owningKey)
+        builder.addCommand(TermDepositOffer.Commands.Issue(), institue.owningKey)
         return builder
     }
 
     //TODO Should this actually be in the TD contract and not here?? - probably should under TD.Commands.Issue() -> ensure a TDOffer is provided as input and create the output of the TD
-    fun genereateCreateTD( builder: TransactionBuilder, TDOffer: StateAndRef<TermDepositOfferState>, selfReference: Party) {
+    fun genereateCreateTD(builder: TransactionBuilder, TDOffer: StateAndRef<State>, selfReference: Party) {
 
     }
-}
+
 
 // *********
 // * State *
 // *********
-/** Term Deposit Offer Contract State
- * This is an offer of a TD, issued by a TD issuer (such as a bank or institution). The idea is that a TD offer can
- * be converted to an active TD as long as it is within its valid period (start and end date). Comes with attached
- * Terms and conditions as a hash, and these terms are then attached to the issued TD.
- *
- * See flows for how a TD Offer is convereted to a TD - not that the state is reproduced so one TD offer can produce many
- * identical TD's.
- *
- * Potential other terms : minimum deposit amount, max deposit amount, fees - (todo would these be kept within contract or just in the attachment?)
- */
-data class TermDepositOfferState(val startDate: java.time.LocalDateTime, val endDate : java.time.LocalDateTime,
-                                 val interestPercent: Float, val institue: Party) : ContractState {
+    /** Term Deposit Offer Contract State
+     * This is an offer of a TD, issued by a TD issuer (such as a bank or institution). The idea is that a TD offer can
+     * be converted to an active TD as long as it is within its valid period (start and end date). Comes with attached
+     * Terms and conditions as a hash, and these terms are then attached to the issued TD.
+     *
+     * See flows for how a TD Offer is convereted to a TD - not that the state is reproduced so one TD offer can produce many
+     * identical TD's.
+     *
+     * Potential other terms : minimum deposit amount, max deposit amount, fees - (todo would these be kept within contract or just in the attachment?)
+     */
+    @CordaSerializable
+    data class State(val startDate: java.time.LocalDateTime, val endDate: java.time.LocalDateTime,
+                                     val interestPercent: Float, val institue: Party) : ContractState {
 
-    override val participants: List<AbstractParty> get() = listOf()
+        override val participants: List<AbstractParty> get() = listOf()
 
-    override fun toString(): String {
-        return "Term Deposit Offer: From ${institue} at ${interestPercent}%"
+        override fun toString(): String {
+            return "Term Deposit Offer: From ${institue} at ${interestPercent}%"
+        }
     }
+
 }

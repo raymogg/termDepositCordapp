@@ -1,6 +1,7 @@
 package com.example
 
-import com.termDeposit.flow.TermDeposit.IssueOffer
+import com.example.flow.ExampleFlow
+import com.termDeposits.flow.TermDeposit.IssueOffer
 import net.corda.core.identity.CordaX500Name
 import net.corda.core.identity.Party
 import net.corda.core.messaging.CordaRPCOps
@@ -47,7 +48,8 @@ class Simulation(options: String) {
     lateinit var bNode : NodeHandle
     lateinit var cNode : NodeHandle
     val stdUser = User("user1", "test",
-            permissions = setOf(FlowPermissions.startFlowPermission<IssueOffer.OfferInitiator>()))
+            permissions = setOf(FlowPermissions.startFlowPermission<IssueOffer.Initiator>(), FlowPermissions.startFlowPermission<ExampleFlow.Initiator>(),
+                    FlowPermissions.startFlowPermission<ExampleFlow.Acceptor>()))
     init {
         main(arrayOf())
     }
@@ -55,7 +57,7 @@ class Simulation(options: String) {
     fun main(args: Array<String>) {
         println("Simulation Main")
         // No permissions required as we are not invoking flows.
-        driver(isDebug = false, extraCordappPackagesToScan = listOf("com.termDeposits")) {
+        driver(isDebug = false, extraCordappPackagesToScan = listOf("com.termDeposits.contract", "termDeposits.contract", "termDepositCordapp.com.termDeposits.contract")) {
             startNode(providedName = CordaX500Name("Controller", "London", "GB"), advertisedServices = setOf(ServiceInfo(ValidatingNotaryService.type)))
             val (nodeA, nodeB, nodeC) = listOf(
                     startNode(providedName = CordaX500Name("PartyA", "London", "GB"), rpcUsers = listOf(stdUser)),
@@ -96,7 +98,7 @@ class Simulation(options: String) {
     }
 
     fun allocateTDPermissions() : Set<String> = setOf(
-            FlowPermissions.startFlowPermission<IssueOffer.OfferInitiator>()
+            FlowPermissions.startFlowPermission<IssueOffer.Initiator>()
     )
 
     //Flow test suite for TD flows
@@ -109,7 +111,7 @@ class Simulation(options: String) {
     fun sendTDOffers(me : CordaRPCOps, receiver: CordaRPCOps, startDate: LocalDateTime, endDate: LocalDateTime,
                      interestPercent: Float) {
         //me.startFlow { IssueOffer.Initiator(startDate, endDate, interestPercent, me.nodeInfo().legalIdentities.first(), listOf(receiver.nodeInfo().legalIdentities.first())) }
-        //me.startFlow(IssueOffer)
+        me.startFlow(IssueOffer::Initiator, startDate, endDate, interestPercent, me.nodeInfo().legalIdentities.first(), listOf(receiver.nodeInfo().legalIdentities.first()))
         println("TD Offers Issued")
     }
 

@@ -1,8 +1,8 @@
-package com.example.plugin
+package com.termDeposits.plugin
 
 import com.example.api.ExampleApi
-import com.termDeposit.contract.TermDepositOfferContract
-import com.termDeposit.contract.TermDepositOfferState
+import com.termDeposits.contract.*
+import com.termDeposits.flow.TermDeposit.IssueOffer
 import net.corda.core.messaging.CordaRPCOps
 import net.corda.core.serialization.SerializationWhitelist
 import net.corda.core.transactions.TransactionBuilder
@@ -22,16 +22,17 @@ class ExamplePlugin : WebServerPluginRegistry {
             // This will serve the exampleWeb directory in resources to /web/example
             "example" to javaClass.classLoader.getResource("exampleWeb").toExternalForm()
     )
-
 }
+
 
 class SerilizationPlugin: SerializationWhitelist {
     /**
      * Whitelisting the required types for serialisation by the Corda node.
      */
     override val whitelist: List<Class<*>> = listOf(
-            TermDepositOfferContract::class.java,
-            TermDepositOfferState::class.java,
+            TermDeposit::class.java,
+            TermDepositOffer::class.java,
+            IssueOffer.Initiator::class.java,
             TransactionBuilder::class.java,
             Boolean::class.java
     )
