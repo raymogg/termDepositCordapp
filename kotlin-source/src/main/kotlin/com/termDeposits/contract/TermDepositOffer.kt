@@ -36,7 +36,7 @@ open class TermDepositOffer : Contract {
                 //Requirements for creating a TD from a TDOffer
                 tx.inputStates.size == 1
                 tx.outputStates.size == 2 //One TDOffer state, one TD state
-                ((tx.outputStates[0] is State) || (tx.outputStates[1] is State) &&
+                ((tx.outputStates[0] is TermDepositOffer.State) || (tx.outputStates[1] is TermDepositOffer.State) &&
                         (tx.outputStates[0] is TermDeposit.State) || (tx.outputStates[1] is TermDeposit.State))
                 val TDTerms = listOf<String>()
                 val TDOTerms = listOf<String>()

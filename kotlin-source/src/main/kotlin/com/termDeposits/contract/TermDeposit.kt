@@ -71,6 +71,7 @@ open class TermDeposit : Contract {
         //builder.addOutputState(TDOffer.state) //TODO Not sure this will work, may need to make a duplicate of this state (eg deep copy)
         builder.addOutputState(TransactionState(data = TDOffer.state.data.copy(), notary = notary, contract = TermDepositOffer.TERMDEPOSIT_OFFER_CONTRACT_ID))
         builder.addCommand(TermDeposit.Commands.Issue(), offerState.institue.owningKey, selfReference.owningKey)
+        builder.addCommand(TermDepositOffer.Commands.CreateTD(), offerState.institue.owningKey)
         return builder
     }
 

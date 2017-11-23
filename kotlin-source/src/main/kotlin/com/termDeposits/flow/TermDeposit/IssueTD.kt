@@ -31,9 +31,9 @@ object IssueTD {
     @InitiatingFlow
     @StartableByRPC
     class Initiator(val startDate: LocalDateTime, val endDate: LocalDateTime, val interestPercent: Float,
-    val issuingInstitue: Party, val depositAmount: Amount<Currency>) : FlowLogic<Unit>() {//FlowLogic<SignedTransaction>() {
+    val issuingInstitue: Party, val depositAmount: Amount<Currency>) : FlowLogic<SignedTransaction>() {//FlowLogic<SignedTransaction>() {
         @Suspendable
-        override fun call(): Unit {//SignedTransaction {
+        override fun call(): SignedTransaction {//SignedTransaction {
             //STEP 1: Retrieve TD Offer from vault with the provided terms
             val notary = serviceHub.networkMapCache.notaryIdentities.first()
             println("Notary " + notary)
@@ -49,31 +49,33 @@ object IssueTD {
 
             //STEP 3: Send to the issuing institue for verification/acceptance
             val flow = initiateFlow(issuingInstitue)
-            flow.sendAndReceive<TransactionBuilder>(tx)
-
+            val stx = flow.sendAndReceive<SignedTransaction>(tx).unwrap { it }
+            println("Before TD Issued")
             //STEP 7: Receieve back txn, sign and commit to ledger
-            val stx = flow.receive<SignedTransaction>().unwrap { it }
             subFlow(ResolveTransactionsFlow(stx, flow))
             val unnotarisedTx = serviceHub.addSignature(stx, serviceHub.myInfo.legalIdentities.first().owningKey)
-            val finishedTx = subFlow(FinalityFlow(unnotarisedTx, setOf(issuingInstitue)))
             println("TD Issued to ${serviceHub.myInfo.legalIdentities.first().name} by ${issuingInstitue.name} at $interestPercent%")
-            return
+            return subFlow(FinalityFlow(unnotarisedTx, setOf(issuingInstitue)))
+
         }
     }
 
     @CordaSerializable
     @InitiatedBy(Initiator::class)
-    open class Acceptor(val counterPartySession: FlowSession) : FlowLogic<Unit>() {
+    open class Acceptor(val counterPartySession: FlowSession) : FlowLogic<SignedTransaction>() {
         @Suspendable
-        override fun call(): Unit {
+        override fun call(): SignedTransaction {
             //STEP 4: Receieve the transaction with the TD Offer and TD
             val tx = counterPartySession.receive<TransactionBuilder>()
 
             //STEP 5: Validate and accept txn
             tx.unwrap {
+                println(it.inputStates())
+                println(it.outputStates())
                 requireThat {
                     //This state was actually issued by us
-                    it.inputStates().filterIsInstance<TermDepositOffer.State>().first().institue == serviceHub.myInfo.legalIdentities.first()
+                    //it.inputStates().filterIsInstance<TermDepositOffer.State>().first().institue == serviceHub.myInfo.legalIdentities.first()
+                    println(it.outputStates().map { it.data }.filterIsInstance<TermDepositOffer.State>())
                 }
                 it
             }
@@ -81,7 +83,7 @@ object IssueTD {
             //STEP 6: Sign transaction and send back to other party
             val stx = serviceHub.signInitialTransaction(tx.unwrap{it}, serviceHub.myInfo.legalIdentities.first().owningKey)
             counterPartySession.send(stx)
-            waitForLedgerCommit(stx.id)
+            return waitForLedgerCommit(stx.id)
         }
     }
 }

@@ -54,8 +54,9 @@ class Simulation(options: String) {
 
     fun main(args: Array<String>) {
         println("Simulation Main")
-        // No permissions required as we are not invoking flows. //TODO Adding startNodesInProcess = true is causing crashes
-        driver(isDebug = false, extraCordappPackagesToScan = listOf("com.termDeposits.contract", "termDeposits.contract", "termDepositCordapp.com.termDeposits.contract"), startNodesInProcess = true) {
+        // No permissions required as we are not invoking flows.
+        driver(isDebug = false, extraCordappPackagesToScan = listOf("com.termDeposits.contract", "termDeposits.contract", "termDepositCordapp.com.termDeposits.contract",
+                "com.termDeposits.flow"), startNodesInProcess = false) {
             startNode(providedName = CordaX500Name("Controller", "London", "GB"), advertisedServices = setOf(ServiceInfo(ValidatingNotaryService.type)))
             val (nodeA, nodeB, nodeC) = listOf(
                     startNode(providedName = CordaX500Name("PartyA", "London", "GB"), rpcUsers = listOf(stdUser)),
@@ -93,6 +94,10 @@ class Simulation(options: String) {
                 bRPC.nodeInfo().legalIdentities.first() to bRPC,
                 cRPC.nodeInfo().legalIdentities.first() to cRPC
         ))
+
+        arrayOf(aNode, bNode, cNode).forEach {
+            println("${it.nodeInfo.legalIdentities.first()} started on ${it.configuration.rpcAddress}")
+        }
     }
 
     fun allocateTDPermissions() : Set<String> = setOf(
@@ -109,7 +114,7 @@ class Simulation(options: String) {
         sendTDOffers(parties[0].second, parties[1].second, LocalDateTime.MIN, LocalDateTime.MAX, 3.6f)
         sendTDOffers(parties[0].second, parties[1].second, LocalDateTime.MIN, LocalDateTime.MAX, 3.8f)
         sendTDOffers(parties[0].second, parties[1].second, LocalDateTime.MIN, LocalDateTime.MAX, 2.4f)
-        sendTDOffers(parties[1].second, parties[0].second, LocalDateTime.MIN, LocalDateTime.MAX, 5.7f)
+        sendTDOffers(parties[1].second, parties[0].second, LocalDateTime.MIN, LocalDateTime.MAX, 5.7f) //TODO bug here -> if these offers from 1 to 0 arent sent, no offers appear in vaults...
         sendTDOffers(parties[1].second, parties[0].second, LocalDateTime.MIN, LocalDateTime.MAX, 6.9f)
 
         //Accept this offer
