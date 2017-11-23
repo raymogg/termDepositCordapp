@@ -1,6 +1,7 @@
 package com.termDeposits.flow.TermDeposit
 
 import co.paralleluniverse.fibers.Suspendable
+import com.termDeposits.contract.TermDeposit
 import com.termDeposits.contract.TermDepositOffer
 import net.corda.core.contracts.Amount
 import net.corda.core.contracts.StateAndRef
@@ -25,18 +26,20 @@ import com.termDeposits.contract.TermDeposit.internalState
 
 
 class TDRetreivalFlow(val startDate: LocalDateTime, val endDate: LocalDateTime, val offeringInstitute: Party,
-                         val interest: Float, val depositAmount: Amount<Currency>, val state: String = internalState.active): FlowLogic<List<StateAndRef<TermDepositOffer.State>>>() {
+                         val interest: Float, val depositAmount: Amount<Currency>, val state: String = internalState.active): FlowLogic<List<StateAndRef<TermDeposit.State>>>() {
     @Suspendable
-    override fun call(): List<StateAndRef<TermDepositOffer.State>> {
+    override fun call(): List<StateAndRef<TermDeposit.State>> {
         //Query the vault for unconsumed states and then for Security loan states
         val criteria = QueryCriteria.VaultQueryCriteria(status = Vault.StateStatus.UNCONSUMED)
-        val offerStates = serviceHub.vaultService.queryBy<TermDepositOffer.State>(criteria)
+        val offerStates = serviceHub.vaultService.queryBy<TermDeposit.State>(criteria)
         //Filter offer states to get the states we want
+        println("TD Retrieval First " + offerStates.states.forEach {it.state.toString()})
         val filteredStates = offerStates.states.filter {
             it.state.data.endDate.isAfter(LocalDateTime.now()) && it.state.data.startDate == startDate &&
                     it.state.data.endDate == endDate &&  it.state.data.institue == offeringInstitute &&
                     it.state.data.interestPercent == interest //it.state.data.internalState == state (Not implemented in the stsate yet)
         }
+        println("TD Retrieval " + filteredStates.forEach { it.state.toString() })
         return filteredStates
     }
 }

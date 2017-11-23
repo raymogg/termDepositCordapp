@@ -1,8 +1,10 @@
 package com.example
 
 import com.example.flow.ExampleFlow
+import com.termDeposits.flow.TermDeposit.ActivateTD
 import com.termDeposits.flow.TermDeposit.IssueOffer
 import com.termDeposits.flow.TermDeposit.IssueTD
+import com.termDeposits.flow.TermDeposit.TDRetreivalFlow
 import net.corda.core.contracts.Amount
 import net.corda.core.identity.CordaX500Name
 import net.corda.core.identity.Party
@@ -103,7 +105,9 @@ class Simulation(options: String) {
     fun allocateTDPermissions() : Set<String> = setOf(
             FlowPermissions.startFlowPermission<IssueOffer.Initiator>(),
             FlowPermissions.startFlowPermission<IssueTD.Initiator>(),
-            FlowPermissions.startFlowPermission<IssueTD.Acceptor>()
+            FlowPermissions.startFlowPermission<IssueTD.Acceptor>(),
+            FlowPermissions.startFlowPermission<ActivateTD.Activator>(),
+            FlowPermissions.startFlowPermission<ActivateTD.Acceptor>()
     )
 
     //Flow test suite for TD flows
@@ -120,6 +124,8 @@ class Simulation(options: String) {
         //Accept this offer
         RequestTD(parties[1].second, parties[0].second, LocalDateTime.MIN, LocalDateTime.MAX, 3.4f)
         //RequestTD(parties[0].second, parties[1].second, LocalDateTime.MIN, LocalDateTime.MAX, 3.4f)
+        Thread.sleep(1000)
+        Activate(parties[0].second, parties[2].second, LocalDateTime.MIN, LocalDateTime.MAX, 3.4f, Amount<Currency>(300, USD))
     }
 
     fun sendTDOffers(me : CordaRPCOps, receiver: CordaRPCOps, startDate: LocalDateTime, endDate: LocalDateTime,
@@ -133,6 +139,11 @@ class Simulation(options: String) {
                   interestPercent: Float) {
         me.startFlow(IssueTD::Initiator, startDate, endDate, interestPercent, issuer.nodeInfo().legalIdentities.first(), Amount<Currency>(300, USD))
         println("TD Requested")
+    }
+
+    fun Activate(me : CordaRPCOps, client : CordaRPCOps, startDate: LocalDateTime, endDate: LocalDateTime, interestPercent: Float, depositAmount: Amount<Currency>) {
+        me.startFlow(ActivateTD::Activator, startDate, endDate, interestPercent, me.nodeInfo().legalIdentities.first(), client.nodeInfo().legalIdentities.first(), depositAmount)
+        //println("TD Activated")
     }
 
 }

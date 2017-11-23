@@ -11,6 +11,7 @@ import net.corda.core.schemas.MappedSchema
 import net.corda.core.schemas.PersistentState
 import net.corda.core.schemas.QueryableState
 import net.corda.core.serialization.CordaSerializable
+import net.corda.core.serialization.serialize
 import net.corda.core.transactions.LedgerTransaction
 import net.corda.core.transactions.TransactionBuilder
 import net.corda.core.utilities.toBase58String
@@ -37,10 +38,25 @@ open class TermDeposit : Contract {
         when (command.value) {
             is Commands.Issue -> requireThat {
                 //TD Issue verification
-                tx.outputStates.size == 2 //output should be a replica TDOffer state and the newly created TD State
-                tx.inputStates.size == 1 //input should be a single TDOffer state
-                tx.inputStates.first() is TermDepositOffer.State
+                "Two outputs are required" using (tx.outputStates.size == 2) //output should be a replica TDOffer state and the newly created TD State
+                "Only one input allowed" using (tx.inputStates.size == 1) //input should be a single TDOffer state
+                "input state must be a term deposit offer" using (tx.inputStates.first() is TermDepositOffer.State)
 
+            }
+
+            is Commands.Activate -> requireThat {
+                //Pending to active verification
+                "Only one input allowed" using (tx.inputStates.size == 1)
+                "Only one output allowed" using (tx.outputStates.size == 1)
+                "Input must be a term deposit" using (tx.inputStates.first() is TermDeposit.State)
+                "Output must be a term deposit" using (tx.outputStates.first() is TermDeposit.State)
+                val input = tx.inputStates.first() as TermDeposit.State
+                val output = tx.outputStates.first() as TermDeposit.State
+                "Deposit amounts must match" using (input.depositAmount == output.depositAmount)
+                "End dates must match" using (input.endDate == output.endDate)
+                "Issuing institue must match" using (input.institue == output.institue)
+                "interest percent must match" using (input.interestPercent == output.interestPercent)
+                "Start date must match" using (input.startDate == output.startDate)
             }
 
             is Commands.Redeem -> requireThat {
@@ -56,6 +72,7 @@ open class TermDeposit : Contract {
     // Used to indicate the transaction's intent - current three types of TD txns - issue, rollover and redeem.
     interface Commands : CommandData {
         class Issue : Commands
+        class Activate: Commands
         class Rollover : Commands
         class Redeem : Commands
     }
@@ -65,7 +82,7 @@ open class TermDeposit : Contract {
         println("Notary in gen issue: $notary")
         val offerState = TDOffer.state.data
         val TDState = TransactionState(data = State(offerState.startDate, offerState.endDate, offerState.interestPercent, offerState.institue,
-                depositAmount), notary = notary, contract = TERMDEPOSIT_CONTRACT_ID)
+                depositAmount, internalState.pending), notary = notary, contract = TERMDEPOSIT_CONTRACT_ID)
         builder.addOutputState(TDState)
         builder.addInputState(TDOffer)
         //builder.addOutputState(TDOffer.state) //TODO Not sure this will work, may need to make a duplicate of this state (eg deep copy)
@@ -87,6 +104,13 @@ open class TermDeposit : Contract {
         return builder
     }
 
+    fun generateActivate(builder: TransactionBuilder, TDState: StateAndRef<TermDeposit.State>, TDConsumer: Party,
+                         notary: Party): TransactionBuilder {
+        builder.addOutputState(TransactionState(data = TDState.state.data.copy(internalState = internalState.active), notary = notary, contract = TERMDEPOSIT_CONTRACT_ID))
+        builder.addCommand(TermDeposit.Commands.Activate(), TDState.state.data.institue.owningKey, TDConsumer.owningKey)
+        return builder
+    }
+
 
     /** Object used to define the states that a term deposit can be in
      * These are used in flows where a term deposit is being finalized. Transitioning the internalState is done through flows
@@ -98,7 +122,7 @@ open class TermDeposit : Contract {
 
     object internalState {
         val ordered = "Ordered"
-        val tentative = "Tentative"
+        val pending = "Pending"
         val active = "Active"
         val exited = "Exited" //A TD state with this internal state should always be "consumed" and hence unusuable in a txn
     }
@@ -112,7 +136,7 @@ open class TermDeposit : Contract {
      */
     @CordaSerializable
     data class State(val startDate: LocalDateTime, val endDate: LocalDateTime, val interestPercent: Float,
-                                val institue: Party, val depositAmount: Amount<Currency>) : ContractState, QueryableState {
+                                val institue: Party, val depositAmount: Amount<Currency>, val internalState: String) : ContractState, QueryableState {
         override val participants: List<AbstractParty> get() = listOf()
 
         override fun generateMappedObject(schema: MappedSchema): PersistentState {
@@ -132,7 +156,7 @@ open class TermDeposit : Contract {
 
 
         override fun toString(): String {
-            return "Term Deposit: From $institue at $interestPercent% starting on $startDate and ending on $endDate"
+            return "Term Deposit: From $institue at $interestPercent% starting on $startDate and ending on $endDate (InternalState: $internalState)"
         }
     }
 }
