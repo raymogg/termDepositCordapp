@@ -38,25 +38,25 @@ open class TermDeposit : Contract {
         when (command.value) {
             is Commands.Issue -> requireThat {
                 //TD Issue verification
-                "Two outputs are required" using (tx.outputStates.size == 2) //output should be a replica TDOffer state and the newly created TD State
-                "Only one input allowed" using (tx.inputStates.size == 1) //input should be a single TDOffer state
-                "input state must be a term deposit offer" using (tx.inputStates.first() is TermDepositOffer.State)
+                //"Two outputs are required" using (tx.outputStates.size == 2) //output should be a replica TDOffer state and the newly created TD State
+                //"Only one input allowed" using (tx.inputStates.size == 1) //input should be a single TDOffer state
+                //"input state must be a term deposit offer" using (tx.inputStates.first() is TermDepositOffer.State)
 
             }
 
             is Commands.Activate -> requireThat {
                 //Pending to active verification
-                "Only one input allowed" using (tx.inputStates.size == 1)
-                "Only one output allowed" using (tx.outputStates.size == 1)
-                "Input must be a term deposit" using (tx.inputStates.first() is TermDeposit.State)
-                "Output must be a term deposit" using (tx.outputStates.first() is TermDeposit.State)
-                val input = tx.inputStates.first() as TermDeposit.State
-                val output = tx.outputStates.first() as TermDeposit.State
-                "Deposit amounts must match" using (input.depositAmount == output.depositAmount)
-                "End dates must match" using (input.endDate == output.endDate)
-                "Issuing institue must match" using (input.institue == output.institue)
-                "interest percent must match" using (input.interestPercent == output.interestPercent)
-                "Start date must match" using (input.startDate == output.startDate)
+//                "Only one input allowed" using (tx.inputStates.size == 1)
+//                "Only one output allowed" using (tx.outputStates.size == 1)
+//                "Input must be a term deposit" using (tx.inputStates.first() is TermDeposit.State)
+//                "Output must be a term deposit" using (tx.outputStates.first() is TermDeposit.State)
+//                val input = tx.inputStates.first() as TermDeposit.State
+//                val output = tx.outputStates.first() as TermDeposit.State
+//                "Deposit amounts must match" using (input.depositAmount == output.depositAmount)
+//                "End dates must match" using (input.endDate == output.endDate)
+//                "Issuing institue must match" using (input.institue == output.institue)
+//                "interest percent must match" using (input.interestPercent == output.interestPercent)
+//                "Start date must match" using (input.startDate == output.startDate)
             }
 
             is Commands.Redeem -> requireThat {
@@ -77,18 +77,18 @@ open class TermDeposit : Contract {
         class Redeem : Commands
     }
 
-    fun generateIssue(builder: TransactionBuilder, TDOffer: StateAndRef<TermDepositOffer.State>, selfReference: Party,
-                      notary: Party, depositAmount: Amount<Currency>): TransactionBuilder {
-        println("Notary in gen issue: $notary")
+    fun generateIssue(builder: TransactionBuilder, TDOffer: StateAndRef<TermDepositOffer.State>,
+                      notary: Party, depositAmount: Amount<Currency>, to: Party): TransactionBuilder {
         val offerState = TDOffer.state.data
-        val TDState = TransactionState(data = State(offerState.startDate, offerState.endDate, offerState.interestPercent, offerState.institue,
-                depositAmount, internalState.pending), notary = notary, contract = TERMDEPOSIT_CONTRACT_ID)
+        val TDState = TransactionState(data = TermDeposit.State(offerState.startDate, offerState.endDate, offerState.interestPercent, offerState.institue,
+                depositAmount, internalState.pending, to), notary = notary, contract = TERMDEPOSIT_CONTRACT_ID)
+        println("Generate Issue: Owner $to")
         builder.addOutputState(TDState)
-        builder.addInputState(TDOffer)
+        //builder.addInputState(TDOffer)
         //builder.addOutputState(TDOffer.state) //TODO Not sure this will work, may need to make a duplicate of this state (eg deep copy)
-        builder.addOutputState(TransactionState(data = TDOffer.state.data.copy(), notary = notary, contract = TermDepositOffer.TERMDEPOSIT_OFFER_CONTRACT_ID))
-        builder.addCommand(TermDeposit.Commands.Issue(), offerState.institue.owningKey, selfReference.owningKey)
-        builder.addCommand(TermDepositOffer.Commands.CreateTD(), offerState.institue.owningKey)
+        //builder.addOutputState(TransactionState(data = TDOffer.state.data.copy(), notary = notary, contract = TermDepositOffer.TERMDEPOSIT_OFFER_CONTRACT_ID))
+        builder.addCommand(TermDeposit.Commands.Issue(), offerState.institue.owningKey, to.owningKey)
+        //builder.addCommand(TermDepositOffer.Commands.CreateTD(), offerState.institue.owningKey)
         return builder
     }
 
@@ -136,8 +136,11 @@ open class TermDeposit : Contract {
      */
     @CordaSerializable
     data class State(val startDate: LocalDateTime, val endDate: LocalDateTime, val interestPercent: Float,
-                                val institue: Party, val depositAmount: Amount<Currency>, val internalState: String) : ContractState, QueryableState {
-        override val participants: List<AbstractParty> get() = listOf()
+                     val institue: Party, val depositAmount: Amount<Currency>, val internalState: String, override val owner: AbstractParty) : QueryableState, OwnableState, ContractState {
+
+        override val participants: List<AbstractParty> get() = listOf(owner)
+
+        override fun withNewOwner(newOwner: AbstractParty): CommandAndState = CommandAndState(TermDeposit.Commands.Issue(), copy(owner = newOwner))
 
         override fun generateMappedObject(schema: MappedSchema): PersistentState {
             return when (schema) {
@@ -156,7 +159,7 @@ open class TermDeposit : Contract {
 
 
         override fun toString(): String {
-            return "Term Deposit: From $institue at $interestPercent% starting on $startDate and ending on $endDate (InternalState: $internalState)"
+            return "Term Deposit: From $institue at $interestPercent% starting on $startDate and ending on $endDate to $owner (InternalState: $internalState)"
         }
     }
 }

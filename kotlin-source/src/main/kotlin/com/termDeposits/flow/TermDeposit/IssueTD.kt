@@ -45,7 +45,7 @@ object IssueTD {
 
             //STEP 2: Build Txn with TDOffer as input and TDOffer + TDState as output TODO Work in attachments and send client KYC data here
             val builder = TransactionBuilder(notary = notary)
-            val tx = TermDeposit().generateIssue(builder,TDOffer,serviceHub.myInfo.legalIdentities.first(), notary, depositAmount)
+            val tx = TermDeposit().generateIssue(builder,TDOffer, notary, depositAmount, serviceHub.myInfo.legalIdentities.first())
 
             //STEP 3: Send to the issuing institue for verification/acceptance
             val flow = initiateFlow(issuingInstitue)
@@ -54,8 +54,8 @@ object IssueTD {
             //STEP 7: Receieve back txn, sign and commit to ledger
             subFlow(ResolveTransactionsFlow(stx, flow))
             val unnotarisedTx = serviceHub.addSignature(stx, serviceHub.myInfo.legalIdentities.first().owningKey)
-            println("TD Issued to ${serviceHub.myInfo.legalIdentities.first().name} by ${issuingInstitue.name} at $interestPercent%")
-            return subFlow(FinalityFlow(unnotarisedTx, setOf(issuingInstitue)))
+            println("TD Issued to ${stx.tx.outputStates.filterIsInstance<TermDeposit.State>().first().owner} by ${issuingInstitue.name} at $interestPercent%")
+            return subFlow(FinalityFlow(unnotarisedTx))
 
         }
     }
@@ -69,21 +69,22 @@ object IssueTD {
             val tx = counterPartySession.receive<TransactionBuilder>()
 
             //STEP 5: Validate and accept txn
-            tx.unwrap {
+            val unwrappedtx = tx.unwrap {
                 println(it.inputStates())
                 println(it.outputStates())
                 requireThat {
                     //This state was actually issued by us
                     //it.inputStates().filterIsInstance<TermDepositOffer.State>().first().institue == serviceHub.myInfo.legalIdentities.first()
-                    println(it.outputStates().map { it.data }.filterIsInstance<TermDepositOffer.State>())
+                    println("Term Deposit Offer output state" + it.outputStates().map { it.data }.filterIsInstance<TermDepositOffer.State>().map { it.owner })
+                    println("Term Deposit Output State "+it.outputStates().map { it.data }.filterIsInstance<TermDeposit.State>())
                 }
                 it
             }
 
             //STEP 6: Sign transaction and send back to other party
-            val stx = serviceHub.signInitialTransaction(tx.unwrap{it}, serviceHub.myInfo.legalIdentities.first().owningKey)
+            val stx = serviceHub.signInitialTransaction(unwrappedtx, serviceHub.myInfo.legalIdentities.first().owningKey)
             counterPartySession.send(stx)
-            return waitForLedgerCommit(stx.id)
+            return stx
         }
     }
 }

@@ -113,19 +113,21 @@ class Simulation(options: String) {
     //Flow test suite for TD flows
     fun runSimulation() {
         println("Simulations")
-        //Send an offer to parties for a TD
+        //Send an offer to parties for a TD - 0 is the issuing institue, 1 is receiever
         sendTDOffers(parties[0].second, parties[1].second, LocalDateTime.MIN, LocalDateTime.MAX, 3.4f)
-        sendTDOffers(parties[0].second, parties[1].second, LocalDateTime.MIN, LocalDateTime.MAX, 3.6f)
-        sendTDOffers(parties[0].second, parties[1].second, LocalDateTime.MIN, LocalDateTime.MAX, 3.8f)
-        sendTDOffers(parties[0].second, parties[1].second, LocalDateTime.MIN, LocalDateTime.MAX, 2.4f)
-        sendTDOffers(parties[1].second, parties[0].second, LocalDateTime.MIN, LocalDateTime.MAX, 5.7f) //TODO bug here -> if these offers from 1 to 0 arent sent, no offers appear in vaults...
-        sendTDOffers(parties[1].second, parties[0].second, LocalDateTime.MIN, LocalDateTime.MAX, 6.9f)
+        //sendTDOffers(parties[0].second, parties[1].second, LocalDateTime.MIN, LocalDateTime.MAX, 3.6f)
+        //sendTDOffers(parties[0].second, parties[1].second, LocalDateTime.MIN, LocalDateTime.MAX, 3.8f)
+        //sendTDOffers(parties[0].second, parties[1].second, LocalDateTime.MIN, LocalDateTime.MAX, 2.4f)
+        Thread.sleep(1000)
+        //sendTDOffers(parties[1].second, parties[0].second, LocalDateTime.MIN, LocalDateTime.MAX, 5.7f) //TODO bug here -> if these offers from 1 to 0 arent sent, no offers appear in vaults...
+        //sendTDOffers(parties[1].second, parties[0].second, LocalDateTime.MIN, LocalDateTime.MAX, 6.9f)
 
         //Accept this offer
         RequestTD(parties[1].second, parties[0].second, LocalDateTime.MIN, LocalDateTime.MAX, 3.4f)
-        //RequestTD(parties[0].second, parties[1].second, LocalDateTime.MIN, LocalDateTime.MAX, 3.4f)
         Thread.sleep(1000)
-        Activate(parties[0].second, parties[2].second, LocalDateTime.MIN, LocalDateTime.MAX, 3.4f, Amount<Currency>(300, USD))
+        Activate(parties[0].second, parties[1].second, LocalDateTime.MIN, LocalDateTime.MAX, 3.4f, Amount<Currency>(300, USD))
+        //Activate(parties[1].second, parties[0].second, LocalDateTime.MIN, LocalDateTime.MAX, 3.4f, Amount<Currency>(300, USD))
+
     }
 
     fun sendTDOffers(me : CordaRPCOps, receiver: CordaRPCOps, startDate: LocalDateTime, endDate: LocalDateTime,
@@ -143,7 +145,8 @@ class Simulation(options: String) {
 
     fun Activate(me : CordaRPCOps, client : CordaRPCOps, startDate: LocalDateTime, endDate: LocalDateTime, interestPercent: Float, depositAmount: Amount<Currency>) {
         me.startFlow(ActivateTD::Activator, startDate, endDate, interestPercent, me.nodeInfo().legalIdentities.first(), client.nodeInfo().legalIdentities.first(), depositAmount)
-        //println("TD Activated")
+        println("TD Activated")
     }
+
 
 }

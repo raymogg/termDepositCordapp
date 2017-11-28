@@ -4,6 +4,8 @@ import com.example.api.ExampleApi
 import com.termDeposits.contract.*
 import com.termDeposits.flow.TermDeposit.IssueOffer
 import com.termDeposits.flow.TermDeposit.IssueTD
+import com.termDeposits.flow.TermDeposit.OfferRetrievalFlow
+import com.termDeposits.flow.TermDeposit.TDRetreivalFlow
 import net.corda.core.messaging.CordaRPCOps
 import net.corda.core.serialization.SerializationWhitelist
 import net.corda.core.transactions.TransactionBuilder
@@ -38,6 +40,8 @@ class SerilizationPlugin: SerializationWhitelist {
             IssueOffer.Initiator::class.java,
             IssueTD.Initiator::class.java,
             IssueTD.Acceptor::class.java,
+            TDRetreivalFlow::class.java,
+            OfferRetrievalFlow::class.java,
             TransactionBuilder::class.java,
             Boolean::class.java
     )

@@ -60,6 +60,8 @@ object ActivateTD {
             val args = flow.receive<List<*>>().unwrap { it }
 
             //STEP 3: Prepare the txn
+            println("Params recieved $args")
+            println("TDRetrival started from ${serviceHub.myInfo.legalIdentities.first().name}")
             val TD = subFlow(TDRetreivalFlow(args[0] as LocalDateTime, args[1] as LocalDateTime, args[3] as Party, args[2] as Float, args[5] as Amount<Currency>))
 
             //STEP 4: Generate the Activate Txn
@@ -70,7 +72,7 @@ object ActivateTD {
             //STEP 5: Sign and send back the txn (only updating internal state so no validation required really)
             val ptx = serviceHub.signInitialTransaction(tx)
             flow.send(ptx)
-            return waitForLedgerCommit(ptx.id)
+            return ptx
         }
     }
 

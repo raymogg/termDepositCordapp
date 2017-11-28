@@ -24,7 +24,7 @@ object TDSchemaV1 : MappedSchema(
     @Table(name = "TD_states")
     class PersistentTDSchema(
             @Column(name = "start_date")
-            var startDate: LocalDateTime, //todo should this be stored as a string or as a LocalDateTime?
+            var startDate: LocalDateTime,
 
             @Column(name = "end_date")
             var endDate: LocalDateTime,
