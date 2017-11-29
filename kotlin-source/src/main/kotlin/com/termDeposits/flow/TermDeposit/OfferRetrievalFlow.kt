@@ -24,11 +24,9 @@ class OfferRetrievalFlow(val startDate: LocalDateTime, val endDate: LocalDateTim
     @Suspendable
     override fun call(): List<StateAndRef<TermDepositOffer.State>> {
         //Query the vault for unconsumed states and then for Security loan states
-        println(startDate.toString() + endDate + offeringInstitute + interest)
         val criteria = QueryCriteria.VaultQueryCriteria(status = Vault.StateStatus.UNCONSUMED)
         val offerStates = serviceHub.vaultService.queryBy<TermDepositOffer.State>(criteria)
         //Filter offer states to get the states we want
-        println(offerStates)
         val filteredStates = offerStates.states.filter {
             it.state.data.endDate.isAfter(LocalDateTime.now()) && it.state.data.startDate == startDate &&
                     it.state.data.endDate == endDate &&  it.state.data.institue == offeringInstitute &&
@@ -37,7 +35,6 @@ class OfferRetrievalFlow(val startDate: LocalDateTime, val endDate: LocalDateTim
         if (filteredStates.isEmpty()) {
             throw FlowException("No Offer states found")
         }
-        println(filteredStates)
         return filteredStates
     }
 }

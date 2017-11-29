@@ -5,6 +5,7 @@ import com.termDeposits.contract.TermDeposit.Companion.TERMDEPOSIT_CONTRACT_ID
 import com.termDeposits.contract.TermDeposit
 import com.termDeposits.contract.TermDepositOffer
 import net.corda.core.contracts.Amount
+import net.corda.core.contracts.Command
 import net.corda.core.contracts.requireThat
 import net.corda.core.flows.*
 import net.corda.core.identity.Party
@@ -36,21 +37,23 @@ object IssueTD {
         override fun call(): SignedTransaction {//SignedTransaction {
             //STEP 1: Retrieve TD Offer from vault with the provided terms
             val notary = serviceHub.networkMapCache.notaryIdentities.first()
-            println("Notary " + notary)
             val TDOffers = subFlow(OfferRetrievalFlow(startDate, endDate, issuingInstitue, interestPercent))
             if (TDOffers.size > 1) {
-                //TODO Decide which offer is being taken
+                //TODO Decide which offer is being taken - this shouldnt matter as the offers are identical
             }
             val TDOffer = TDOffers.first()
 
             //STEP 2: Build Txn with TDOffer as input and TDOffer + TDState as output TODO Work in attachments and send client KYC data here
             val builder = TransactionBuilder(notary = notary)
+            builder.addInputState(TDOffer)
+            builder.addOutputState(TDOffer.state.copy())
+            builder.addCommand(Command(TermDepositOffer.Commands.CreateTD(), TDOffer.state.data.owner.owningKey))
             val tx = TermDeposit().generateIssue(builder,TDOffer, notary, depositAmount, serviceHub.myInfo.legalIdentities.first())
 
             //STEP 3: Send to the issuing institue for verification/acceptance
             val flow = initiateFlow(issuingInstitue)
             val stx = flow.sendAndReceive<SignedTransaction>(tx).unwrap { it }
-            println("Before TD Issued")
+
             //STEP 7: Receieve back txn, sign and commit to ledger
             subFlow(ResolveTransactionsFlow(stx, flow))
             val unnotarisedTx = serviceHub.addSignature(stx, serviceHub.myInfo.legalIdentities.first().owningKey)
@@ -62,6 +65,7 @@ object IssueTD {
 
     @CordaSerializable
     @InitiatedBy(Initiator::class)
+    @StartableByRPC
     open class Acceptor(val counterPartySession: FlowSession) : FlowLogic<SignedTransaction>() {
         @Suspendable
         override fun call(): SignedTransaction {
@@ -70,13 +74,9 @@ object IssueTD {
 
             //STEP 5: Validate and accept txn
             val unwrappedtx = tx.unwrap {
-                println(it.inputStates())
-                println(it.outputStates())
                 requireThat {
                     //This state was actually issued by us
-                    //it.inputStates().filterIsInstance<TermDepositOffer.State>().first().institue == serviceHub.myInfo.legalIdentities.first()
-                    println("Term Deposit Offer output state" + it.outputStates().map { it.data }.filterIsInstance<TermDepositOffer.State>().map { it.owner })
-                    println("Term Deposit Output State "+it.outputStates().map { it.data }.filterIsInstance<TermDeposit.State>())
+                    it.outputStates().map { it.data }.filterIsInstance<TermDepositOffer.State>().first().institue == serviceHub.myInfo.legalIdentities.first()
                 }
                 it
             }
@@ -84,7 +84,7 @@ object IssueTD {
             //STEP 6: Sign transaction and send back to other party
             val stx = serviceHub.signInitialTransaction(unwrappedtx, serviceHub.myInfo.legalIdentities.first().owningKey)
             counterPartySession.send(stx)
-            return stx
+            return waitForLedgerCommit(stx.id)
         }
     }
 }

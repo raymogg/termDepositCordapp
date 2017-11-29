@@ -107,7 +107,8 @@ class Simulation(options: String) {
             FlowPermissions.startFlowPermission<IssueTD.Initiator>(),
             FlowPermissions.startFlowPermission<IssueTD.Acceptor>(),
             FlowPermissions.startFlowPermission<ActivateTD.Activator>(),
-            FlowPermissions.startFlowPermission<ActivateTD.Acceptor>()
+            FlowPermissions.startFlowPermission<ActivateTD.Acceptor>(),
+            FlowPermissions.startFlowPermission<IssueOffer.Reciever>()
     )
 
     //Flow test suite for TD flows
@@ -115,37 +116,30 @@ class Simulation(options: String) {
         println("Simulations")
         //Send an offer to parties for a TD - 0 is the issuing institue, 1 is receiever
         sendTDOffers(parties[0].second, parties[1].second, LocalDateTime.MIN, LocalDateTime.MAX, 3.4f)
-        //sendTDOffers(parties[0].second, parties[1].second, LocalDateTime.MIN, LocalDateTime.MAX, 3.6f)
-        //sendTDOffers(parties[0].second, parties[1].second, LocalDateTime.MIN, LocalDateTime.MAX, 3.8f)
-        //sendTDOffers(parties[0].second, parties[1].second, LocalDateTime.MIN, LocalDateTime.MAX, 2.4f)
-        Thread.sleep(1000)
-        //sendTDOffers(parties[1].second, parties[0].second, LocalDateTime.MIN, LocalDateTime.MAX, 5.7f) //TODO bug here -> if these offers from 1 to 0 arent sent, no offers appear in vaults...
-        //sendTDOffers(parties[1].second, parties[0].second, LocalDateTime.MIN, LocalDateTime.MAX, 6.9f)
-
         //Accept this offer
         RequestTD(parties[1].second, parties[0].second, LocalDateTime.MIN, LocalDateTime.MAX, 3.4f)
-        Thread.sleep(1000)
+        //Activate this TD - Done once the issuing party receieves its cash through regular bank transfer
         Activate(parties[0].second, parties[1].second, LocalDateTime.MIN, LocalDateTime.MAX, 3.4f, Amount<Currency>(300, USD))
-        //Activate(parties[1].second, parties[0].second, LocalDateTime.MIN, LocalDateTime.MAX, 3.4f, Amount<Currency>(300, USD))
 
     }
 
     fun sendTDOffers(me : CordaRPCOps, receiver: CordaRPCOps, startDate: LocalDateTime, endDate: LocalDateTime,
                      interestPercent: Float) {
         //me.startFlow { IssueOffer.Initiator(startDate, endDate, interestPercent, me.nodeInfo().legalIdentities.first(), listOf(receiver.nodeInfo().legalIdentities.first())) }
-        me.startFlow(IssueOffer::Initiator, startDate, endDate, interestPercent, me.nodeInfo().legalIdentities.first(), receiver.nodeInfo().legalIdentities.first())
-        println("TD Offers Issued")
+        val returnVal = me.startFlow(IssueOffer::Initiator, startDate, endDate, interestPercent, me.nodeInfo().legalIdentities.first(), receiver.nodeInfo().legalIdentities.first()).returnValue.getOrThrow()
+        //println("TD Offers Issued")
+
     }
 
     fun RequestTD(me : CordaRPCOps, issuer: CordaRPCOps, startDate: LocalDateTime, endDate: LocalDateTime,
                   interestPercent: Float) {
-        me.startFlow(IssueTD::Initiator, startDate, endDate, interestPercent, issuer.nodeInfo().legalIdentities.first(), Amount<Currency>(300, USD))
-        println("TD Requested")
+        val returnVal = me.startFlow(IssueTD::Initiator, startDate, endDate, interestPercent, issuer.nodeInfo().legalIdentities.first(), Amount<Currency>(300, USD)).returnValue.getOrThrow()
+        //println("TD Requested")
     }
 
     fun Activate(me : CordaRPCOps, client : CordaRPCOps, startDate: LocalDateTime, endDate: LocalDateTime, interestPercent: Float, depositAmount: Amount<Currency>) {
-        me.startFlow(ActivateTD::Activator, startDate, endDate, interestPercent, me.nodeInfo().legalIdentities.first(), client.nodeInfo().legalIdentities.first(), depositAmount)
-        println("TD Activated")
+        val returnVal = me.startFlow(ActivateTD::Activator, startDate, endDate, interestPercent, me.nodeInfo().legalIdentities.first(), client.nodeInfo().legalIdentities.first(), depositAmount).returnValue.getOrThrow()
+        //println("TD Activated")
     }
 
 

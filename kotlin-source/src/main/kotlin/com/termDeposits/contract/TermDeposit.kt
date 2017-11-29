@@ -4,6 +4,7 @@ import com.termDeposit.schema.TDOSchemaV1
 import com.termDeposit.schema.TDSchemaV1
 import com.termDeposit.schema.TermDepositSchema
 import com.termDeposits.contract.TermDepositOffer
+import kotlinx.html.TD
 import net.corda.core.contracts.*
 import net.corda.core.identity.AbstractParty
 import net.corda.core.identity.Party
@@ -38,9 +39,9 @@ open class TermDeposit : Contract {
         when (command.value) {
             is Commands.Issue -> requireThat {
                 //TD Issue verification
-                //"Two outputs are required" using (tx.outputStates.size == 2) //output should be a replica TDOffer state and the newly created TD State
-                //"Only one input allowed" using (tx.inputStates.size == 1) //input should be a single TDOffer state
-                //"input state must be a term deposit offer" using (tx.inputStates.first() is TermDepositOffer.State)
+                "Two outputs are required" using (tx.outputStates.size == 2) //output should be a replica TDOffer state and the newly created TD State
+                "Only one input allowed" using (tx.inputStates.size == 1) //input should be a single TDOffer state
+                "input state must be a term deposit offer" using (tx.inputStates.first() is TermDepositOffer.State)
 
             }
 
@@ -82,13 +83,10 @@ open class TermDeposit : Contract {
         val offerState = TDOffer.state.data
         val TDState = TransactionState(data = TermDeposit.State(offerState.startDate, offerState.endDate, offerState.interestPercent, offerState.institue,
                 depositAmount, internalState.pending, to), notary = notary, contract = TERMDEPOSIT_CONTRACT_ID)
-        println("Generate Issue: Owner $to")
+        //Add tje TermDeposit as the output
         builder.addOutputState(TDState)
-        //builder.addInputState(TDOffer)
-        //builder.addOutputState(TDOffer.state) //TODO Not sure this will work, may need to make a duplicate of this state (eg deep copy)
-        //builder.addOutputState(TransactionState(data = TDOffer.state.data.copy(), notary = notary, contract = TermDepositOffer.TERMDEPOSIT_OFFER_CONTRACT_ID))
+        //Add the issue command
         builder.addCommand(TermDeposit.Commands.Issue(), offerState.institue.owningKey, to.owningKey)
-        //builder.addCommand(TermDepositOffer.Commands.CreateTD(), offerState.institue.owningKey)
         return builder
     }
 
@@ -106,7 +104,8 @@ open class TermDeposit : Contract {
 
     fun generateActivate(builder: TransactionBuilder, TDState: StateAndRef<TermDeposit.State>, TDConsumer: Party,
                          notary: Party): TransactionBuilder {
-        builder.addOutputState(TransactionState(data = TDState.state.data.copy(internalState = internalState.active), notary = notary, contract = TERMDEPOSIT_CONTRACT_ID))
+        //builder.addInputState(TDState) //TODO This freezes the flow with notification - Requesting 1 dependency(s) for verification from C=US,L=New York,O=PartyB
+        builder.addOutputState(TransactionState(data = TDState.state.data.copy(internalState = internalState.active), notary = TDState.state.notary, contract = TERMDEPOSIT_CONTRACT_ID))
         builder.addCommand(TermDeposit.Commands.Activate(), TDState.state.data.institue.owningKey, TDConsumer.owningKey)
         return builder
     }

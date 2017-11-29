@@ -34,27 +34,27 @@ open class TermDepositOffer : Contract {
         when (command.value) {
             is Commands.CreateTD -> requireThat {
                 //Requirements for creating a TD from a TDOffer
-//                tx.inputStates.size == 1
-//                tx.outputStates.size == 2 //One TDOffer state, one TD state
-//                ((tx.outputStates[0] is TermDepositOffer.State) || (tx.outputStates[1] is TermDepositOffer.State) &&
-//                        (tx.outputStates[0] is TermDeposit.State) || (tx.outputStates[1] is TermDeposit.State))
-//                val TDTerms = listOf<String>()
-//                val TDOTerms = listOf<String>()
-//                //Validate the individual terms match
-//                tx.outputStates.forEach {
-//                    if (it is TermDeposit.State) {
-//                        TDTerms.plus(it.startDate.toString())
-//                        TDTerms.plus(it.endDate.toString())
-//                        TDTerms.plus(it.interestPercent.toString())
-//                        TDTerms.plus(it.institue.name.commonName.toString())
-//                    } else if (it is State) {
-//                        TDOTerms.plus(it.startDate.toString())
-//                        TDOTerms.plus(it.endDate.toString())
-//                        TDOTerms.plus(it.interestPercent.toString())
-//                        TDOTerms.plus(it.institue.name.commonName.toString())
-//                    }
-//                }
-//                TDTerms.equals(TDOTerms) //all terms should match
+                tx.inputStates.size == 1
+                tx.outputStates.size == 2 //One TDOffer state, one TD state
+                ((tx.outputStates[0] is TermDepositOffer.State) || (tx.outputStates[1] is TermDepositOffer.State) &&
+                        (tx.outputStates[0] is TermDeposit.State) || (tx.outputStates[1] is TermDeposit.State))
+                val TDTerms = listOf<String>()
+                val TDOTerms = listOf<String>()
+                //Validate the individual terms match
+                tx.outputStates.forEach {
+                    if (it is TermDeposit.State) {
+                        TDTerms.plus(it.startDate.toString())
+                        TDTerms.plus(it.endDate.toString())
+                        TDTerms.plus(it.interestPercent.toString())
+                        TDTerms.plus(it.institue.name.commonName.toString())
+                    } else if (it is State) {
+                        TDOTerms.plus(it.startDate.toString())
+                        TDOTerms.plus(it.endDate.toString())
+                        TDOTerms.plus(it.interestPercent.toString())
+                        TDOTerms.plus(it.institue.name.commonName.toString())
+                    }
+                }
+                TDTerms.equals(TDOTerms) //all terms should match
                 }
 
             is Commands.Issue -> requireThat {

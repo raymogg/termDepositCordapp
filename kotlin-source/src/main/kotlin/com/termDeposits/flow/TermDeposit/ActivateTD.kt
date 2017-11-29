@@ -31,16 +31,17 @@ object ActivateTD {
     @Suspendable
     override fun call(): SignedTransaction { //SignedTransaction {
         //STEP 1: Notify other party of activation
+        println("Sent notification of activation")
         val flow = initiateFlow(client)
         flow.send(listOf(startDate, endDate, interestPercent, issuingInstitue, client, depositAmount)) //this can be anything, simply starting up the clients flow
 
-
-
         //STEP 6: Recieve back the signed txn and commit it to the ledger
         val ptx = flow.receive<SignedTransaction>()
+        println("Recieved back txn")
 
         //STEP 5: Sign the txn and commit to the ledger
         val stx = serviceHub.addSignature(ptx.unwrap { it })
+        println("Sig added")
         subFlow(ResolveTransactionsFlow(stx, flow))
         println("Term Deposit: from $issuingInstitue to $client now activated")
         return subFlow(FinalityFlow(stx))
@@ -57,22 +58,23 @@ object ActivateTD {
             val notary = serviceHub.networkMapCache.notaryIdentities.single()
 
             //STEP 2: Receieve the message to start activation
+            println("Receieved notification")
             val args = flow.receive<List<*>>().unwrap { it }
 
             //STEP 3: Prepare the txn
-            println("Params recieved $args")
-            println("TDRetrival started from ${serviceHub.myInfo.legalIdentities.first().name}")
+            println("Retrieving TD")
             val TD = subFlow(TDRetreivalFlow(args[0] as LocalDateTime, args[1] as LocalDateTime, args[3] as Party, args[2] as Float, args[5] as Amount<Currency>))
 
             //STEP 4: Generate the Activate Txn
-            val tx = TransactionBuilder()
+            val tx = TransactionBuilder(notary = notary)
             TermDeposit().generateActivate(tx, TD.first(), args[3] as Party, notary)
 
 
             //STEP 5: Sign and send back the txn (only updating internal state so no validation required really)
             val ptx = serviceHub.signInitialTransaction(tx)
             flow.send(ptx)
-            return ptx
+            println("Sent back txn")
+            return waitForLedgerCommit(ptx.id)
         }
     }
 

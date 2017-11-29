@@ -15,6 +15,7 @@ import java.util.*
 import com.termDeposits.contract.TermDeposit.internalState
 import net.corda.core.contracts.Contract
 import net.corda.core.contracts.ContractState
+import net.corda.core.flows.FlowException
 import net.corda.core.flows.StartableByRPC
 import net.corda.core.serialization.CordaSerializable
 
@@ -36,19 +37,18 @@ class TDRetreivalFlow(val startDate: LocalDateTime, val endDate: LocalDateTime, 
     override fun call(): List<StateAndRef<TermDeposit.State>> {
         //Query the vault for unconsumed states and then for Security loan states
         val criteria = QueryCriteria.VaultQueryCriteria(status = Vault.StateStatus.UNCONSUMED)
-        val check = serviceHub.vaultService.queryBy<ContractState>()
         val offerStates = serviceHub.vaultService.queryBy<TermDeposit.State>(criteria)
-        val allStates = serviceHub.vaultService.queryBy<TermDepositOffer.State>(criteria)
         //Filter offer states to get the states we want
-        println("All TDs "+check)
-        println("TD Retrieval First " + offerStates)
-        println("TD Retrieval Offer States " + allStates)
         val filteredStates = offerStates.states.filter {
             it.state.data.endDate.isAfter(LocalDateTime.now()) && it.state.data.startDate == startDate &&
                     it.state.data.endDate == endDate &&  it.state.data.institue == offeringInstitute &&
                     it.state.data.interestPercent == interest //it.state.data.internalState == state (Not implemented in the stsate yet)
         }
-        println("TD Retrieval " + filteredStates.forEach { it.state.toString() })
+
+        if (filteredStates.isEmpty()) {
+            throw FlowException("No Term Deposit states found")
+        }
+
         return filteredStates
     }
 }
