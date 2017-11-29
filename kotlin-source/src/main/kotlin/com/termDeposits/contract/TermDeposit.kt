@@ -104,7 +104,7 @@ open class TermDeposit : Contract {
 
     fun generateActivate(builder: TransactionBuilder, TDState: StateAndRef<TermDeposit.State>, TDConsumer: Party,
                          notary: Party): TransactionBuilder {
-        //builder.addInputState(TDState) //TODO This freezes the flow with notification - Requesting 1 dependency(s) for verification from C=US,L=New York,O=PartyB
+        builder.addInputState(TDState)
         builder.addOutputState(TransactionState(data = TDState.state.data.copy(internalState = internalState.active), notary = TDState.state.notary, contract = TERMDEPOSIT_CONTRACT_ID))
         builder.addCommand(TermDeposit.Commands.Activate(), TDState.state.data.institue.owningKey, TDConsumer.owningKey)
         return builder

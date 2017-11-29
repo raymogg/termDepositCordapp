@@ -58,7 +58,7 @@ object IssueTD {
             subFlow(ResolveTransactionsFlow(stx, flow))
             val unnotarisedTx = serviceHub.addSignature(stx, serviceHub.myInfo.legalIdentities.first().owningKey)
             println("TD Issued to ${stx.tx.outputStates.filterIsInstance<TermDeposit.State>().first().owner} by ${issuingInstitue.name} at $interestPercent%")
-            return subFlow(FinalityFlow(unnotarisedTx))
+            return subFlow(FinalityFlow(unnotarisedTx, setOf(issuingInstitue)))
 
         }
     }

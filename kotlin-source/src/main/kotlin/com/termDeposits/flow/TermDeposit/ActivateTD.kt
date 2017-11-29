@@ -44,7 +44,7 @@ object ActivateTD {
         println("Sig added")
         subFlow(ResolveTransactionsFlow(stx, flow))
         println("Term Deposit: from $issuingInstitue to $client now activated")
-        return subFlow(FinalityFlow(stx))
+        return subFlow(FinalityFlow(stx, setOf(client)))
 
         }
     }
@@ -67,6 +67,7 @@ object ActivateTD {
 
             //STEP 4: Generate the Activate Txn
             val tx = TransactionBuilder(notary = notary)
+            println("TD Being used: ${TD.first()}")
             TermDeposit().generateActivate(tx, TD.first(), args[3] as Party, notary)
 
 
