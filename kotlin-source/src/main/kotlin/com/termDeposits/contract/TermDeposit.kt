@@ -39,25 +39,25 @@ open class TermDeposit : Contract {
         when (command.value) {
             is Commands.Issue -> requireThat {
                 //TD Issue verification
-                "Two outputs are required" using (tx.outputStates.size == 2) //output should be a replica TDOffer state and the newly created TD State
-                "Only one input allowed" using (tx.inputStates.size == 1) //input should be a single TDOffer state
-                "input state must be a term deposit offer" using (tx.inputStates.first() is TermDepositOffer.State)
+                "more than two outputs are required" using (tx.outputStates.size > 2) //output should be a replica TDOffer state and the newly created TD State, plus various cash states
+                "More than one input allowed" using (tx.inputStates.size > 1) //input should be a single TDOffer state plus cash
+                "input state must be a term deposit offer" using ((tx.inputStates.filterIsInstance<TermDepositOffer.State>().size == 1))
 
             }
 
             is Commands.Activate -> requireThat {
                 //Pending to active verification
-//                "Only one input allowed" using (tx.inputStates.size == 1)
-//                "Only one output allowed" using (tx.outputStates.size == 1)
-//                "Input must be a term deposit" using (tx.inputStates.first() is TermDeposit.State)
-//                "Output must be a term deposit" using (tx.outputStates.first() is TermDeposit.State)
-//                val input = tx.inputStates.first() as TermDeposit.State
-//                val output = tx.outputStates.first() as TermDeposit.State
-//                "Deposit amounts must match" using (input.depositAmount == output.depositAmount)
-//                "End dates must match" using (input.endDate == output.endDate)
-//                "Issuing institue must match" using (input.institue == output.institue)
-//                "interest percent must match" using (input.interestPercent == output.interestPercent)
-//                "Start date must match" using (input.startDate == output.startDate)
+                "Only one input allowed" using (tx.inputStates.size == 1)
+                "Only one output allowed" using (tx.outputStates.size == 1)
+                "Input must be a term deposit" using (tx.inputStates.first() is TermDeposit.State)
+                "Output must be a term deposit" using (tx.outputStates.first() is TermDeposit.State)
+                val input = tx.inputStates.first() as TermDeposit.State
+                val output = tx.outputStates.first() as TermDeposit.State
+                "Deposit amounts must match" using (input.depositAmount == output.depositAmount)
+                "End dates must match" using (input.endDate == output.endDate)
+                "Issuing institue must match" using (input.institue == output.institue)
+                "interest percent must match" using (input.interestPercent == output.interestPercent)
+                "Start date must match" using (input.startDate == output.startDate)
             }
 
             is Commands.Redeem -> requireThat {
@@ -90,9 +90,9 @@ open class TermDeposit : Contract {
         return builder
     }
 
-    fun genereateRedeem(builder: TransactionBuilder, TDOffer: StateAndRef<TermDepositOffer.State>, selfReference: Party,
-                        notary: Party): TransactionBuilder {
-        //TODO
+    fun genereateRedeem(builder: TransactionBuilder, TDOffer: StateAndRef<TermDeposit.State>): TransactionBuilder {
+        builder.addInputState(TDOffer)
+        builder.addCommand(TermDeposit.Commands.Redeem(), TDOffer.state.data.institue.owningKey, TDOffer.state.data.owner.owningKey)
         return builder
     }
 
@@ -116,13 +116,11 @@ open class TermDeposit : Contract {
      * and certain flows will require the internal state to be a certain value before they proceed. Once the internal state
      * is transitioned to exited, the TD state will become consumed in the vault - as it is no longer an active loan.
      */
-    //TODO: Is internal state needed, or should it just be if the flow isnt finalized within timeout period the txn is reveresed (As corda normally does)
-//      if it is, will need to add to the TermDepositState below
+
 
     object internalState {
-        val ordered = "Ordered"
-        val pending = "Pending"
-        val active = "Active"
+        val pending = "Pending" //Term deposit has been created, but waiting for confirmation of payment reception from issuing party
+        val active = "Active" //Term Deposit is active (i.e between start date and end date)
         val exited = "Exited" //A TD state with this internal state should always be "consumed" and hence unusuable in a txn
     }
 

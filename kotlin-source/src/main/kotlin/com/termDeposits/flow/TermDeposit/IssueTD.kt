@@ -9,11 +9,13 @@ import net.corda.core.contracts.Command
 import net.corda.core.contracts.requireThat
 import net.corda.core.flows.*
 import net.corda.core.identity.Party
+import net.corda.core.identity.groupPublicKeysByWellKnownParty
 import net.corda.core.internal.ResolveTransactionsFlow
 import net.corda.core.serialization.CordaSerializable
 import net.corda.core.transactions.SignedTransaction
 import net.corda.core.transactions.TransactionBuilder
 import net.corda.core.utilities.unwrap
+import net.corda.finance.contracts.asset.Cash
 import java.time.LocalDateTime
 import java.util.*
 
@@ -45,20 +47,23 @@ object IssueTD {
 
             //STEP 2: Build Txn with TDOffer as input and TDOffer + TDState as output TODO Work in attachments and send client KYC data here
             val builder = TransactionBuilder(notary = notary)
+            //Add TD Offer as input
             builder.addInputState(TDOffer)
             builder.addOutputState(TDOffer.state.copy())
+            //Add cash as output
+            val (tx, cashKeys) = Cash.generateSpend(serviceHub, builder, depositAmount, issuingInstitue)
             builder.addCommand(Command(TermDepositOffer.Commands.CreateTD(), TDOffer.state.data.owner.owningKey))
-            val tx = TermDeposit().generateIssue(builder,TDOffer, notary, depositAmount, serviceHub.myInfo.legalIdentities.first())
+            val ptx = TermDeposit().generateIssue(tx,TDOffer, notary, depositAmount, serviceHub.myInfo.legalIdentities.first())
 
             //STEP 3: Send to the issuing institue for verification/acceptance
             val flow = initiateFlow(issuingInstitue)
-            val stx = flow.sendAndReceive<SignedTransaction>(tx).unwrap { it }
+            val stx = flow.sendAndReceive<SignedTransaction>(ptx).unwrap { it }
 
             //STEP 7: Receieve back txn, sign and commit to ledger
             subFlow(ResolveTransactionsFlow(stx, flow))
             val unnotarisedTx = serviceHub.addSignature(stx, serviceHub.myInfo.legalIdentities.first().owningKey)
             println("TD Issued to ${stx.tx.outputStates.filterIsInstance<TermDeposit.State>().first().owner} by ${issuingInstitue.name} at $interestPercent%")
-            return subFlow(FinalityFlow(unnotarisedTx, setOf(issuingInstitue)))
+            return subFlow(FinalityFlow(unnotarisedTx, setOf(issuingInstitue)))// + groupPublicKeysByWellKnownParty(serviceHub,cashKeys).keys ))
 
         }
     }
