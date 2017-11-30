@@ -2,6 +2,7 @@ package com.termDeposits.flow.TermDeposit
 
 import co.paralleluniverse.fibers.Suspendable
 import com.termDeposits.contract.TermDeposit
+import net.corda.confidential.IdentitySyncFlow
 import net.corda.core.contracts.Amount
 import net.corda.core.contracts.StateAndRef
 import net.corda.core.contracts.requireThat
@@ -40,6 +41,10 @@ object RedeemTD {
 
             //STEP 2: Send the term deposit to the other party
             flowSession.send(TermDeposits.first())
+
+            // Sync identities to ensure we know all of the identities involved in the transaction we're about to
+            // be asked to sign
+            subFlow(IdentitySyncFlow.Receive(flowSession))
 
             //Sign transaction when sent back from other party
             val signTransactionFlow = object : SignTransactionFlow(flowSession, SignTransactionFlow.tracker()) {
@@ -83,7 +88,11 @@ object RedeemTD {
             //STEP 5: Get the client to sign the transaction
             println("Inputs ${tx.inputStates()}")
             println("Outputs ${tx.outputStates()}")
-            val partSignedTxn = serviceHub.signInitialTransaction(tx, cashKeys)
+            val partSignedTxn = serviceHub.signInitialTransaction(tx, cashKeys.plus(serviceHub.myInfo.legalIdentities.first().owningKey))
+
+            // Sync up confidential identities in the transaction with our counterparty
+            subFlow(IdentitySyncFlow.Send(flow, tx.toWireTransaction(serviceHub)))
+
             println("Before collect sigs")
             val otherPartySig = subFlow(CollectSignaturesFlow(partSignedTxn, listOf(flow), CollectSignaturesFlow.tracker()))
             println("after collect sigs")

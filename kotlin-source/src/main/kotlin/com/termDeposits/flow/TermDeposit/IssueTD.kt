@@ -4,6 +4,7 @@ import co.paralleluniverse.fibers.Suspendable
 import com.termDeposits.contract.TermDeposit.Companion.TERMDEPOSIT_CONTRACT_ID
 import com.termDeposits.contract.TermDeposit
 import com.termDeposits.contract.TermDepositOffer
+import net.corda.confidential.IdentitySyncFlow
 import net.corda.core.contracts.Amount
 import net.corda.core.contracts.Command
 import net.corda.core.contracts.requireThat
@@ -40,6 +41,7 @@ object IssueTD {
         @Suspendable
         override fun call(): SignedTransaction {//SignedTransaction {
             //STEP 1: Retrieve TD Offer from vault with the provided terms
+            val flow = initiateFlow(issuingInstitue)
             val notary = serviceHub.networkMapCache.notaryIdentities.first()
             val TDOffers = subFlow(OfferRetrievalFlow(startDate, endDate, issuingInstitue, interestPercent))
             if (TDOffers.size > 1) {
@@ -59,8 +61,10 @@ object IssueTD {
             //Sign txn
             val stx = serviceHub.signInitialTransaction(ptx, cashKeys)
 
+            // Sync up confidential identities in the transaction with our counterparty
+            subFlow(IdentitySyncFlow.Send(flow, ptx.toWireTransaction(serviceHub)))
+
             //STEP 3: Send to the issuing institue for verification/acceptance
-            val flow = initiateFlow(issuingInstitue)
             //val ftx = flow.sendAndReceive<SignedTransaction>(stx).unwrap { it }
             val otherPartySig = subFlow(CollectSignaturesFlow(stx, setOf(flow), CollectSignaturesFlow.tracker()))
             //STEP 7: Receieve back txn, sign and commit to ledger
@@ -96,14 +100,16 @@ object IssueTD {
 //            val stx = serviceHub.addSignature(unwrappedtx)
 //            counterPartySession.send(stx)
 
+            // Sync identities to ensure we know all of the identities involved in the transaction we're about to
+            // be asked to sign
+            subFlow(IdentitySyncFlow.Receive(counterPartySession))
+
             //STEP 4: Receieve the txn and sign it
             val signTransactionFlow = object : SignTransactionFlow(counterPartySession, SignTransactionFlow.tracker()) {
                 override fun checkTransaction(stx: SignedTransaction)  {
                     requireThat {
-
-                    }
                         //TODO Validate
-
+                    }
                 }
             }
 
