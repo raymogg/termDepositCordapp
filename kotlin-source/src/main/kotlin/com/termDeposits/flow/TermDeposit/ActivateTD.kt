@@ -29,7 +29,8 @@ object ActivateTD {
     open class Activator(val startDate: LocalDateTime, val endDate: LocalDateTime, val interestPercent: Float,
                          val issuingInstitue: Party, val client: Party, val depositAmount: Amount<Currency>) : FlowLogic<SignedTransaction>() {//FlowLogic<SignedTransaction>() {
     @Suspendable
-    override fun call(): SignedTransaction { //SignedTransaction {
+    override fun call(): SignedTransaction {
+        println("Start Activivation")
         //STEP 1: Notify other party of activation
         val flow = initiateFlow(client)
         flow.send(listOf(startDate, endDate, interestPercent, issuingInstitue, client, depositAmount)) //this can be anything, simply starting up the clients flow
@@ -59,7 +60,8 @@ object ActivateTD {
 
             //STEP 3: Prepare the txn
             val TD = subFlow(TDRetreivalFlow(args[0] as LocalDateTime, args[1] as LocalDateTime, args[3] as Party, args[2] as Float, args[5] as Amount<Currency>, TermDeposit.internalState.pending))
-
+            println("Required Values ${args[5] as Amount<Currency>}")
+            println("Term Deposit Values ${TD.first().state.data.depositAmount}")
             //STEP 4: Generate the Activate Txn
             val tx = TransactionBuilder(notary = notary)
             TermDeposit().generateActivate(tx, TD.first(), args[3] as Party, notary)

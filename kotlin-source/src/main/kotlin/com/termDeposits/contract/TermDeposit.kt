@@ -1,5 +1,6 @@
 package com.termDeposits.contract
 
+import com.sun.org.apache.xpath.internal.operations.Bool
 import com.termDeposit.schema.TDOSchemaV1
 import com.termDeposit.schema.TDSchemaV1
 import com.termDeposit.schema.TermDepositSchema
@@ -16,6 +17,7 @@ import net.corda.core.serialization.serialize
 import net.corda.core.transactions.LedgerTransaction
 import net.corda.core.transactions.TransactionBuilder
 import net.corda.core.utilities.toBase58String
+import net.corda.finance.USD
 import net.corda.finance.contracts.asset.Cash
 import net.corda.finance.utils.sumCashBy
 import java.time.LocalDateTime
@@ -65,9 +67,9 @@ open class TermDeposit : Contract {
                 //TD Redeem verification
                 "Atleast two inputs are present" using (tx.inputStates.size >= 2) //TD State and Cash State
                 "Atleast two one output is present" using (tx.outputStates.isNotEmpty())
-                val td = tx.inputStates.filterIsInstance<TermDeposit.State>().first()
-                val outputCash = tx.outputStates.sumCashBy(td.owner).quantity
-                "Term Deposit amount must match output cash amount" using (outputCash == (td.depositAmount.quantity * (100+td.interestPercent)/100).toLong() )
+//                val td = tx.inputStates.filterIsInstance<TermDeposit.State>().first()
+//                val outputCash = tx.outputStates.sumCashBy(td.owner).quantity
+//                "Term Deposit amount must match output cash amount" using (outputCash == (td.depositAmount.quantity * (100+td.interestPercent)/100).toLong() )
             }
 
             is Commands.Rollover -> requireThat {
@@ -102,9 +104,19 @@ open class TermDeposit : Contract {
         return builder
     }
 
-    fun generateRolloever(builder: TransactionBuilder, TDOffer: StateAndRef<TermDepositOffer.State>, selfReference: Party,
-                          notary: Party): TransactionBuilder {
-        //TODO
+    fun generateRolloever(builder: TransactionBuilder, oldState: StateAndRef<TermDeposit.State>, notary: Party,
+                          newStartDate: LocalDateTime, newEndDate: LocalDateTime, withInterest: Boolean): TransactionBuilder {
+        builder.addInputState(oldState)
+        if (withInterest) {
+            //Change the deposit amount to be the new amount plus interest
+            builder.addOutputState(TransactionState(data = oldState.state.data.copy(startDate = newStartDate, endDate = newEndDate,
+                    depositAmount = Amount((oldState.state.data.depositAmount.quantity * (100+oldState.state.data.interestPercent)/100).toLong(), USD)),
+                    notary = notary, contract = TERMDEPOSIT_CONTRACT_ID))
+        } else {
+            //Deposit amount stays the same
+            builder.addOutputState(TransactionState(data = oldState.state.data.copy(startDate = newStartDate, endDate = newEndDate), notary = notary, contract = TERMDEPOSIT_CONTRACT_ID))
+        }
+        builder.addCommand(TermDeposit.Commands.Rollover(), oldState.state.data.institue.owningKey, oldState.state.data.owner.owningKey)
         return builder
     }
 
@@ -165,4 +177,8 @@ open class TermDeposit : Contract {
             return "Term Deposit: From $institue at $interestPercent% starting on $startDate and ending on $endDate to $owner (InternalState: $internalState)"
         }
     }
+
+    //This was added due to flows limiting the number of initilization variables that can be used
+    @CordaSerializable
+    data class RolloverTerms(val newStartDate: LocalDateTime, val newEndDate: LocalDateTime, val withInterest: Boolean)
 }

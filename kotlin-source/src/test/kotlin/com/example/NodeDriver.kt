@@ -1,6 +1,6 @@
 package com.example
 
-import com.example.flow.ExampleFlow
+import com.termDeposits.contract.TermDeposit
 import com.termDeposits.flow.TermDeposit.*
 import net.corda.core.contracts.Amount
 import net.corda.core.identity.CordaX500Name
@@ -10,7 +10,6 @@ import net.corda.core.messaging.startFlow
 import net.corda.core.messaging.startTrackedFlow
 import net.corda.core.utilities.OpaqueBytes
 import net.corda.core.utilities.getOrThrow
-import net.corda.finance.AMOUNT
 import net.corda.finance.USD
 import net.corda.finance.flows.CashExitFlow
 import net.corda.finance.flows.CashIssueAndPaymentFlow
@@ -119,7 +118,9 @@ class Simulation(options: String) {
             FlowPermissions.startFlowPermission<ActivateTD.Acceptor>(),
             FlowPermissions.startFlowPermission<IssueOffer.Reciever>(),
             FlowPermissions.startFlowPermission<RedeemTD.RedemptionInitiator>(),
-            FlowPermissions.startFlowPermission<RedeemTD.RedemptionAcceptor>()
+            FlowPermissions.startFlowPermission<RedeemTD.RedemptionAcceptor>(),
+            FlowPermissions.startFlowPermission<RolloverTD.RolloverAcceptor>(),
+            FlowPermissions.startFlowPermission<RolloverTD.RolloverInitiator>()
             )
 
     fun allocateCashPermissions() : Set<String> = setOf(
@@ -133,19 +134,25 @@ class Simulation(options: String) {
     fun runSimulation() {
         //Issue some cash to each party
         parties.forEach {
-            issueCash(cashIssuers.first().second, it.second, it.second.notaryIdentities().first())
+            issueCash(it.second, it.second.notaryIdentities().first())
         }
 
         println("Simulations")
         //Send an offer to parties for a TD - 0 is the issuing institue, 1 is receiever
-        val endTime = LocalDateTime.MAX
         sendTDOffers(parties[0].second, parties[1].second, LocalDateTime.MIN, LocalDateTime.MAX, 3.4f)
+        //sendTDOffers(parties[0].second, parties[1].second, LocalDateTime.MIN, LocalDateTime.MAX, 3.8f)
+        //sendTDOffers(parties[1].second, parties[0].second, LocalDateTime.MIN, LocalDateTime.MAX, 3.2f)
         //Accept this offer
-        RequestTD(parties[1].second, parties[0].second, LocalDateTime.MIN, LocalDateTime.MAX, 3.4f)
+        RequestTD(parties[1].second, parties[0].second, LocalDateTime.MIN, LocalDateTime.MAX, 3.4f, Amount<Currency>(300000, USD))
+        //RequestTD(parties[0].second, parties[1].second, LocalDateTime.MIN, LocalDateTime.MAX, 3.2f, Amount<Currency>(500000, USD))
         //Activate this TD - Done once the issuing party receieves its cash through regular bank transfer
         Activate(parties[0].second, parties[1].second, LocalDateTime.MIN, LocalDateTime.MAX, 3.4f, Amount<Currency>(300000, USD))
+        //Activate(parties[1].second, parties[0].second, LocalDateTime.MIN, LocalDateTime.MAX, 3.2f, Amount<Currency>(500000, USD))
         //Redeem this TD - removed time constraints on this for now so it works
-        Redeem(parties[1].second, parties[0].second, LocalDateTime.MIN, LocalDateTime.MAX, 3.4f, Amount<Currency>(300000, USD))
+        //Redeem(parties[1].second, parties[0].second, LocalDateTime.MIN, LocalDateTime.MAX, 3.4f, Amount<Currency>(300000, USD))
+        //Redeem(parties[0].second, parties[1].second, LocalDateTime.MIN, LocalDateTime.MAX, 3.2f, Amount<Currency>(500000, USD))
+        Rollover(parties[1].second, parties[0].second, LocalDateTime.MIN, LocalDateTime.MAX, LocalDateTime.MIN,
+                LocalDateTime.MAX, 3.4f, Amount<Currency>(300000, USD), true)
     }
 
     fun sendTDOffers(me : CordaRPCOps, receiver: CordaRPCOps, startDate: LocalDateTime, endDate: LocalDateTime,
@@ -155,9 +162,9 @@ class Simulation(options: String) {
     }
 
     fun RequestTD(me : CordaRPCOps, issuer: CordaRPCOps, startDate: LocalDateTime, endDate: LocalDateTime,
-                  interestPercent: Float) {
+                  interestPercent: Float, depositAmount: Amount<Currency>) {
         //Request a TD at $300 USD
-        val returnVal = me.startFlow(IssueTD::Initiator, startDate, endDate, interestPercent, issuer.nodeInfo().legalIdentities.first(), Amount<Currency>(300000, USD)).returnValue.getOrThrow()
+        val returnVal = me.startFlow(IssueTD::Initiator, startDate, endDate, interestPercent, issuer.nodeInfo().legalIdentities.first(), depositAmount).returnValue.getOrThrow()
         //println("TD Requested")
     }
 
@@ -166,7 +173,7 @@ class Simulation(options: String) {
         println("TD Activated")
     }
 
-    private fun issueCash(centralBank : CordaRPCOps, recipient : CordaRPCOps, notaryNode : Party) {
+    private fun issueCash(recipient : CordaRPCOps, notaryNode : Party) {
         val rand = Random()
         val dollaryDoos = BigDecimal((rand.nextInt(100 + 1 - 1) + 1) * 1000000)     // $1,000,000 to $100,000,000
         val amount = Amount.fromDecimal(dollaryDoos, USD)
@@ -179,6 +186,25 @@ class Simulation(options: String) {
                interestPercent: Float, depositAmount: Amount<Currency>) {
         val returnVal = me.startFlow(RedeemTD::RedemptionInitiator, startDate, endDate, interestPercent, issuer.nodeInfo().legalIdentities.first(), depositAmount).returnValue.getOrThrow()
     }
+
+    fun Rollover(me: CordaRPCOps, issuer: CordaRPCOps, startDate: LocalDateTime, endDate: LocalDateTime, newStartDate: LocalDateTime,
+                 newEndDate: LocalDateTime, interestPercent: Float, depositAmount: Amount<Currency>, withInterest: Boolean) {
+//        val returnVal = me.startFlow(RolloverTD::RolloverInitiator, startDate, endDate, newStartDate, newEndDate, interestPercent, issuer.nodeInfo().legalIdentities.first(),
+//                depositAmount, withInterest).returnValue.getOrThow()
+        val rolloverTerms = TermDeposit.RolloverTerms(newStartDate, newEndDate, withInterest)
+        val returnVal = me.startFlow(RolloverTD::RolloverInitiator, startDate, endDate, interestPercent, issuer.nodeInfo().legalIdentities.first(),
+                depositAmount, rolloverTerms)
+    }
+
+
+    /** ERROR NOTES/LOG
+     *
+     * 1. Redeem flow has an issue with adding cash states if offers are requested in two directions (i.e A starts a TD with B, B starts a TD with A). Random cash output stsates are added to the txn
+     *    Question has been posted on SO.
+     *
+     *
+     *
+     */
 
 
 }

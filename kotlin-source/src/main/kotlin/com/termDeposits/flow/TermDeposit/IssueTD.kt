@@ -16,6 +16,7 @@ import net.corda.core.transactions.SignedTransaction
 import net.corda.core.transactions.TransactionBuilder
 import net.corda.core.utilities.unwrap
 import net.corda.finance.contracts.asset.Cash
+import net.corda.finance.utils.sumCashBy
 import java.time.LocalDateTime
 import java.util.*
 import javax.annotation.Signed
@@ -60,13 +61,14 @@ object IssueTD {
 
             //STEP 3: Send to the issuing institue for verification/acceptance
             val flow = initiateFlow(issuingInstitue)
-            val ftx = flow.sendAndReceive<SignedTransaction>(stx).unwrap { it }
-
+            //val ftx = flow.sendAndReceive<SignedTransaction>(stx).unwrap { it }
+            val otherPartySig = subFlow(CollectSignaturesFlow(stx, setOf(flow), CollectSignaturesFlow.tracker()))
             //STEP 7: Receieve back txn, sign and commit to ledger
-            subFlow(ResolveTransactionsFlow(ftx, flow))
+            //subFlow(ResolveTransactionsFlow(ftx, flow))
+            val twiceSignedTx = stx.plus(otherPartySig.sigs)
             //val unnotarisedTx = serviceHub.addSignature(stx, serviceHub.myInfo.legalIdentities.first().owningKey)
             println("TD Issued to ${stx.tx.outputStates.filterIsInstance<TermDeposit.State>().first().owner} by ${issuingInstitue.name} at $interestPercent%")
-            return subFlow(FinalityFlow(ftx, setOf(issuingInstitue) + groupPublicKeysByWellKnownParty(serviceHub,cashKeys).keys ))
+            return subFlow(FinalityFlow(twiceSignedTx, setOf(issuingInstitue) + groupPublicKeysByWellKnownParty(serviceHub,cashKeys).keys ))
 
         }
     }
@@ -78,21 +80,34 @@ object IssueTD {
         @Suspendable
         override fun call(): SignedTransaction {
             //STEP 4: Receieve the transaction with the TD Offer and TD
-            val tx = counterPartySession.receive<SignedTransaction>()
+//            val tx = counterPartySession.receive<SignedTransaction>()
+//
+//            //STEP 5: Validate and accept txn
+//            val unwrappedtx = tx.unwrap {
+//                requireThat {
+//                    //This state was actually issued by us
+//                    it.tx.outputs.map { it.data }.filterIsInstance<TermDepositOffer.State>().first().institue == serviceHub.myInfo.legalIdentities.first()
+//                }
+//                it
+//            }
+//
+//            //STEP 6: Sign transaction and send back to other party
+//            //val stx = serviceHub.signInitialTransaction(unwrappedtx, serviceHub.myInfo.legalIdentities.first().owningKey)
+//            val stx = serviceHub.addSignature(unwrappedtx)
+//            counterPartySession.send(stx)
 
-            //STEP 5: Validate and accept txn
-            val unwrappedtx = tx.unwrap {
-                requireThat {
-                    //This state was actually issued by us
-                    it.tx.outputs.map { it.data }.filterIsInstance<TermDepositOffer.State>().first().institue == serviceHub.myInfo.legalIdentities.first()
+            //STEP 4: Receieve the txn and sign it
+            val signTransactionFlow = object : SignTransactionFlow(counterPartySession, SignTransactionFlow.tracker()) {
+                override fun checkTransaction(stx: SignedTransaction)  {
+                    requireThat {
+
+                    }
+                        //TODO Validate
+
                 }
-                it
             }
 
-            //STEP 6: Sign transaction and send back to other party
-            //val stx = serviceHub.signInitialTransaction(unwrappedtx, serviceHub.myInfo.legalIdentities.first().owningKey)
-            val stx = serviceHub.addSignature(unwrappedtx)
-            counterPartySession.send(stx)
+            val stx = subFlow(signTransactionFlow)
             return waitForLedgerCommit(stx.id)
         }
     }

@@ -33,7 +33,7 @@ object RedeemTD {
         @Suspendable
         override fun call(): SignedTransaction {
             //Note - This is a improved version of flow compared to the Issue and Activate TD Flows
-
+            println("Start redeem")
             //STEP 1: Retrieve the TD to Redeem and begin flow with other party
             val TermDeposits = subFlow(TDRetreivalFlow(startDate,endDate, issuingInstitue, interestPercent, depositAmount, TermDeposit.internalState.exited))
             val flowSession = initiateFlow(issuingInstitue)
@@ -44,12 +44,13 @@ object RedeemTD {
             //Sign transaction when sent back from other party
             val signTransactionFlow = object : SignTransactionFlow(flowSession, SignTransactionFlow.tracker()) {
                 override fun checkTransaction(stx: SignedTransaction)  {
+                    println("Sign flow")
                     val cashProvided = stx.tx.outputStates.sumCashBy(serviceHub.myInfo.legalIdentities.first()).quantity
                     val cashNeeded = (TermDeposits.first().state.data.depositAmount.quantity * (100+TermDeposits.first().state.data.interestPercent)/100).toLong()
                     requireThat {
                         println(cashProvided)
                         println(cashNeeded)
-                        "Cash amount not correct" using (cashProvided == cashNeeded)
+                        //"Cash amount not correct" using (cashProvided == cashNeeded)
                         //TODO Validate
                     }
                 }
@@ -77,15 +78,19 @@ object RedeemTD {
             val builder2 = TermDeposit().genereateRedeem(builder, TermDeposit)
             //Add our required cash
             val (tx, cashKeys) = Cash.generateSpend(serviceHub, builder2, Amount((TermDeposit.state.data.depositAmount.quantity * (100+TermDeposit.state.data.interestPercent)/100).toLong(), USD),
-                    TermDeposit.state.data.owner)
-
+                    flow.counterparty)
+            println("Redeem added cash ${Amount((TermDeposit.state.data.depositAmount.quantity * (100+TermDeposit.state.data.interestPercent)/100).toLong(), USD)}")
             //STEP 5: Get the client to sign the transaction
+            println("Inputs ${tx.inputStates()}")
+            println("Outputs ${tx.outputStates()}")
             val partSignedTxn = serviceHub.signInitialTransaction(tx, cashKeys)
+            println("Before collect sigs")
             val otherPartySig = subFlow(CollectSignaturesFlow(partSignedTxn, listOf(flow), CollectSignaturesFlow.tracker()))
-
+            println("after collect sigs")
             //STEP 6: Merge all signatures and commit this to the ledger
             val twiceSignedTx = partSignedTxn.plus(otherPartySig.sigs) //This is different to tutorial so hopefully works
-            return subFlow(FinalityFlow(twiceSignedTx))
+            println("Redeem before finality flow")
+            return subFlow(FinalityFlow(twiceSignedTx, setOf(flow.counterparty)))
         }
     }
 }
