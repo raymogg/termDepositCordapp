@@ -8,7 +8,6 @@ import net.corda.core.contracts.StateAndRef
 import net.corda.core.contracts.requireThat
 import net.corda.core.flows.*
 import net.corda.core.identity.Party
-import net.corda.core.internal.ResolveTransactionsFlow
 import net.corda.core.serialization.CordaSerializable
 import net.corda.core.transactions.SignedTransaction
 import net.corda.core.transactions.TransactionBuilder
@@ -16,11 +15,12 @@ import net.corda.core.utilities.unwrap
 import net.corda.finance.USD
 import net.corda.finance.contracts.asset.Cash
 import net.corda.finance.utils.sumCashBy
-import java.time.LocalDate
 import java.time.LocalDateTime
 import java.util.*
 
-/** Flow for redeeming a TD.
+/** Flow for redeeming a TD. This flow is invoked by a client/node that "owns" the term deposit (i.e have given money to the
+ * issuing institue). After this flow the term deposits will be consumed.
+ * The correct amount of money will be returned to the client.
  */
 
 
@@ -33,7 +33,7 @@ object RedeemTD {
     val issuingInstitue: Party, val depositAmount: Amount<Currency>) : FlowLogic<SignedTransaction>() {
         @Suspendable
         override fun call(): SignedTransaction {
-            //Note - This is a improved version of flow compared to the Issue and Activate TD Flows
+
             //STEP 1: Retrieve the TD to Redeem and begin flow with other party
             val TermDeposits = subFlow(TDRetreivalFlows.TDRetreivalFlow(startDate,endDate, issuingInstitue, interestPercent, depositAmount, TermDeposit.internalState.exited))
             val flowSession = initiateFlow(issuingInstitue)
@@ -68,7 +68,7 @@ object RedeemTD {
         override fun call(): SignedTransaction {
             //STEP 3: Receive the TD from the client that is being redeemed
             val TermDeposit = flow.receive<StateAndRef<TermDeposit.State>>().unwrap {
-                //TODO: Required validation
+                //TODO: any required validation
                 it
             }
 

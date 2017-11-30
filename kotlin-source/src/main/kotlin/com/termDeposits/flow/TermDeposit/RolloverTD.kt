@@ -18,22 +18,20 @@ import java.security.PublicKey
 import java.time.LocalDateTime
 import java.util.*
 
-/** Flow for rolling over a TD.
+/** Flow for rolling over a TD. Takes in TermDeposit, calculates the final amount that should have been paid back to the client
+ *
+ * rolloverTerms is an object containing a new start date, new end date and a withInterest boolean. This with interest boolean
+ * value simply identifies whether or not the interest should be rolled over into the new term deposit or paid out
+ *
+ * Two options - rollover w/ interest (withInterest set to true), regular rollover (withInterest set to false)
+ * If rollover w/ interest - new TD created w/ starting amount of interest+old princinple, no cash paid out
+ * If regular - new TD created w/ new start and end date, interest cash paid back to the client.
+ *
+
  */
 
 @CordaSerializable
 object RolloverTD {
-
-    /**
-     * Takes in TermDeposit, calculates the final amount that should have been paid back to the client
-     * Two options - rollover w/ interest, regular rollover
-     * If rollover w/ interest - new TD created w/ starting amount of interest+old princinple, no cash paid out
-     * If regular - new TD created w/ new start and end date, interest cash paid back to the client.
-     *
-     * Do we keep the same difference in dates? i.e if original was for 30 days, new one is for 30 days? (think yes)
-     * Do we do same rates, etc, or new rates?
-     */
-
 
     @CordaSerializable
     @InitiatingFlow

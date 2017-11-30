@@ -1,11 +1,6 @@
 package com.termDeposits.contract
 
-import com.sun.org.apache.xpath.internal.operations.Bool
-import com.termDeposit.schema.TDOSchemaV1
 import com.termDeposit.schema.TDSchemaV1
-import com.termDeposit.schema.TermDepositSchema
-import com.termDeposits.contract.TermDepositOffer
-import kotlinx.html.TD
 import net.corda.core.contracts.*
 import net.corda.core.identity.AbstractParty
 import net.corda.core.identity.Party
@@ -13,19 +8,22 @@ import net.corda.core.schemas.MappedSchema
 import net.corda.core.schemas.PersistentState
 import net.corda.core.schemas.QueryableState
 import net.corda.core.serialization.CordaSerializable
-import net.corda.core.serialization.serialize
 import net.corda.core.transactions.LedgerTransaction
 import net.corda.core.transactions.TransactionBuilder
 import net.corda.core.utilities.toBase58String
 import net.corda.finance.USD
-import net.corda.finance.contracts.asset.Cash
 import net.corda.finance.utils.sumCashBy
 import java.time.LocalDateTime
 import java.util.*
 
-// *****************
-// * Contract Code *
-// *****************
+/**
+ * Term Deposit
+ *
+ * Class for Term Deposits. Contains all the verification logic needed for different transactions, as well as a class
+ * that defines the term deposit state.
+ *
+ * See IssueTD, ActivateTD, RedeemdTD and RolloverTD to see the flows which use this state and transaction types.
+ */
 
 @CordaSerializable
 open class TermDeposit : Contract {
@@ -34,10 +32,10 @@ open class TermDeposit : Contract {
         @JvmStatic
         val TERMDEPOSIT_CONTRACT_ID = "com.termDeposits.contract.TermDeposit"
     }
+
     // A transaction is considered valid if the verify() function of the contract of each of the transaction's input
     // and output states does not throw an exception.
     override fun verify(tx: LedgerTransaction) {
-        // Verification logic goes here.
         val command = tx.commands.requireSingleCommand<TermDeposit.Commands>()
         when (command.value) {
             is Commands.Issue -> requireThat {
@@ -79,7 +77,7 @@ open class TermDeposit : Contract {
         }
     }
 
-    // Used to indicate the transaction's intent - current three types of TD txns - issue, rollover and redeem.
+    // Used to indicate the transaction's intent
     interface Commands : CommandData {
         class Issue : Commands
         class Activate: Commands
@@ -87,6 +85,11 @@ open class TermDeposit : Contract {
         class Redeem : Commands
     }
 
+
+    /**
+     * Functions used to simplify generating transactions within flows. They add the required term deposit states and
+     * commands for each type of transaction
+     */
     fun generateIssue(builder: TransactionBuilder, TDOffer: StateAndRef<TermDepositOffer.State>,
                       notary: Party, depositAmount: Amount<Currency>, to: Party): TransactionBuilder {
         val offerState = TDOffer.state.data
@@ -143,13 +146,10 @@ open class TermDeposit : Contract {
         val exited = "Exited" //A TD state with this internal state should always be "consumed" and hence unusuable in a txn
     }
 
-// *********
-// * State *
-// *********
-    /** Term Deposit Contract State
-     * Fields it has are a start and end date, current state (internal state) and offer details (or terms)
-     *
-     */
+    // **********************
+    // * Term Deposit State *
+    // **********************
+
     @CordaSerializable
     data class State(val startDate: LocalDateTime, val endDate: LocalDateTime, val interestPercent: Float,
                      val institue: Party, val depositAmount: Amount<Currency>, val internalState: String, override val owner: AbstractParty,
@@ -180,7 +180,10 @@ open class TermDeposit : Contract {
         }
     }
 
-    //This was added due to flows limiting the number of initilization variables that can be used
+    /**
+     * Data class to hold the required terms for a Term deposit rollover. Needed as the number of variables that can be past
+     * to a flow is limited to 6 - so these three need to be grouped into a single object.
+     */
     @CordaSerializable
     data class RolloverTerms(val newStartDate: LocalDateTime, val newEndDate: LocalDateTime, val withInterest: Boolean)
 }

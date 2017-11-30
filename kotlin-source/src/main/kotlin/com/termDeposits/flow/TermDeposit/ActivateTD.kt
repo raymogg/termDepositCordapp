@@ -14,11 +14,11 @@ import net.corda.core.utilities.unwrap
 import java.time.LocalDateTime
 import java.util.*
 
-/** Flow for a Term Deposit Issuer to activate a TD with a client
-
-
-        */
-
+/**
+ * Flow for  TD Issuer to activate a TD with a client. This flow would be invoked after the issuer has recieved the transfer
+ * of cash off ledger. This flow will change the term deposits internal state from pending to active indicating it is now
+ * "live"
+ */
 
 @CordaSerializable
 object ActivateTD {
@@ -30,10 +30,9 @@ object ActivateTD {
                          val issuingInstitue: Party, val client: Party, val depositAmount: Amount<Currency>) : FlowLogic<SignedTransaction>() {//FlowLogic<SignedTransaction>() {
     @Suspendable
     override fun call(): SignedTransaction {
-        println("Start Activivation")
         //STEP 1: Notify other party of activation
         val flow = initiateFlow(client)
-        flow.send(listOf(startDate, endDate, interestPercent, issuingInstitue, client, depositAmount)) //this can be anything, simply starting up the clients flow
+        flow.send(listOf(startDate, endDate, interestPercent, issuingInstitue, client, depositAmount))
 
         //STEP 6: Recieve back the signed txn and commit it to the ledger
         val ptx = flow.receive<SignedTransaction>()
@@ -59,9 +58,9 @@ object ActivateTD {
             val args = flow.receive<List<*>>().unwrap { it }
 
             //STEP 3: Prepare the txn
-            val TD = subFlow(TDRetreivalFlows.TDRetreivalFlow(args[0] as LocalDateTime, args[1] as LocalDateTime, args[3] as Party, args[2] as Float, args[5] as Amount<Currency>, TermDeposit.internalState.pending))
-            println("Required Values ${args[5] as Amount<Currency>}")
-            println("Term Deposit Values ${TD.first().state.data.depositAmount}")
+            val TD = subFlow(TDRetreivalFlows.TDRetreivalFlow(args[0] as LocalDateTime, args[1] as LocalDateTime,
+                    args[3] as Party, args[2] as Float, args[5] as Amount<Currency>, TermDeposit.internalState.pending))
+
             //STEP 4: Generate the Activate Txn
             val tx = TransactionBuilder(notary = notary)
             TermDeposit().generateActivate(tx, TD.first(), args[3] as Party, notary)

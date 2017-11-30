@@ -24,6 +24,9 @@ import net.corda.core.serialization.CordaSerializable
  *
  * There is no restriction on this flow to retrieve only one TD (i.e a TD with the exact same terms from the same institue
  * is possible)
+ *
+ * Another query option is also provided to query based on a term deposits linear ID if required. The same optional internal
+ * state field can be provided for this query.
  */
 
 object TDRetreivalFlows {
@@ -83,6 +86,7 @@ object TDRetreivalFlows {
         }
     }
 
+    //Query based on linearID
     @StartableByRPC
     @CordaSerializable
     class TDRetreivalFlowID(val id: UniqueIdentifier, val state: String = internalState.active) : FlowLogic<List<StateAndRef<TermDeposit.State>>>() {

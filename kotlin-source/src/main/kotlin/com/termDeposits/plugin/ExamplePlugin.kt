@@ -41,7 +41,8 @@ class SerilizationPlugin: SerializationWhitelist {
             RolloverTD.RolloverAcceptor::class.java,
             RedeemTD.RedemptionAcceptor::class.java,
             RedeemTD.RedemptionInitiator::class.java,
-            TDRetreivalFlow::class.java,
+            TDRetreivalFlows.TDRetreivalFlow::class.java,
+            TDRetreivalFlows.TDRetreivalFlowID::class.java,
             OfferRetrievalFlow::class.java,
             TransactionBuilder::class.java,
             Boolean::class.java

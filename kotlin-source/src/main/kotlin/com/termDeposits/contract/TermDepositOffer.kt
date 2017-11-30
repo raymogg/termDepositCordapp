@@ -2,7 +2,6 @@ package com.termDeposits.contract
 
 
 import com.termDeposit.schema.TDOSchemaV1
-import com.termDeposit.schema.TermDepositOfferSchema
 import net.corda.core.contracts.*
 import net.corda.core.identity.AbstractParty
 import net.corda.core.identity.Party
@@ -15,10 +14,13 @@ import net.corda.core.transactions.TransactionBuilder
 import net.corda.core.utilities.toBase58String
 import java.time.LocalDateTime
 
-// *****************
-// * Contract Code *
-// *****************
-// This is used to identify our contract when building a transaction
+/**
+ * Term Deposit Offer
+ *
+ * A term deposit offer is issued by an institue which provides term deposits (i.e banks, etc). Provided the current
+ * date is between the offers start and end date, and other offer terms are met (i.e minimum or maximum deposit amounts),
+ * a TermDeposit offer can be redeemed for an actual term deposit with the issuing institue.
+ */
 
 @CordaSerializable
 open class TermDepositOffer : Contract {
@@ -83,20 +85,11 @@ open class TermDepositOffer : Contract {
         return builder
     }
 
-    //TODO Should this actually be in the TD contract and not here?? - probably should under TD.Commands.Issue() -> ensure a TDOffer is provided as input and create the output of the TD
-    fun genereateCreateTD(builder: TransactionBuilder, TDOffer: StateAndRef<State>, selfReference: Party) {
 
-    }
-
-
-// *********
-// * State *
-// *********
+    // *********
+    // * State *
+    // *********
     /** Term Deposit Offer Contract State
-     * This is an offer of a TD, issued by a TD issuer (such as a bank or institution). The idea is that a TD offer can
-     * be converted to an active TD as long as it is within its valid period (start and end date). Comes with attached
-     * Terms and conditions as a hash, and these terms are then attached to the issued TD.
-     *
      * See flows for how a TD Offer is convereted to a TD - not that the state is reproduced so one TD offer can produce many
      * identical TD's.
      *
