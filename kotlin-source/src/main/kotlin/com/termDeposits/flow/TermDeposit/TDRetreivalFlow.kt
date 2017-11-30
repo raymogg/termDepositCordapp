@@ -43,7 +43,7 @@ class TDRetreivalFlow(val startDate: LocalDateTime, val endDate: LocalDateTime, 
         //Filter offer states to get the states we want
         //Active Filter
         if (state == TermDeposit.internalState.active) {
-            println("Active Filter")
+            //println("Active Filter")
             filteredStates = offerStates.states.filter {
                 it.state.data.endDate.isAfter(LocalDateTime.now()) && it.state.data.startDate == startDate &&
                         it.state.data.endDate == endDate && it.state.data.institue == offeringInstitute &&
@@ -53,7 +53,7 @@ class TDRetreivalFlow(val startDate: LocalDateTime, val endDate: LocalDateTime, 
 
         //Pending filter
         else if (state == TermDeposit.internalState.pending) {
-            println("Pending Filter")
+            //println("Pending Filter")
             filteredStates = offerStates.states.filter {
                 it.state.data.endDate.isAfter(LocalDateTime.now()) && it.state.data.startDate == startDate &&
                         it.state.data.endDate == endDate && it.state.data.institue == offeringInstitute &&
@@ -63,7 +63,7 @@ class TDRetreivalFlow(val startDate: LocalDateTime, val endDate: LocalDateTime, 
 
         //Deposits that are "expired" (i.e end date done, but not actually consumed)
         else if (state == TermDeposit.internalState.exited) {
-            println("Expired Filter")
+            //println("Expired Filter")
             filteredStates = offerStates.states.filter {
                 //it.state.data.endDate.isBefore(LocalDateTime.now()) &&
                         it.state.data.startDate == startDate &&

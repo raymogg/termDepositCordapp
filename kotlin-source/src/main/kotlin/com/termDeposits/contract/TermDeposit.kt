@@ -17,6 +17,7 @@ import net.corda.core.transactions.LedgerTransaction
 import net.corda.core.transactions.TransactionBuilder
 import net.corda.core.utilities.toBase58String
 import net.corda.finance.contracts.asset.Cash
+import net.corda.finance.utils.sumCashBy
 import java.time.LocalDateTime
 import java.util.*
 
@@ -62,6 +63,11 @@ open class TermDeposit : Contract {
 
             is Commands.Redeem -> requireThat {
                 //TD Redeem verification
+                "Atleast two inputs are present" using (tx.inputStates.size >= 2) //TD State and Cash State
+                "Atleast two one output is present" using (tx.outputStates.isNotEmpty())
+                val td = tx.inputStates.filterIsInstance<TermDeposit.State>().first()
+                val outputCash = tx.outputStates.sumCashBy(td.owner).quantity
+                "Term Deposit amount must match output cash amount" using (outputCash == (td.depositAmount.quantity * (100+td.interestPercent)/100).toLong() )
             }
 
             is Commands.Rollover -> requireThat {

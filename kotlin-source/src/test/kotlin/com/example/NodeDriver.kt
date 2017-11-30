@@ -55,7 +55,7 @@ class Simulation(options: String) {
     lateinit var bNode : NodeHandle
     lateinit var cNode : NodeHandle
     val stdUser = User("user1", "test",
-            permissions = TDPermissions)
+            permissions = TDPermissions+cashPermissions)
     val cashUser = User("user1", "test",
             permissions = TDPermissions+cashPermissions)
     init {
@@ -71,7 +71,7 @@ class Simulation(options: String) {
             val (nodeA, nodeB, nodeC) = listOf(
                     startNode(providedName = CordaX500Name("PartyA", "London", "GB"), rpcUsers = listOf(stdUser)),
                     startNode(providedName = CordaX500Name("PartyB", "New York", "US"), rpcUsers = listOf(stdUser)),
-                    startNode(providedName = CordaX500Name("PartyC", "Paris", "FR"), rpcUsers = listOf(cashUser))).map { it.getOrThrow() }
+                    startNode(providedName = CordaX500Name("PartyC", "Paris", "FR"), rpcUsers = listOf(stdUser))).map { it.getOrThrow() }
 
             aNode = nodeA
             bNode = nodeB
@@ -96,14 +96,13 @@ class Simulation(options: String) {
         val bClient = bNode.rpcClientToNode()
         val bRPC = bClient.start(stdUser.username, stdUser.password).proxy
 
-        //C is acting as central bank
         val cClient = cNode.rpcClientToNode()
         val cRPC = cClient.start(stdUser.username, stdUser.password).proxy
 
         parties.addAll(listOf(
                 aRPC.nodeInfo().legalIdentities.first() to aRPC,
-                bRPC.nodeInfo().legalIdentities.first() to bRPC
-                //cRPC.nodeInfo().legalIdentities.first() to cRPC
+                bRPC.nodeInfo().legalIdentities.first() to bRPC,
+                cRPC.nodeInfo().legalIdentities.first() to cRPC
         ))
 
         cashIssuers.add(cRPC.nodeInfo().legalIdentities.first() to cRPC)
@@ -151,10 +150,8 @@ class Simulation(options: String) {
 
     fun sendTDOffers(me : CordaRPCOps, receiver: CordaRPCOps, startDate: LocalDateTime, endDate: LocalDateTime,
                      interestPercent: Float) {
-        //me.startFlow { IssueOffer.Initiator(startDate, endDate, interestPercent, me.nodeInfo().legalIdentities.first(), listOf(receiver.nodeInfo().legalIdentities.first())) }
         val returnVal = me.startFlow(IssueOffer::Initiator, startDate, endDate, interestPercent, me.nodeInfo().legalIdentities.first(), receiver.nodeInfo().legalIdentities.first()).returnValue.getOrThrow()
         //println("TD Offers Issued")
-
     }
 
     fun RequestTD(me : CordaRPCOps, issuer: CordaRPCOps, startDate: LocalDateTime, endDate: LocalDateTime,
@@ -166,14 +163,15 @@ class Simulation(options: String) {
 
     fun Activate(me : CordaRPCOps, client : CordaRPCOps, startDate: LocalDateTime, endDate: LocalDateTime, interestPercent: Float, depositAmount: Amount<Currency>) {
         val returnVal = me.startFlow(ActivateTD::Activator, startDate, endDate, interestPercent, me.nodeInfo().legalIdentities.first(), client.nodeInfo().legalIdentities.first(), depositAmount).returnValue.getOrThrow()
-        //println("TD Activated")
+        println("TD Activated")
     }
 
     private fun issueCash(centralBank : CordaRPCOps, recipient : CordaRPCOps, notaryNode : Party) {
         val rand = Random()
         val dollaryDoos = BigDecimal((rand.nextInt(100 + 1 - 1) + 1) * 1000000)     // $1,000,000 to $100,000,000
         val amount = Amount.fromDecimal(dollaryDoos, USD)
-        centralBank.startTrackedFlow(::CashIssueAndPaymentFlow, amount, OpaqueBytes.of(1), recipient.nodeInfo().legalIdentities.first(), false, notaryNode).returnValue.getOrThrow()
+        //Self issue cash now - i.e not sent from central bank
+        recipient.startTrackedFlow(::CashIssueFlow, amount, OpaqueBytes.of(1), notaryNode).returnValue.getOrThrow()
         println("Cash Issue: ${amount} units of $USD issued to ${recipient.nodeInfo().legalIdentities.first()}")
     }
 
