@@ -59,7 +59,7 @@ object ActivateTD {
             val args = flow.receive<List<*>>().unwrap { it }
 
             //STEP 3: Prepare the txn
-            val TD = subFlow(TDRetreivalFlow(args[0] as LocalDateTime, args[1] as LocalDateTime, args[3] as Party, args[2] as Float, args[5] as Amount<Currency>, TermDeposit.internalState.pending))
+            val TD = subFlow(TDRetreivalFlows.TDRetreivalFlow(args[0] as LocalDateTime, args[1] as LocalDateTime, args[3] as Party, args[2] as Float, args[5] as Amount<Currency>, TermDeposit.internalState.pending))
             println("Required Values ${args[5] as Amount<Currency>}")
             println("Term Deposit Values ${TD.first().state.data.depositAmount}")
             //STEP 4: Generate the Activate Txn

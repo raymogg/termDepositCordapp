@@ -67,13 +67,14 @@ open class TermDeposit : Contract {
                 //TD Redeem verification
                 "Atleast two inputs are present" using (tx.inputStates.size >= 2) //TD State and Cash State
                 "Atleast two one output is present" using (tx.outputStates.isNotEmpty())
-//                val td = tx.inputStates.filterIsInstance<TermDeposit.State>().first()
-//                val outputCash = tx.outputStates.sumCashBy(td.owner).quantity
-//                "Term Deposit amount must match output cash amount" using (outputCash == (td.depositAmount.quantity * (100+td.interestPercent)/100).toLong() )
+                val td = tx.inputStates.filterIsInstance<TermDeposit.State>().first()
+                val outputCash = tx.outputStates.sumCashBy(td.owner).quantity
+                "Term Deposit amount must match output cash amount" using (outputCash == (td.depositAmount.quantity * (100+td.interestPercent)/100).toLong() )
             }
 
             is Commands.Rollover -> requireThat {
                 //TD Rollover verification
+
             }
         }
     }
@@ -151,7 +152,8 @@ open class TermDeposit : Contract {
      */
     @CordaSerializable
     data class State(val startDate: LocalDateTime, val endDate: LocalDateTime, val interestPercent: Float,
-                     val institue: Party, val depositAmount: Amount<Currency>, val internalState: String, override val owner: AbstractParty) : QueryableState, OwnableState, ContractState {
+                     val institue: Party, val depositAmount: Amount<Currency>, val internalState: String, override val owner: AbstractParty,
+                     override val linearId: UniqueIdentifier = UniqueIdentifier()) : QueryableState, OwnableState, ContractState, LinearState {
 
         override val participants: List<AbstractParty> get() = listOf(owner)
 

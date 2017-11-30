@@ -149,10 +149,11 @@ class Simulation(options: String) {
         Activate(parties[0].second, parties[1].second, LocalDateTime.MIN, LocalDateTime.MAX, 3.4f, Amount<Currency>(300000, USD))
         Activate(parties[1].second, parties[0].second, LocalDateTime.MIN, LocalDateTime.MAX, 3.2f, Amount<Currency>(500000, USD))
         //Redeem this TD - removed time constraints on this for now so it works
-        Redeem(parties[1].second, parties[0].second, LocalDateTime.MIN, LocalDateTime.MAX, 3.4f, Amount<Currency>(300000, USD))
+        //Redeem(parties[1].second, parties[0].second, LocalDateTime.MIN, LocalDateTime.MAX, 3.4f, Amount<Currency>(300000, USD))
         Redeem(parties[0].second, parties[1].second, LocalDateTime.MIN, LocalDateTime.MAX, 3.2f, Amount<Currency>(500000, USD))
-       // Rollover(parties[1].second, parties[0].second, LocalDateTime.MIN, LocalDateTime.MAX, LocalDateTime.MIN,
-                //LocalDateTime.MAX, 3.4f, Amount<Currency>(300000, USD), false)
+        Rollover(parties[1].second, parties[0].second, LocalDateTime.MIN, LocalDateTime.MAX, LocalDateTime.MIN,
+                LocalDateTime.MAX, 3.4f, Amount<Currency>(300000, USD), true)
+        Redeem(parties[1].second, parties[0].second, LocalDateTime.MIN, LocalDateTime.MAX, 3.4f, Amount<Currency>(310200, USD)) //3102 USD due to the rollover interest in previous txn
     }
 
     fun sendTDOffers(me : CordaRPCOps, receiver: CordaRPCOps, startDate: LocalDateTime, endDate: LocalDateTime,
@@ -195,7 +196,7 @@ class Simulation(options: String) {
 //                depositAmount, withInterest).returnValue.getOrThow()
         val rolloverTerms = TermDeposit.RolloverTerms(newStartDate, newEndDate, withInterest)
         val returnVal = me.startFlow(RolloverTD::RolloverInitiator, startDate, endDate, interestPercent, issuer.nodeInfo().legalIdentities.first(),
-                depositAmount, rolloverTerms)
+                depositAmount, rolloverTerms).returnValue.getOrThrow()
     }
 
 

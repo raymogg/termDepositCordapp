@@ -3,8 +3,6 @@ package com.termDeposits.flow.TermDeposit
 import co.paralleluniverse.fibers.Suspendable
 import com.termDeposits.contract.TermDeposit
 import com.termDeposits.contract.TermDepositOffer
-import net.corda.core.contracts.Amount
-import net.corda.core.contracts.StateAndRef
 import net.corda.core.flows.FlowLogic
 import net.corda.core.identity.Party
 import net.corda.core.node.services.Vault
@@ -13,8 +11,7 @@ import net.corda.core.node.services.vault.QueryCriteria
 import java.time.LocalDateTime
 import java.util.*
 import com.termDeposits.contract.TermDeposit.internalState
-import net.corda.core.contracts.Contract
-import net.corda.core.contracts.ContractState
+import net.corda.core.contracts.*
 import net.corda.core.flows.FlowException
 import net.corda.core.flows.StartableByRPC
 import net.corda.core.serialization.CordaSerializable
@@ -29,57 +26,106 @@ import net.corda.core.serialization.CordaSerializable
  * is possible)
  */
 
+object TDRetreivalFlows {
 
-@StartableByRPC
-@CordaSerializable
-class TDRetreivalFlow(val startDate: LocalDateTime, val endDate: LocalDateTime, val offeringInstitute: Party,
-                         val interest: Float, val depositAmount: Amount<Currency>, val state: String = internalState.active): FlowLogic<List<StateAndRef<TermDeposit.State>>>() {
-    @Suspendable
-    override fun call(): List<StateAndRef<TermDeposit.State>> {
-        //Query the vault for unconsumed states and then for Security loan states
-        val criteria = QueryCriteria.VaultQueryCriteria(status = Vault.StateStatus.UNCONSUMED)
-        val offerStates = serviceHub.vaultService.queryBy<TermDeposit.State>(criteria)
-        val filteredStates: List<StateAndRef<TermDeposit.State>>
-        //Filter offer states to get the states we want
-        //Active Filter
-        if (state == TermDeposit.internalState.active) {
-            //println("Active Filter")
-            filteredStates = offerStates.states.filter {
-                it.state.data.endDate.isAfter(LocalDateTime.now()) && it.state.data.startDate == startDate &&
-                        it.state.data.endDate == endDate && it.state.data.institue == offeringInstitute &&
-                        it.state.data.interestPercent == interest && it.state.data.internalState == TermDeposit.internalState.active
+    @StartableByRPC
+    @CordaSerializable
+    class TDRetreivalFlow(val startDate: LocalDateTime, val endDate: LocalDateTime, val offeringInstitute: Party,
+                          val interest: Float, val depositAmount: Amount<Currency>, val state: String = internalState.active) : FlowLogic<List<StateAndRef<TermDeposit.State>>>() {
+        @Suspendable
+        override fun call(): List<StateAndRef<TermDeposit.State>> {
+            //Query the vault for unconsumed states and then for Security loan states
+            val criteria = QueryCriteria.VaultQueryCriteria(status = Vault.StateStatus.UNCONSUMED)
+            val offerStates = serviceHub.vaultService.queryBy<TermDeposit.State>(criteria)
+            val filteredStates: List<StateAndRef<TermDeposit.State>>
+            //Filter offer states to get the states we want
+            //Active Filter
+            if (state == TermDeposit.internalState.active) {
+                //println("Active Filter")
+                filteredStates = offerStates.states.filter {
+                    it.state.data.endDate.isAfter(LocalDateTime.now()) && it.state.data.startDate == startDate &&
+                            it.state.data.endDate == endDate && it.state.data.institue == offeringInstitute &&
+                            it.state.data.interestPercent == interest && it.state.data.internalState == TermDeposit.internalState.active
+                            && it.state.data.depositAmount == depositAmount
+                }
             }
-        }
 
-        //Pending filter
-        else if (state == TermDeposit.internalState.pending) {
-            //println("Pending Filter")
-            filteredStates = offerStates.states.filter {
-                it.state.data.endDate.isAfter(LocalDateTime.now()) && it.state.data.startDate == startDate &&
-                        it.state.data.endDate == endDate && it.state.data.institue == offeringInstitute &&
-                        it.state.data.interestPercent == interest && it.state.data.internalState == TermDeposit.internalState.pending
+            //Pending filter
+            else if (state == TermDeposit.internalState.pending) {
+                //println("Pending Filter")
+                filteredStates = offerStates.states.filter {
+                    it.state.data.endDate.isAfter(LocalDateTime.now()) && it.state.data.startDate == startDate &&
+                            it.state.data.endDate == endDate && it.state.data.institue == offeringInstitute &&
+                            it.state.data.interestPercent == interest && it.state.data.internalState == TermDeposit.internalState.pending
+                            && it.state.data.depositAmount == depositAmount
+                }
             }
-        }
 
-        //Deposits that are "expired" (i.e end date done, but not actually consumed)
-        else if (state == TermDeposit.internalState.exited) {
-            //println("Expired Filter")
-            filteredStates = offerStates.states.filter {
-                //it.state.data.endDate.isBefore(LocalDateTime.now()) &&
-                        it.state.data.startDate == startDate &&
-                        it.state.data.endDate == endDate && it.state.data.institue == offeringInstitute &&
-                        it.state.data.interestPercent == interest
+            //Deposits that are "expired" (i.e end date done, but not actually consumed)
+            else if (state == TermDeposit.internalState.exited) {
+                //println("Expired Filter")
+                filteredStates = offerStates.states.filter {
+                    //it.state.data.endDate.isBefore(LocalDateTime.now()) &&
+                    it.state.data.startDate == startDate &&
+                            it.state.data.endDate == endDate && it.state.data.institue == offeringInstitute &&
+                            it.state.data.interestPercent == interest &&
+                            it.state.data.depositAmount == depositAmount
+                }
+            } else {
+                throw FlowException("Invalid Term Deposit State provided")
             }
-        }
 
-        else {
-            throw FlowException("Invalid Term Deposit State provided")
-        }
+            if (filteredStates.isEmpty()) {
+                throw FlowException("No Term Deposit states found")
+            }
 
-        if (filteredStates.isEmpty()) {
-            throw FlowException("No Term Deposit states found")
+            return filteredStates
         }
-
-        return filteredStates
     }
+
+    @StartableByRPC
+    @CordaSerializable
+    class TDRetreivalFlowID(val id: UniqueIdentifier, val state: String = internalState.active) : FlowLogic<List<StateAndRef<TermDeposit.State>>>() {
+        @Suspendable
+        override fun call(): List<StateAndRef<TermDeposit.State>> {
+            //Query the vault for unconsumed states and then for Security loan states
+            val criteria = QueryCriteria.VaultQueryCriteria(status = Vault.StateStatus.UNCONSUMED)
+            val offerStates = serviceHub.vaultService.queryBy<TermDeposit.State>(criteria)
+            val filteredStates: List<StateAndRef<TermDeposit.State>>
+            //Filter offer states to get the states we want
+            //Active Filter
+            if (state == TermDeposit.internalState.active) {
+                //println("Active Filter")
+                filteredStates = offerStates.states.filter {
+                    it.state.data.linearId == id
+                }
+            }
+
+            //Pending filter
+            else if (state == TermDeposit.internalState.pending) {
+                //println("Pending Filter")
+                filteredStates = offerStates.states.filter {
+                    it.state.data.linearId == id
+                }
+            }
+
+            //Deposits that are "expired" (i.e end date done, but not actually consumed)
+            else if (state == TermDeposit.internalState.exited) {
+                //println("Expired Filter")
+                filteredStates = offerStates.states.filter {
+                    //it.state.data.endDate.isBefore(LocalDateTime.now()) &&
+                    it.state.data.linearId == id
+                }
+            } else {
+                throw FlowException("Invalid Term Deposit State provided")
+            }
+
+            if (filteredStates.isEmpty()) {
+                throw FlowException("No Term Deposit states found")
+            }
+
+            return filteredStates
+        }
+    }
+
 }

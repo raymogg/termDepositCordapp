@@ -46,7 +46,7 @@ object RolloverTD {
 
             //STEP 1: Send the TD to rollover with instruction on interest
             val flowSession = initiateFlow(issuingInstitue)
-            val termDeposit = subFlow(TDRetreivalFlow(startDate, endDate, issuingInstitue, interestPercent, depositAmount))
+            val termDeposit = subFlow(TDRetreivalFlows.TDRetreivalFlow(startDate, endDate, issuingInstitue, interestPercent, depositAmount))
             flowSession.send(listOf(termDeposit.first(), rolloverTerms.withInterest, rolloverTerms.newStartDate, rolloverTerms.newEndDate))
 
             val signTransactionFlow = object : SignTransactionFlow(flowSession, SignTransactionFlow.tracker()) {
