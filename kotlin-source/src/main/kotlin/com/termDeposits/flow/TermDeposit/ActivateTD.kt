@@ -2,7 +2,6 @@ package com.termDeposits.flow.TermDeposit
 
 import co.paralleluniverse.fibers.Suspendable
 import com.termDeposits.contract.TermDeposit
-import com.termDeposits.contract.TermDepositOffer
 import net.corda.core.contracts.Amount
 import net.corda.core.flows.*
 import net.corda.core.identity.Party

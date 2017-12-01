@@ -83,28 +83,13 @@ object IssueTD {
     open class Acceptor(val counterPartySession: FlowSession) : FlowLogic<SignedTransaction>() {
         @Suspendable
         override fun call(): SignedTransaction {
-            //STEP 4: Receieve the transaction with the TD Offer and TD
-//            val tx = counterPartySession.receive<SignedTransaction>()
-//
-//            //STEP 5: Validate and accept txn
-//            val unwrappedtx = tx.unwrap {
-//                requireThat {
-//                    //This state was actually issued by us
-//                    it.tx.outputs.map { it.data }.filterIsInstance<TermDepositOffer.State>().first().institue == serviceHub.myInfo.legalIdentities.first()
-//                }
-//                it
-//            }
-//
-//            //STEP 6: Sign transaction and send back to other party
-//            //val stx = serviceHub.signInitialTransaction(unwrappedtx, serviceHub.myInfo.legalIdentities.first().owningKey)
-//            val stx = serviceHub.addSignature(unwrappedtx)
-//            counterPartySession.send(stx)
+
+            //STEP 4: Sync Identities, Receive the txn and sign it
 
             // Sync identities to ensure we know all of the identities involved in the transaction we're about to
             // be asked to sign
             subFlow(IdentitySyncFlow.Receive(counterPartySession))
 
-            //STEP 4: Receieve the txn and sign it
             val signTransactionFlow = object : SignTransactionFlow(counterPartySession, SignTransactionFlow.tracker()) {
                 override fun checkTransaction(stx: SignedTransaction)  {
                     requireThat {

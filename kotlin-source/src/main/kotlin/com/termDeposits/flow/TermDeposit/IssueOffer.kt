@@ -2,13 +2,21 @@ package com.termDeposits.flow.TermDeposit
 
 import co.paralleluniverse.fibers.Suspendable
 import com.termDeposits.contract.TermDepositOffer
+import net.corda.core.contracts.requireThat
+import net.corda.core.crypto.SecureHash
 import net.corda.core.flows.*
 import net.corda.core.identity.Party
+import net.corda.core.internal.InputStreamAndHash
 import net.corda.core.internal.ResolveTransactionsFlow
 import net.corda.core.serialization.CordaSerializable
 import net.corda.core.transactions.SignedTransaction
 import net.corda.core.transactions.TransactionBuilder
 import net.corda.core.utilities.unwrap
+import java.io.File
+import java.nio.file.Files
+import java.nio.file.Paths
+import java.security.DigestInputStream
+import java.security.MessageDigest
 import java.time.LocalDateTime
 
 
@@ -26,16 +34,21 @@ object IssueOffer {
     @StartableByRPC
     @InitiatingFlow
     open class Initiator(val startDateTime: LocalDateTime, val endDate: LocalDateTime, val interestPercent: Float,
-                    val issuingInstitue: Party, val otherParty: Party) : FlowLogic<SignedTransaction>() {//FlowLogic<SignedTransaction>() {
+                    val issuingInstitue: Party, val otherParty: Party, val contractName: String) : FlowLogic<SignedTransaction>() {//FlowLogic<SignedTransaction>() {
         @Suspendable
         override fun call(): SignedTransaction {
-            //STEP 1: Create TDOffer and build txn
+            //STEP 1: Create TDOffer and build txn - including adding the term deposit terms as an attachment
             val notary = serviceHub.networkMapCache.notaryIdentities.single()
             val tx = TransactionBuilder()
             val partTx = TermDepositOffer().generateIssue(tx, startDateTime, endDate, interestPercent, issuingInstitue, notary, otherParty)
             val flowSession = initiateFlow(otherParty)
+            //Attach the term deposit terms
+            val secureHash = getFileHash(contractName)
+            //For now we simply attach this hash as a attachment and the other side verifies that this hash matches there document - would require nodes to send attachments before the txn
+            //partTx.addAttachment(secureHash) //TODO: For some reason adding this attachment causes flows to freeze
+            println("Attachment Added")
             //Send the Transaction to the other party
-            flowSession.send(partTx)
+            flowSession.send(Pair(partTx, contractName))
 
             //STEP 4: Receieve back txn
             val stx = flowSession.receive<SignedTransaction>().unwrap { it }
@@ -56,17 +69,28 @@ object IssueOffer {
         @Suspendable
         override fun call(): SignedTransaction {
             //STEP 2: Recieve txn from issuing institue
-            val tx = flow.receive<TransactionBuilder>().unwrap {
+            val tx = flow.receive<Pair<TransactionBuilder, String>>().unwrap {
                 //println("Recieved Txn")
+                requireThat {
+                    //"Contract hash matches" using (it.first.attachments().first() == getFileHash(it.second)) //TODO Instead of receiving this, check with our contracts - if we dont have this hash need to download
+                }
                 //TODO: Any checks that need to be done on the offer (shouldnt need to be any) or potential logging of offers recieved
                 it
             }
 
             //STEP 3: Sign and send back this offer
-            val stx = serviceHub.signInitialTransaction(tx)
+            val stx = serviceHub.signInitialTransaction(tx.first)
             flow.send(stx)
             return waitForLedgerCommit(stx.id)
 
         }
+    }
+
+    fun getFileHash(filename: String) : SecureHash {
+        val loader = Thread.currentThread().contextClassLoader.getResourceAsStream(filename)
+        val md = MessageDigest.getInstance("MD5")
+        val digestStream = DigestInputStream(loader, md)
+        val bytes = md.digest()
+        return SecureHash.sha256(File.pathSeparator)
     }
 }

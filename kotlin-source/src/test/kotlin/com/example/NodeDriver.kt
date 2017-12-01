@@ -47,16 +47,23 @@ fun main(args: Array<String>) {
 
 class Simulation(options: String) {
     val TDPermissions = allocateTDPermissions()
+    val bankPermissions = allocateBankPermissions()
     val cashPermissions = allocateCashPermissions()
     val parties = ArrayList<Pair<Party, CordaRPCOps>>()
+    val banks = ArrayList<Pair<Party, CordaRPCOps>>()
     val cashIssuers = ArrayList<Pair<Party, CordaRPCOps>>()
     lateinit var aNode : NodeHandle
     lateinit var bNode : NodeHandle
     lateinit var cNode : NodeHandle
+    lateinit var bankA : NodeHandle
+    lateinit var bankB : NodeHandle
+    lateinit var centralBank : NodeHandle
     val stdUser = User("user1", "test",
             permissions = TDPermissions+cashPermissions)
-    val cashUser = User("user1", "test",
-            permissions = TDPermissions+cashPermissions)
+    val cashIssuer = User("user1", "test",
+            permissions = TDPermissions+cashPermissions+bankPermissions)
+    val bank = User("user1", "test",
+            permissions = TDPermissions+bankPermissions)
     init {
         main(arrayOf())
     }
@@ -67,15 +74,20 @@ class Simulation(options: String) {
         driver(isDebug = false, extraCordappPackagesToScan = listOf("com.termDeposits.contract", "termDeposits.contract", "termDepositCordapp.com.termDeposits.contract",
                 "com.termDeposits.flow", "net.corda.finance"), startNodesInProcess = false) {
             startNode(providedName = CordaX500Name("Controller", "London", "GB"), advertisedServices = setOf(ServiceInfo(ValidatingNotaryService.type)))
-            val (nodeA, nodeB, nodeC) = listOf(
-                    startNode(providedName = CordaX500Name("PartyA", "London", "GB"), rpcUsers = listOf(stdUser)),
-                    startNode(providedName = CordaX500Name("PartyB", "New York", "US"), rpcUsers = listOf(stdUser)),
-                    startNode(providedName = CordaX500Name("PartyC", "Paris", "FR"), rpcUsers = listOf(stdUser))).map { it.getOrThrow() }
+            val cBank = startNode(providedName = CordaX500Name("CentralBank", "Brisbane", "AU"), rpcUsers = listOf(cashIssuer)).getOrThrow()
+            val (nodeA, nodeB, nodeC, aBank, bBank) = listOf(
+                    startNode(providedName = CordaX500Name("ClientA", "London", "GB"), rpcUsers = listOf(stdUser)),
+                    startNode(providedName = CordaX500Name("ClientB", "New York", "US"), rpcUsers = listOf(stdUser)),
+                    startNode(providedName = CordaX500Name("ClientC", "Paris", "FR"), rpcUsers = listOf(stdUser)),
+                    startNode(providedName = CordaX500Name("BankA", "Munich", "DE"), rpcUsers = listOf(bank)),
+                    startNode(providedName = CordaX500Name("BankB", "Singapore", "SG"), rpcUsers = listOf(bank))).map { it.getOrThrow() }
 
             aNode = nodeA
             bNode = nodeB
             cNode = nodeC
-
+            bankA = aBank
+            bankB = bBank
+            centralBank = cBank
             /*startWebserver(aNode)
             startWebserver(bNode)
             startWebserver(cNode)*/
@@ -98,30 +110,52 @@ class Simulation(options: String) {
         val cClient = cNode.rpcClientToNode()
         val cRPC = cClient.start(stdUser.username, stdUser.password).proxy
 
+        val aBankClient = bankA.rpcClientToNode()
+        val abRPC = aBankClient.start(stdUser.username, stdUser.password).proxy
+
+        val bBankClient = bankB.rpcClientToNode()
+        val bbRPC = bBankClient.start(stdUser.username, stdUser.password).proxy
+
+        val centralBankClient = centralBank.rpcClientToNode()
+        val cbrpc = centralBankClient.start(stdUser.username, stdUser.password).proxy
+
         parties.addAll(listOf(
                 aRPC.nodeInfo().legalIdentities.first() to aRPC,
                 bRPC.nodeInfo().legalIdentities.first() to bRPC,
                 cRPC.nodeInfo().legalIdentities.first() to cRPC
         ))
 
-        cashIssuers.add(cRPC.nodeInfo().legalIdentities.first() to cRPC)
+        banks.addAll(listOf(
+                abRPC.nodeInfo().legalIdentities.first() to abRPC,
+                bbRPC.nodeInfo().legalIdentities.first() to bbRPC
+        ))
+
+        cashIssuers.add(cbrpc.nodeInfo().legalIdentities.first() to cbrpc
+        )
         arrayOf(aNode, bNode, cNode).forEach {
             println("${it.nodeInfo.legalIdentities.first()} started on ${it.configuration.rpcAddress}")
         }
     }
 
     fun allocateTDPermissions() : Set<String> = setOf(
-            FlowPermissions.startFlowPermission<IssueOffer.Initiator>(),
+            //FlowPermissions.startFlowPermission<IssueOffer.Initiator>(),
             FlowPermissions.startFlowPermission<IssueTD.Initiator>(),
             FlowPermissions.startFlowPermission<IssueTD.Acceptor>(),
-            FlowPermissions.startFlowPermission<ActivateTD.Activator>(),
+            //FlowPermissions.startFlowPermission<ActivateTD.Activator>(),
             FlowPermissions.startFlowPermission<ActivateTD.Acceptor>(),
             FlowPermissions.startFlowPermission<IssueOffer.Reciever>(),
             FlowPermissions.startFlowPermission<RedeemTD.RedemptionInitiator>(),
             FlowPermissions.startFlowPermission<RedeemTD.RedemptionAcceptor>(),
-            FlowPermissions.startFlowPermission<RolloverTD.RolloverAcceptor>(),
+            //FlowPermissions.startFlowPermission<RolloverTD.RolloverAcceptor>(),
             FlowPermissions.startFlowPermission<RolloverTD.RolloverInitiator>()
             )
+
+    fun allocateBankPermissions() : Set<String> = setOf(
+            FlowPermissions.startFlowPermission<IssueOffer.Initiator>(),
+            FlowPermissions.startFlowPermission<ActivateTD.Activator>(),
+            FlowPermissions.startFlowPermission<RolloverTD.RolloverAcceptor>(),
+            FlowPermissions.startFlowPermission<RedeemTD.RedemptionAcceptor>()
+    )
 
     fun allocateCashPermissions() : Set<String> = setOf(
             FlowPermissions.startFlowPermission<CashIssueFlow>(),
@@ -136,29 +170,34 @@ class Simulation(options: String) {
         parties.forEach {
             issueCash(it.second, it.second.notaryIdentities().first())
         }
+        //Issue some cash to each of the banks
+        banks.forEach{
+            issueCash(it.second, it.second.notaryIdentities().first())
+        }
 
         println("Simulations")
         //Send an offer to parties for a TD - 0 is the issuing institue, 1 is receiever
-        sendTDOffers(parties[0].second, parties[1].second, LocalDateTime.MIN, LocalDateTime.MAX, 3.4f)
+        sendTDOffers(banks[0].second, parties[1].second, LocalDateTime.MIN, LocalDateTime.MAX, 3.4f)
         //sendTDOffers(parties[0].second, parties[1].second, LocalDateTime.MIN, LocalDateTime.MAX, 3.8f)
-        sendTDOffers(parties[1].second, parties[0].second, LocalDateTime.MIN, LocalDateTime.MAX, 3.2f)
+        sendTDOffers(banks[1].second, parties[0].second, LocalDateTime.MIN, LocalDateTime.MAX, 3.2f)
         //Accept this offer
-        RequestTD(parties[1].second, parties[0].second, LocalDateTime.MIN, LocalDateTime.MAX, 3.4f, Amount<Currency>(300000, USD))
-        RequestTD(parties[0].second, parties[1].second, LocalDateTime.MIN, LocalDateTime.MAX, 3.2f, Amount<Currency>(500000, USD))
+        RequestTD(parties[1].second, banks[0].second, LocalDateTime.MIN, LocalDateTime.MAX, 3.4f, Amount<Currency>(300000, USD))
+        RequestTD(parties[0].second, banks[1].second, LocalDateTime.MIN, LocalDateTime.MAX, 3.2f, Amount<Currency>(500000, USD))
         //Activate this TD - Done once the issuing party receieves its cash through regular bank transfer
-        Activate(parties[0].second, parties[1].second, LocalDateTime.MIN, LocalDateTime.MAX, 3.4f, Amount<Currency>(300000, USD))
-        Activate(parties[1].second, parties[0].second, LocalDateTime.MIN, LocalDateTime.MAX, 3.2f, Amount<Currency>(500000, USD))
+        Activate(banks[0].second, parties[1].second, LocalDateTime.MIN, LocalDateTime.MAX, 3.4f, Amount<Currency>(300000, USD))
+        Activate(banks[1].second, parties[0].second, LocalDateTime.MIN, LocalDateTime.MAX, 3.2f, Amount<Currency>(500000, USD))
         //Redeem this TD - removed time constraints on this for now so it works
         //Redeem(parties[1].second, parties[0].second, LocalDateTime.MIN, LocalDateTime.MAX, 3.4f, Amount<Currency>(300000, USD))
-        Redeem(parties[0].second, parties[1].second, LocalDateTime.MIN, LocalDateTime.MAX, 3.2f, Amount<Currency>(500000, USD))
-        Rollover(parties[1].second, parties[0].second, LocalDateTime.MIN, LocalDateTime.MAX, LocalDateTime.MIN,
+        Redeem(parties[0].second, banks[1].second, LocalDateTime.MIN, LocalDateTime.MAX, 3.2f, Amount<Currency>(500000, USD))
+        Rollover(parties[1].second, banks[0].second, LocalDateTime.MIN, LocalDateTime.MAX, LocalDateTime.MIN,
                 LocalDateTime.MAX, 3.4f, Amount<Currency>(300000, USD), true)
-        Redeem(parties[1].second, parties[0].second, LocalDateTime.MIN, LocalDateTime.MAX, 3.4f, Amount<Currency>(310200, USD)) //3102 USD due to the rollover interest in previous txn
+        Redeem(parties[1].second, banks[0].second, LocalDateTime.MIN, LocalDateTime.MAX, 3.4f, Amount<Currency>(310200, USD)) //3102 USD due to the rollover interest in previous txn
     }
 
     fun sendTDOffers(me : CordaRPCOps, receiver: CordaRPCOps, startDate: LocalDateTime, endDate: LocalDateTime,
                      interestPercent: Float) {
-        val returnVal = me.startFlow(IssueOffer::Initiator, startDate, endDate, interestPercent, me.nodeInfo().legalIdentities.first(), receiver.nodeInfo().legalIdentities.first()).returnValue.getOrThrow()
+        val returnVal = me.startFlow(IssueOffer::Initiator, startDate, endDate, interestPercent, me.nodeInfo().legalIdentities.first(), receiver.nodeInfo().legalIdentities.first(),
+                "Example_TD_Contract.pdf").returnValue.getOrThrow()
         //println("TD Offers Issued")
     }
 
