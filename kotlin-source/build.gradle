@@ -24,6 +24,7 @@ sourceSets {
     }
 }
 
+
 dependencies {
     compile "org.jetbrains.kotlin:kotlin-stdlib-jre8:$kotlin_version"
     testCompile "org.jetbrains.kotlin:kotlin-test:$kotlin_version"
@@ -47,6 +48,7 @@ dependencies {
     // Specify your cordapp's dependencies below, including dependent CorDapps
     cordapp "net.corda:corda-finance:$corda_release_version"
 }
+
 
 tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile).all {
     kotlinOptions {
@@ -98,6 +100,6 @@ task deployNodes(type: net.corda.plugins.Cordform, dependsOn: ['jar']) {
 
 task runExampleClientRPCKotlin(type: JavaExec) {
     classpath = sourceSets.main.runtimeClasspath
-    main = 'com.termDeposit.client.ExampleClientRPCKt'
+    main = 'com.termDeposits.client.ExampleClientRPCKt'
     args 'localhost:10006'
 }

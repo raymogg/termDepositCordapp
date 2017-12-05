@@ -42,6 +42,8 @@ import com.termDepositCordapp.gui.model.ReportingCurrencyModel
 import com.termDepositCordapp.gui.model.SettingsModel
 import com.termDepositCordapp.gui.sign
 import com.termDepositCordapp.gui.ui.setCustomCellFactory
+import com.termDeposits.contract.TermDeposit
+import com.termDeposits.contract.TermDepositOffer
 import net.corda.finance.contracts.asset.Cash
 import tornadofx.*
 import java.util.*
@@ -293,6 +295,52 @@ class TransactionViewer : CordaView("Transactions") {
                                     tooltip(data.owner.owningKey.toBase58String())
                                 }
                             }
+                        }
+
+                        is TermDepositOffer.State -> {
+                            row {
+                                label("Issuer : ") {gridpaneConstraints { hAlignment = HPos.RIGHT }}
+                                label(data.institue.toString())
+                            }
+
+                            row {
+                                label("Interest : ") {gridpaneConstraints { hAlignment = HPos.RIGHT }}
+                                label(data.interestPercent.toString())
+                            }
+
+                            row {
+                                label("Duration : ") {gridpaneConstraints { hAlignment = HPos.RIGHT }}
+                                label(data.startDate.toString())
+                            }
+
+                        }
+
+                        is TermDeposit.State -> {
+                            row {
+                                label("Issuer : ") {gridpaneConstraints { hAlignment = HPos.RIGHT }}
+                                label(data.institue.toString())
+                            }
+
+                            row {
+                                label("Interest : ") {gridpaneConstraints { hAlignment = HPos.RIGHT }}
+                                label(data.interestPercent.toString())
+                            }
+
+                            row {
+                                label("Deposited Amount : ") {gridpaneConstraints { hAlignment = HPos.RIGHT }}
+                                label(data.depositAmount.toString())
+                            }
+
+                            row {
+                                label("End Date : ") {gridpaneConstraints { hAlignment = HPos.RIGHT }}
+                                label(data.endDate.toString())
+                            }
+
+                            row {
+                                label("Internal State : ") {gridpaneConstraints { hAlignment = HPos.RIGHT }}
+                                label(data.internalState.toString())
+                            }
+
                         }
 //                        is SecurityClaim.State -> {
 //                            row {
