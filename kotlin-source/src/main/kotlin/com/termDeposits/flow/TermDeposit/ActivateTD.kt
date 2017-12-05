@@ -26,7 +26,7 @@ object ActivateTD {
     @StartableByRPC
     @InitiatingFlow
     open class Activator(val startDate: LocalDateTime, val endDate: LocalDateTime, val interestPercent: Float,
-                         val issuingInstitue: Party, val client: Party, val depositAmount: Amount<Currency>) : FlowLogic<SignedTransaction>() {//FlowLogic<SignedTransaction>() {
+                         val issuingInstitue: Party, val client: Party, val depositAmount: Amount<Currency>) : FlowLogic<SignedTransaction>() {
     @Suspendable
     override fun call(): SignedTransaction {
         //STEP 1: Notify other party of activation
@@ -41,7 +41,6 @@ object ActivateTD {
         subFlow(ResolveTransactionsFlow(stx, flow))
         println("Term Deposit: from $issuingInstitue to $client now activated")
         return subFlow(FinalityFlow(stx, setOf(client)))
-
         }
     }
 
@@ -53,7 +52,7 @@ object ActivateTD {
         override fun call() : SignedTransaction {
             val notary = serviceHub.networkMapCache.notaryIdentities.single()
 
-            //STEP 2: Receieve the message to start activation
+            //STEP 2: Receive the message to start activation
             val args = flow.receive<List<*>>().unwrap { it }
 
             //STEP 3: Prepare the txn

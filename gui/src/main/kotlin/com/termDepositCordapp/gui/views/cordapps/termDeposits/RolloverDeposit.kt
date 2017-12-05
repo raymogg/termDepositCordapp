@@ -1,10 +1,10 @@
 package com.termDepositCordapp.gui.views.cordapps.termDeposits
 
-
 import com.termDepositCordapp.gui.views.stringConverter
 import com.termDepositCordapp.gui.model.TermDepositsModel
 import com.termDeposits.contract.TermDeposit
-import com.termDeposits.flow.TermDeposit.PromptActivate
+import com.termDeposits.flow.TermDeposit.RedeemTD
+import com.termDeposits.flow.TermDeposit.RolloverTD
 import javafx.beans.binding.Bindings
 import javafx.beans.binding.BooleanBinding
 import javafx.beans.property.SimpleObjectProperty
@@ -20,20 +20,25 @@ import net.corda.core.flows.FlowException
 import net.corda.core.messaging.startFlow
 import org.controlsfx.dialog.ExceptionDialog
 import tornadofx.*
+import java.time.LocalDateTime
 
 /**
  * Created by raymondm on 14/08/2017.
  */
 
-class PromptActivate : Fragment() {
+class RolloverDeposit : Fragment() {
     override val root by fxml<DialogPane>()
     // Components
+    private val transactionTypeCB by fxid<ChoiceBox<TermDeposit>>()
+
     private val offerChoiceBox by fxid<ChoiceBox<StateAndRef<TermDeposit.State>>>()
     private val offerLabel by fxid<Label>()
+    private val withInterestChoiceBox by fxid<ChoiceBox<Boolean>>()
+    private val withInterestLabel by fxid<Label>()
     private val issueRef = SimpleObjectProperty<Byte>()
     // Inject data
     private val parties by observableList(NetworkIdentityModel::parties)
-    private val offerStates by observableList(TermDepositsModel::pendingStates)
+    private val offerStates by observableList(TermDepositsModel::depositStates)
     // private val issuers by observableList(IssuerModel::issuers)
     private val rpcProxy by observableValue(NodeMonitorModel::proxyObservable)
     private val myIdentity by observableValue(NetworkIdentityModel::myIdentity)
@@ -90,9 +95,10 @@ class PromptActivate : Fragment() {
         setResultConverter {
             when (it) {
                 executeButton -> {
+                    val newTerms = TermDeposit.RolloverTerms(LocalDateTime.MIN, LocalDateTime.MAX, withInterestChoiceBox.value)
                     //TODO Execute accept offer
-                    rpcProxy.value?.startFlow(PromptActivate::Prompter, offerChoiceBox.value.state.data.startDate, offerChoiceBox.value.state.data.endDate,
-                            offerChoiceBox.value.state.data.interestPercent, offerChoiceBox.value.state.data.institue, rpcProxy.value?.nodeInfo()!!.legalIdentities.first(),  offerChoiceBox.value.state.data.depositAmount)
+                    rpcProxy.value?.startFlow(RolloverTD::RolloverInitiator, offerChoiceBox.value.state.data.startDate, offerChoiceBox.value.state.data.endDate,
+                            offerChoiceBox.value.state.data.interestPercent, offerChoiceBox.value.state.data.institue,  offerChoiceBox.value.state.data.depositAmount, newTerms)
                 }
                 else -> null
             }
@@ -113,8 +119,9 @@ class PromptActivate : Fragment() {
         //partyATextField.textProperty().bind(myIdentity.map { it?.legalIdentity?.let { PartyNameFormatter.short.format(it.name) } ?: "" })
         //partyALabel.textProperty().bind(transactionTypeCB.valueProperty().map { it?.partyNameA?.let { "$it : " } })
         //partyATextField.visibleProperty().bind(transactionTypeCB.valueProperty().map { it?.partyNameA }.isNotNull())
-
-        offerLabel.text = "Pending Deposits"
+        withInterestLabel.text = "Rollover Interest?"
+        withInterestChoiceBox.items = listOf(true, false).observable()
+        offerLabel.text = "Offers"
         // Loan Selection
         offerChoiceBox.apply {
             //            partyBLabel.textProperty().bind(transactionTypeCB.valueProperty().map { it?.partyNameB?.let { "$it : " } })
@@ -141,3 +148,4 @@ class PromptActivate : Fragment() {
 
     }
 }
+

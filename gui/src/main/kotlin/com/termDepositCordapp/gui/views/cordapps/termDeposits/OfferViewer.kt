@@ -10,22 +10,16 @@ import de.jensd.fx.glyphs.fontawesome.FontAwesomeIcon
 import de.jensd.fx.glyphs.fontawesome.FontAwesomeIconView
 import javafx.beans.binding.Bindings
 import javafx.beans.property.SimpleStringProperty
-import javafx.beans.value.ObservableValue
 import javafx.collections.FXCollections
 import javafx.collections.ObservableList
-import javafx.geometry.Insets
 import javafx.scene.Parent
-import javafx.scene.chart.NumberAxis
 import javafx.scene.control.*
 import javafx.scene.input.MouseButton
 import javafx.scene.layout.HBox
 import javafx.scene.layout.Priority
 import javafx.scene.layout.VBox
-import net.corda.client.jfx.model.*
 import net.corda.client.jfx.utils.*
-import net.corda.core.contracts.Amount
 import net.corda.core.contracts.StateAndRef
-import net.corda.core.contracts.withoutIssuer
 import net.corda.core.identity.AbstractParty
 import com.termDepositCordapp.gui.formatters.AmountFormatter
 import com.termDepositCordapp.gui.formatters.PartyNameFormatter
@@ -34,24 +28,12 @@ import com.termDepositCordapp.gui.identicon.identiconToolTip
 import com.termDepositCordapp.gui.model.*
 import com.termDepositCordapp.gui.ui.*
 import com.termDepositCordapp.gui.views.*
-import com.termDepositCordapp.gui.views.resolveIssuer
-import com.termDeposits.contract.TermDeposit
 import com.termDeposits.contract.TermDepositOffer
-import javafx.beans.property.ObjectProperty
 import javafx.geometry.Pos
-import javafx.scene.Node
 import net.corda.core.crypto.SecureHash
-import net.corda.core.flows.FlowLogic
-import net.corda.core.messaging.startFlow
-import net.corda.core.transactions.TransactionBuilder
-import org.fxmisc.easybind.EasyBind
 import tornadofx.*
-import java.time.Instant
 import java.time.LocalDateTime
-import java.util.*
-import net.corda.core.flows.FlowLogic.*
-import net.corda.core.internal.x500Name
-import kotlin.reflect.KFunction1
+
 
 class OfferViewer : CordaView("Term Deposit Offers") {
     //RPC Proxy
@@ -61,7 +43,7 @@ class OfferViewer : CordaView("Term Deposit Offers") {
     // Inject UI elements.
     override val root: BorderPane by fxml()
     override val icon: FontAwesomeIcon = FontAwesomeIcon.ADDRESS_CARD
-    override val widgets = listOf(CordaWidget("TermDeposit", OfferWidget(), icon)).observable()
+    override val widgets = listOf(CordaWidget("Offers", OfferWidget(), icon)).observable()
     // Left pane
     private val leftPane: VBox by fxid()
     private val splitPane: SplitPane by fxid()
@@ -252,17 +234,16 @@ class OfferViewer : CordaView("Term Deposit Offers") {
             // TODO : Add a scrolling table to show latest transaction.
             // TODO : Add a chart to show types of transactions.
             init {
-//                right {
-//                    label {
-//                        val hash = SecureHash.randomSHA256()
-//                        graphic = identicon(hash, 30.0)
-//                        var totalStock = 0;
-//                        println("Claim States size ${claimStates.size}")
-//                        textProperty().bind(Bindings.size(claimStates).map(Number::toString))
-//                        //textProperty().bind(Bindings.concat(totalStock))
-//                        BorderPane.setAlignment(this, Pos.BOTTOM_RIGHT)
-//                    }
-//                }
+                right {
+                    label {
+                        val hash = SecureHash.randomSHA256()
+                        graphic = identicon(hash, 30.0)
+                        var totalStock = 0;
+                        textProperty().bind(Bindings.size(claimStates).map(Number::toString))
+                        //textProperty().bind(Bindings.concat(totalStock))
+                        BorderPane.setAlignment(this, Pos.BOTTOM_RIGHT)
+                    }
+                }
 
 
             }

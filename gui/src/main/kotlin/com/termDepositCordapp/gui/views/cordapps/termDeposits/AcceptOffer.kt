@@ -30,8 +30,6 @@ class AcceptOffer : Fragment() {
     override val root by fxml<DialogPane>()
     // Components
     private val transactionTypeCB by fxid<ChoiceBox<TermDepositOffer>>()
-    //private val partyATextField by fxid<TextField>()
-    //private val partyALabel by fxid<Label>()
     private val offerChoiceBox by fxid<ChoiceBox<StateAndRef<TermDepositOffer.State>>>()
     private val offerLabel by fxid<Label>()
     private val depositLabel by fxid<Label>()
@@ -47,13 +45,6 @@ class AcceptOffer : Fragment() {
     private val cash by observableList(ContractStateModel::cash)
     private val executeButton = ButtonType("Execute", ButtonBar.ButtonData.APPLY)
 
-
-    //private val loanItems = ChosenList(transactionTypeCB.valueProperty().map {
-        //when (it) {
-          //  LoanTransactions.UpdateAll ->
-        //    else -> loanTypes
-      //  }
-    //})
 
     fun show(window: Window): Unit {
         newTransactionDialog(window).showAndWait().ifPresent { command: Unit ->

@@ -3,8 +3,6 @@ package com.termDepositCordapp.gui.views.cordapps.termDeposits
 import com.termDepositCordapp.gui.views.stringConverter
 import com.termDepositCordapp.gui.model.TermDepositsModel
 import com.termDeposits.contract.TermDeposit
-import com.termDeposits.contract.TermDepositOffer
-import com.termDeposits.flow.TermDeposit.IssueTD
 import com.termDeposits.flow.TermDeposit.RedeemTD
 import javafx.beans.binding.Bindings
 import javafx.beans.binding.BooleanBinding
@@ -19,10 +17,8 @@ import net.corda.client.jfx.utils.isNotNull
 import net.corda.core.contracts.*
 import net.corda.core.flows.FlowException
 import net.corda.core.messaging.startFlow
-import net.corda.finance.USD
 import org.controlsfx.dialog.ExceptionDialog
 import tornadofx.*
-import java.time.LocalDateTime
 
 /**
  * Created by raymondm on 14/08/2017.
@@ -32,8 +28,7 @@ class ExitDeposit : Fragment() {
     override val root by fxml<DialogPane>()
     // Components
     private val transactionTypeCB by fxid<ChoiceBox<TermDeposit>>()
-    //private val partyATextField by fxid<TextField>()
-    //private val partyALabel by fxid<Label>()
+
     private val offerChoiceBox by fxid<ChoiceBox<StateAndRef<TermDeposit.State>>>()
     private val offerLabel by fxid<Label>()
     private val issueRef = SimpleObjectProperty<Byte>()
@@ -46,14 +41,6 @@ class ExitDeposit : Fragment() {
     private val notaries by observableList(NetworkIdentityModel::notaries)
     private val cash by observableList(ContractStateModel::cash)
     private val executeButton = ButtonType("Execute", ButtonBar.ButtonData.APPLY)
-
-
-    //private val loanItems = ChosenList(transactionTypeCB.valueProperty().map {
-    //when (it) {
-    //  LoanTransactions.UpdateAll ->
-    //    else -> loanTypes
-    //  }
-    //})
 
     fun show(window: Window): Unit {
         newTransactionDialog(window).showAndWait().ifPresent { command: Unit ->
