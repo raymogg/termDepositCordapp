@@ -19,7 +19,7 @@
                         <TreeTableColumn fx:id="claimViewerTableExchangeHolding" styleClass="first-column"
                                          text="Exchange/Holding"/>
                         <!--<TreeTableColumn fx:id="claimViewerTableQuantity" text="Quantity"-->
-                                         <!--styleClass="monetary-value, second-column"/>-->
+                        <!--styleClass="monetary-value, second-column"/>-->
                     </columns>
                 </TreeTableView>
                 <Label fx:id="totalMatchingLabel" text="Total 15 matching issuer(s)"/>

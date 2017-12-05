@@ -46,14 +46,24 @@ class TermDepositsModel {
         list.addAll(statesDiff.added)
     }
 
-    //Security loan states active in the vault
+    //Active termdeposit states in the vault
     private val depositStatesDiff: Observable<Diff<TermDeposit.State>> = contractStatesDiff.map {
         Diff(it.added.filterDepositStateAndRef(), it.removed.filterDepositStateAndRef())
     }
-    val loanStates: ObservableList<StateAndRef<TermDeposit.State>> = depositStatesDiff.fold(FXCollections.observableArrayList()) { list: MutableList<StateAndRef<TermDeposit.State>>, statesDiff ->
-        list.removeIf { it in statesDiff.removed }
+    val depositStates: ObservableList<StateAndRef<TermDeposit.State>> = depositStatesDiff.fold(FXCollections.observableArrayList()) { list: MutableList<StateAndRef<TermDeposit.State>>, statesDiff ->
+        list.removeIf { it in statesDiff.removed}
         list.addAll(statesDiff.added)
     }
+
+    //Pending termdeposit states in the vault
+    private val pendingStatesDiff: Observable<Diff<TermDeposit.State>> = contractStatesDiff.map {
+        Diff(it.added.filterPendingStateAndRef(), it.removed.filterPendingStateAndRef())
+    }
+    val pendingStates: ObservableList<StateAndRef<TermDeposit.State>> = pendingStatesDiff.fold(FXCollections.observableArrayList()) { list: MutableList<StateAndRef<TermDeposit.State>>, statesDiff ->
+        list.removeIf { it in statesDiff.removed}
+        list.addAll(statesDiff.added)
+    }
+
 
     private fun Collection<StateAndRef<ContractState>>.filterCashStateAndRefs(): List<StateAndRef<Cash.State>> {
         return this.map { stateAndRef ->
@@ -82,7 +92,28 @@ class TermDepositsModel {
             @Suppress("UNCHECKED_CAST")
             if (stateAndRef.state.data is TermDeposit.State) {
                 // Kotlin doesn't unify here for some reason
-                stateAndRef as StateAndRef<TermDeposit.State>
+                if ((stateAndRef as StateAndRef<TermDeposit.State>).state.data.internalState == TermDeposit.internalState.active) {
+                    stateAndRef as StateAndRef<TermDeposit.State>
+                } else {
+                    null
+                }
+            } else {
+                null
+            }
+        }.filterNotNull()
+    }
+
+    private fun Collection<StateAndRef<ContractState>>.filterPendingStateAndRef(): List<StateAndRef<TermDeposit.State>> {
+        return this.map { stateAndRef ->
+            @Suppress("UNCHECKED_CAST")
+            if (stateAndRef.state.data is TermDeposit.State) {
+                // Kotlin doesn't unify here for some reason
+                if ((stateAndRef as StateAndRef<TermDeposit.State>).state.data.internalState == TermDeposit.internalState.pending) {
+                    stateAndRef
+                } else {
+                    null
+                }
+
             } else {
                 null
             }

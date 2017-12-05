@@ -145,7 +145,8 @@ class OfferViewer : CordaView("Term Deposit Offers") {
                     setOnMouseClicked {
                         if (it.button == MouseButton.PRIMARY) {
                             //TODO - Some offer button
-                            //find<UpdatePortfolio>().show(this@PortfolioViewer.root.scene.window)
+                            find<AcceptOffer>().show(this@OfferViewer.root.scene.window)
+
                         }
                     }
                 }
@@ -206,20 +207,20 @@ class OfferViewer : CordaView("Term Deposit Offers") {
                     //is ViewerNode.QuantityNode -> node.states.map { it.state.data.code }.first()
                 }
             }
-            claimViewerTableQuantity.apply {
-                setCellValueFactory {
-                    val node = it.value.value
-                    when (node) {
-                        is ViewerNode.ExchangeNode -> null.lift()
-                        //is ViewerNode.QuantityNode -> node.quantity.map { it }
-                    }
-                }
-                cellFactory = quantityCellFactory
-                /**
-                 * We must set this, otherwise on sort an exception will be thrown, as it will try to compare Amounts of differing currency
-                 */
-                isSortable = false
-            }
+//            claimViewerTableQuantity.apply {
+//                setCellValueFactory {
+//                    val node = it.value.value
+//                    when (node) {
+//                        is ViewerNode.ExchangeNode -> null.lift()
+//                        //is ViewerNode.QuantityNode -> node.quantity.map { it }
+//                    }
+//                }
+//                cellFactory = quantityCellFactory
+//                /**
+//                 * We must set this, otherwise on sort an exception will be thrown, as it will try to compare Amounts of differing currency
+//                 */
+//                isSortable = false
+//            }
 
             // Right Pane.
             totalPositionsLabel.textProperty().bind(claimStatesList.itemsProperty().map {
@@ -251,17 +252,17 @@ class OfferViewer : CordaView("Term Deposit Offers") {
             // TODO : Add a scrolling table to show latest transaction.
             // TODO : Add a chart to show types of transactions.
             init {
-                right {
-                    label {
-                        val hash = SecureHash.randomSHA256()
-                        graphic = identicon(hash, 30.0)
-                        var totalStock = 0;
-                        println("Claim States size ${claimStates.size}")
-                        textProperty().bind(Bindings.size(claimStates).map(Number::toString))
-                        //textProperty().bind(Bindings.concat(totalStock))
-                        BorderPane.setAlignment(this, Pos.BOTTOM_RIGHT)
-                    }
-                }
+//                right {
+//                    label {
+//                        val hash = SecureHash.randomSHA256()
+//                        graphic = identicon(hash, 30.0)
+//                        var totalStock = 0;
+//                        println("Claim States size ${claimStates.size}")
+//                        textProperty().bind(Bindings.size(claimStates).map(Number::toString))
+//                        //textProperty().bind(Bindings.concat(totalStock))
+//                        BorderPane.setAlignment(this, Pos.BOTTOM_RIGHT)
+//                    }
+//                }
 
 
             }
