@@ -50,8 +50,7 @@ open class TermDepositOffer : Contract {
                         TDTerms.plus(it.interestPercent.toString())
                         TDTerms.plus(it.institue.name.commonName.toString())
                     } else if (it is State) {
-                        TDOTerms.plus(it.startDate.toString())
-                        TDOTerms.plus(it.endDate.toString())
+                        TDOTerms.plus(it.validTill.toString())
                         TDOTerms.plus(it.interestPercent.toString())
                         TDOTerms.plus(it.institue.name.commonName.toString())
                     }
@@ -65,7 +64,6 @@ open class TermDepositOffer : Contract {
                 tx.outputStates.size == 1
                 val offerState = tx.outputStates.first() as State
                 //Individual requirements for offer states - e.g non negative values
-                offerState.startDate != offerState.endDate
                 offerState.interestPercent > 0
             }
         }
@@ -79,7 +77,7 @@ open class TermDepositOffer : Contract {
 
     public fun generateIssue(builder: TransactionBuilder, startDate: LocalDateTime, endDate: LocalDateTime, interestPercent: Float,
                              institue: Party, notary: Party, receiver: Party): TransactionBuilder {
-        val state = TransactionState(data = TermDepositOffer.State(startDate, endDate, interestPercent, institue, receiver), notary = notary, contract = TERMDEPOSIT_OFFER_CONTRACT_ID)
+        val state = TransactionState(data = TermDepositOffer.State(endDate, interestPercent, institue, receiver), notary = notary, contract = TERMDEPOSIT_OFFER_CONTRACT_ID)
         builder.addOutputState(state)
         builder.addCommand(TermDepositOffer.Commands.Issue(), institue.owningKey)
         return builder
@@ -96,7 +94,7 @@ open class TermDepositOffer : Contract {
      * Potential other terms : minimum deposit amount, max deposit amount, fees - (todo would these be kept within contract or just in the attachment?)
      */
     @CordaSerializable
-    data class State(val startDate: java.time.LocalDateTime, val endDate: java.time.LocalDateTime,
+    data class State(val validTill: LocalDateTime,
                                      val interestPercent: Float, val institue: Party, override val owner: AbstractParty) : QueryableState, OwnableState, ContractState {
 
         override val participants: List<AbstractParty> get() = listOf(owner)
@@ -112,8 +110,7 @@ open class TermDepositOffer : Contract {
         override fun generateMappedObject(schema: MappedSchema): PersistentState {
             return when (schema) {
                 is TDOSchemaV1 -> TDOSchemaV1.PersistentTDOSchema(
-                        startDate = this.startDate,
-                        endDate = this.endDate,
+                        endDate = this.validTill,
                         interest = this.interestPercent,
                         institute = this.institue.owningKey.toBase58String()
 

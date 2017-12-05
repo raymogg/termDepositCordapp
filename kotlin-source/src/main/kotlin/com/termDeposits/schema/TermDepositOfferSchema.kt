@@ -24,8 +24,6 @@ object TDOSchemaV1 : MappedSchema(
     @Entity
     @Table(name = "TDOffer_states")
     class PersistentTDOSchema(
-            @Column(name = "start_date")
-            var startDate: LocalDateTime,
 
             @Column(name = "end_date")
             var endDate: LocalDateTime,

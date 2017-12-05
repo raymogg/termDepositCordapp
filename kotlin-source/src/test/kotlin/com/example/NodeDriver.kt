@@ -176,15 +176,16 @@ class Simulation(options: String) {
 
         println("Simulations")
         //Send an offer to parties for a TD - 0 is the issuing institue, 1 is receiever
-        sendTDOffers(banks[0].second, parties[1].second, LocalDateTime.MIN, LocalDateTime.MAX, 3.4f)
+        sendTDOffers(banks[0].second, parties[0].second, LocalDateTime.MIN, LocalDateTime.MAX, 3.4f)
         //sendTDOffers(parties[0].second, parties[1].second, LocalDateTime.MIN, LocalDateTime.MAX, 3.8f)
         sendTDOffers(banks[1].second, parties[0].second, LocalDateTime.MIN, LocalDateTime.MAX, 3.2f)
         //STOP HERE FOR NOW TO DO GUI TESTING AND CONSTRUCTION
         //Accept this offer
-//        RequestTD(parties[1].second, banks[0].second, LocalDateTime.MIN, LocalDateTime.MAX, 3.4f, Amount<Currency>(300000, USD))
+        RequestTD(parties[0].second, banks[0].second, LocalDateTime.MIN, LocalDateTime.MAX, 3.4f, Amount<Currency>(300000, USD))
+
 //        RequestTD(parties[0].second, banks[1].second, LocalDateTime.MIN, LocalDateTime.MAX, 3.2f, Amount<Currency>(500000, USD))
 //        //Activate this TD - Done once the issuing party receieves its cash through regular bank transfer
-//        Activate(banks[0].second, parties[1].second, LocalDateTime.MIN, LocalDateTime.MAX, 3.4f, Amount<Currency>(300000, USD))
+        Activate(banks[0].second, parties[0].second, LocalDateTime.MIN, LocalDateTime.MAX, 3.4f, Amount<Currency>(300000, USD))
 //        Activate(banks[1].second, parties[0].second, LocalDateTime.MIN, LocalDateTime.MAX, 3.2f, Amount<Currency>(500000, USD))
 //        //Redeem this TD - removed time constraints on this for now so it works
 //        //Redeem(parties[1].second, parties[0].second, LocalDateTime.MIN, LocalDateTime.MAX, 3.4f, Amount<Currency>(300000, USD))

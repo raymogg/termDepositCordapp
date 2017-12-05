@@ -148,18 +148,30 @@ class ActiveViewer : CordaView("Active Term Deposits") {
                 "Interest" to { state, text -> state.state.data.interestPercent.toString().contains(text, true) }
         )
         root.top = hbox(5.0) {
-            button("Offer button (todo)", FontAwesomeIconView(FontAwesomeIcon.PLUS)) {
+            button("Exit Deposit", FontAwesomeIconView(FontAwesomeIcon.PLUS)) {
                 setOnMouseClicked {
                     if (it.button == MouseButton.PRIMARY) {
-                        //TODO - Some offer button
+                        //TODO - Make this button functional
+                        find<ExitDeposit>().show(this@ActiveViewer.root.scene.window)
+
+                    }
+                }
+            }
+
+            button("Rollover Deposit", FontAwesomeIconView(FontAwesomeIcon.PLUS)) {
+                setOnMouseClicked {
+                    if (it.button == MouseButton.PRIMARY) {
+                        //TODO - Make this button functional
                         find<AcceptOffer>().show(this@ActiveViewer.root.scene.window)
 
                     }
                 }
             }
+
             HBox.setHgrow(searchField.root, Priority.ALWAYS)
             add(searchField.root)
         }
+
 
         /**
          * This is where we aggregate the list of states into the TreeTable structure.

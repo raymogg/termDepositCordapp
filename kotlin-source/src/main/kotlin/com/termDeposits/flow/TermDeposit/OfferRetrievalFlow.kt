@@ -28,8 +28,8 @@ class OfferRetrievalFlow(val startDate: LocalDateTime, val endDate: LocalDateTim
         val offerStates = serviceHub.vaultService.queryBy<TermDepositOffer.State>(criteria)
         //Filter offer states to get the states we want
         val filteredStates = offerStates.states.filter {
-            it.state.data.endDate.isAfter(LocalDateTime.now()) && it.state.data.startDate == startDate &&
-                    it.state.data.endDate == endDate &&  it.state.data.institue == offeringInstitute &&
+            it.state.data.validTill.isAfter(LocalDateTime.now())  &&
+                    it.state.data.institue == offeringInstitute &&
                     it.state.data.interestPercent == interest
         }
         if (filteredStates.isEmpty()) {

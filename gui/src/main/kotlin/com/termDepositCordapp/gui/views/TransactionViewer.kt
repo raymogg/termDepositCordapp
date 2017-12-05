@@ -310,7 +310,7 @@ class TransactionViewer : CordaView("Transactions") {
 
                             row {
                                 label("Duration : ") {gridpaneConstraints { hAlignment = HPos.RIGHT }}
-                                label(data.startDate.toString())
+                                label(data.validTill.toString())
                             }
 
                         }

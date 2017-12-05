@@ -91,9 +91,11 @@ open class TermDeposit : Contract {
      * commands for each type of transaction
      */
     fun generateIssue(builder: TransactionBuilder, TDOffer: StateAndRef<TermDepositOffer.State>,
-                      notary: Party, depositAmount: Amount<Currency>, to: Party): TransactionBuilder {
+                      notary: Party, depositAmount: Amount<Currency>, to: Party, startDate: LocalDateTime,
+                      endDate: LocalDateTime): TransactionBuilder {
         val offerState = TDOffer.state.data
-        val TDState = TransactionState(data = TermDeposit.State(offerState.startDate, offerState.endDate, offerState.interestPercent, offerState.institue,
+        //TODO Rather than hardcoding values, have start and end past in as a paramater
+        val TDState = TransactionState(data = TermDeposit.State(startDate, endDate, offerState.interestPercent, offerState.institue,
                 depositAmount, internalState.pending, to), notary = notary, contract = TERMDEPOSIT_CONTRACT_ID)
         //Add tje TermDeposit as the output
         builder.addOutputState(TDState)

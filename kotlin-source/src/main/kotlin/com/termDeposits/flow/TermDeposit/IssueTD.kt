@@ -57,9 +57,9 @@ object IssueTD {
             //Add cash as output
             val (tx, cashKeys) = Cash.generateSpend(serviceHub, builder, depositAmount, issuingInstitue)
             builder.addCommand(Command(TermDepositOffer.Commands.CreateTD(), TDOffer.state.data.owner.owningKey))
-            val ptx = TermDeposit().generateIssue(tx,TDOffer, notary, depositAmount, serviceHub.myInfo.legalIdentities.first())
+            val ptx = TermDeposit().generateIssue(tx,TDOffer, notary, depositAmount, serviceHub.myInfo.legalIdentities.first(), LocalDateTime.MIN, LocalDateTime.MAX)
             //Sign txn
-            val stx = serviceHub.signInitialTransaction(ptx, cashKeys)
+            val stx = serviceHub.signInitialTransaction(ptx, cashKeys+serviceHub.myInfo.legalIdentities.first().owningKey)
 
             // Sync up confidential identities in the transaction with our counterparty
             subFlow(IdentitySyncFlow.Send(flow, ptx.toWireTransaction(serviceHub)))

@@ -2,8 +2,10 @@ package com.termDepositCordapp.gui.views.cordapps.termDeposits
 
 import com.termDepositCordapp.gui.views.stringConverter
 import com.termDepositCordapp.gui.model.TermDepositsModel
+import com.termDeposits.contract.TermDeposit
 import com.termDeposits.contract.TermDepositOffer
 import com.termDeposits.flow.TermDeposit.IssueTD
+import com.termDeposits.flow.TermDeposit.RedeemTD
 import javafx.beans.binding.Bindings
 import javafx.beans.binding.BooleanBinding
 import javafx.beans.property.SimpleObjectProperty
@@ -26,21 +28,19 @@ import java.time.LocalDateTime
  * Created by raymondm on 14/08/2017.
  */
 
-class AcceptOffer : Fragment() {
+class ExitDeposit : Fragment() {
     override val root by fxml<DialogPane>()
     // Components
-    private val transactionTypeCB by fxid<ChoiceBox<TermDepositOffer>>()
+    private val transactionTypeCB by fxid<ChoiceBox<TermDeposit>>()
     //private val partyATextField by fxid<TextField>()
     //private val partyALabel by fxid<Label>()
-    private val offerChoiceBox by fxid<ChoiceBox<StateAndRef<TermDepositOffer.State>>>()
+    private val offerChoiceBox by fxid<ChoiceBox<StateAndRef<TermDeposit.State>>>()
     private val offerLabel by fxid<Label>()
-    private val depositLabel by fxid<Label>()
-    private val depositTextField by fxid<TextField>()
     private val issueRef = SimpleObjectProperty<Byte>()
     // Inject data
     private val parties by observableList(NetworkIdentityModel::parties)
-    private val offerStates by observableList(TermDepositsModel::offerStates)
-   // private val issuers by observableList(IssuerModel::issuers)
+    private val offerStates by observableList(TermDepositsModel::depositStates)
+    // private val issuers by observableList(IssuerModel::issuers)
     private val rpcProxy by observableValue(NodeMonitorModel::proxyObservable)
     private val myIdentity by observableValue(NetworkIdentityModel::myIdentity)
     private val notaries by observableList(NetworkIdentityModel::notaries)
@@ -49,10 +49,10 @@ class AcceptOffer : Fragment() {
 
 
     //private val loanItems = ChosenList(transactionTypeCB.valueProperty().map {
-        //when (it) {
-          //  LoanTransactions.UpdateAll ->
-        //    else -> loanTypes
-      //  }
+    //when (it) {
+    //  LoanTransactions.UpdateAll ->
+    //    else -> loanTypes
+    //  }
     //})
 
     fun show(window: Window): Unit {
@@ -81,21 +81,21 @@ class AcceptOffer : Fragment() {
 
                 }
                 dialog.dialogPane.scene.window.sizeToScene()
-                }.setOnFailed {
-                    val ex = it.source.exception
-                    when (ex) {
-                        is FlowException -> {
-                            dialog.alertType = Alert.AlertType.ERROR
-                            dialog.contentText = ex.message
-                        }
-                        else -> {
-                            dialog.close()
-                            ExceptionDialog(ex).apply { initOwner(window) }.showAndWait()
-                        }
+            }.setOnFailed {
+                val ex = it.source.exception
+                when (ex) {
+                    is FlowException -> {
+                        dialog.alertType = Alert.AlertType.ERROR
+                        dialog.contentText = ex.message
+                    }
+                    else -> {
+                        dialog.close()
+                        ExceptionDialog(ex).apply { initOwner(window) }.showAndWait()
                     }
                 }
             }
         }
+    }
 
 
     private fun newTransactionDialog(window: Window) = Dialog<Unit>().apply {
@@ -105,9 +105,9 @@ class AcceptOffer : Fragment() {
             when (it) {
                 executeButton -> {
                     //TODO Execute accept offer
-                    rpcProxy.value?.startFlow(IssueTD::Initiator, LocalDateTime.MIN, LocalDateTime.MAX, offerChoiceBox.value.state.data.interestPercent,
-                            offerChoiceBox.value.state.data.institue,  Amount(depositTextField.text.toLong()*100, USD))
-               }
+                    rpcProxy.value?.startFlow(RedeemTD::RedemptionInitiator, offerChoiceBox.value.state.data.startDate, offerChoiceBox.value.state.data.endDate,
+                            offerChoiceBox.value.state.data.interestPercent, offerChoiceBox.value.state.data.institue,  offerChoiceBox.value.state.data.depositAmount)
+                }
                 else -> null
             }
         }
@@ -129,30 +129,30 @@ class AcceptOffer : Fragment() {
         //partyATextField.visibleProperty().bind(transactionTypeCB.valueProperty().map { it?.partyNameA }.isNotNull())
 
         offerLabel.text = "Offers"
-        depositLabel.text = "Deposit Amount"
         // Loan Selection
         offerChoiceBox.apply {
-//            partyBLabel.textProperty().bind(transactionTypeCB.valueProperty().map { it?.partyNameB?.let { "$it : " } })
+            //            partyBLabel.textProperty().bind(transactionTypeCB.valueProperty().map { it?.partyNameB?.let { "$it : " } })
             items = offerStates
             converter = stringConverter { "Issuing Institue: " + it.state.data.institue.toString() +
-                 "\n Interest: "+ it.state.data.interestPercent+"%" +
-                        "\n Valid till: " + it.state.data.validTill.toString()}
+                    "\n Interest: "+ it.state.data.interestPercent+"%" +
+                    "\n Deposited Amount " + it.state.data.depositAmount.toString() +
+                    "\n End Date " + it.state.data.endDate.toString()}
         }
 
-            // Validate inputs.
-            val formValidCondition = arrayOf(
-                    //myIdentity.isNotNull(),
-                    offerChoiceBox.valueProperty().isNotNull
+        // Validate inputs.
+        val formValidCondition = arrayOf(
+                //myIdentity.isNotNull(),
+                offerChoiceBox.valueProperty().isNotNull
 
-            ).reduce(BooleanBinding::and)
+        ).reduce(BooleanBinding::and)
 
-            // Enable execute button when form is valid.
-            root.buttonTypes.add(executeButton)
-            //Use correct for validation
-            //Add validation based on transactionType
-            root.lookupButton(executeButton).disableProperty().bind(formValidCondition.not())
+        // Enable execute button when form is valid.
+        root.buttonTypes.add(executeButton)
+        //Use correct for validation
+        //Add validation based on transactionType
+        root.lookupButton(executeButton).disableProperty().bind(formValidCondition.not())
 
 
-        }
     }
+}
 

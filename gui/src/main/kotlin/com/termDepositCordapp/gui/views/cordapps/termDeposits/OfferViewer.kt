@@ -128,7 +128,7 @@ class OfferViewer : CordaView("Term Deposit Offers") {
                     PartyNameFormatter.short.format(it)
                 } ?: "Anonymous"))
                 institueValueLabel.apply { tooltip(resolvedIssuer.nameOrNull()?.let { PartyNameFormatter.full.format(it) } ?: "Anonymous") }
-                originatedValueLabel.text = stateRow.originated.toString()
+                originatedValueLabel.text = stateRow.stateAndRef.state.data.validTill.toString()
                 interestValueLabel.text = stateRow.stateAndRef.state.data.interestPercent.toString()
             }
         }
@@ -141,7 +141,7 @@ class OfferViewer : CordaView("Term Deposit Offers") {
                     "Interest" to { state, text -> state.state.data.interestPercent.toString().contains(text, true) }
             )
             root.top = hbox(5.0) {
-                button("Offer button (todo)", FontAwesomeIconView(FontAwesomeIcon.PLUS)) {
+                button("Accept Offer", FontAwesomeIconView(FontAwesomeIcon.PLUS)) {
                     setOnMouseClicked {
                         if (it.button == MouseButton.PRIMARY) {
                             //TODO - Some offer button

@@ -17,7 +17,7 @@
                 <TreeTableView fx:id="claimViewerTable" showRoot="false" VBox.vgrow="ALWAYS">
                     <columns>
                         <TreeTableColumn fx:id="claimViewerTableExchangeHolding" styleClass="first-column"
-                                         text="Exchange/Holding"/>
+                                         text="Issuing Institute"/>
                         <!--<TreeTableColumn fx:id="claimViewerTableQuantity" text="Quantity"-->
                         <!--styleClass="monetary-value, second-column"/>-->
                     </columns>

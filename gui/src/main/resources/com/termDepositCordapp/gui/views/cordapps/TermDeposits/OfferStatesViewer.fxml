@@ -6,7 +6,7 @@
     <Label text="State ID"/>
     <Label text="Institue" GridPane.rowIndex="1"/>
     <Label text="Interest" GridPane.rowIndex="2"/>
-    <Label text="Originated" wrapText="true" GridPane.rowIndex="3"/>
+    <Label text="Valid Till" wrapText="true" GridPane.rowIndex="3"/>
 
     <Label fx:id="stateIdValueLabel" text="39043-329090-390091" GridPane.columnIndex="1"/>
     <Label fx:id="institueValueLabel" styleClass="counterparty" text="C-03820 HSBC GROUP PLC" GridPane.columnIndex="1"
