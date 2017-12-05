@@ -146,11 +146,11 @@ class PendingViewer : CordaView("Pending Term Deposits") {
                 "Interest" to { state, text -> state.state.data.interestPercent.toString().contains(text, true) }
         )
         root.top = hbox(5.0) {
-            button("Offer button (todo)", FontAwesomeIconView(FontAwesomeIcon.PLUS)) {
+            button("Prompt Bank to Activate", FontAwesomeIconView(FontAwesomeIcon.PLUS)) {
                 setOnMouseClicked {
                     if (it.button == MouseButton.PRIMARY) {
                         //TODO - Some offer button
-                        find<AcceptOffer>().show(this@PendingViewer.root.scene.window)
+                        find<PromptActivate>().show(this@PendingViewer.root.scene.window)
 
                     }
                 }

@@ -66,7 +66,7 @@ object ActivateTD {
 
 
             //STEP 5: Sign and send back the txn (only updating internal state so no validation required really)
-            val ptx = serviceHub.signInitialTransaction(tx)
+            val ptx = serviceHub.signInitialTransaction(tx, serviceHub.myInfo.legalIdentities.first().owningKey)
             flow.send(ptx)
             return waitForLedgerCommit(ptx.id)
         }

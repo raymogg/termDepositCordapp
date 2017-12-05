@@ -25,17 +25,15 @@ object PromptActivate {
     @StartableByRPC
     @InitiatingFlow
     open class Prompter(val startDate: LocalDateTime, val endDate: LocalDateTime, val interestPercent: Float,
-                         val issuingInstitue: Party, val client: Party, val depositAmount: Amount<Currency>) : FlowLogic<SignedTransaction>() {//FlowLogic<SignedTransaction>() {
+                         val issuingInstitue: Party, val client: Party, val depositAmount: Amount<Currency>) : FlowLogic<Unit>() {//FlowLogic<SignedTransaction>() {
     @Suspendable
-    override fun call(): SignedTransaction {
+    override fun call(): Unit {
         //STEP 1: Notify other party of activation
-        val flow = initiateFlow(client)
+        val flow = initiateFlow(issuingInstitue)
         flow.send(listOf(startDate, endDate, interestPercent, issuingInstitue, client, depositAmount))
 
         //STEP 6: Recieve back the signed txn and commit it to the ledger
-        val finishedTx = flow.receive<SignedTransaction>()
-
-        return finishedTx.unwrap { it }
+        return
 
     }
     }
@@ -56,7 +54,6 @@ object PromptActivate {
                     args[4] as Party, args[5] as Amount<Currency>))
 
             //STEP 4: Generate the Activate Txn
-            flow.send(TD)
             return TD
         }
     }

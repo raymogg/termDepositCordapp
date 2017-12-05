@@ -146,8 +146,11 @@ class Simulation(options: String) {
             FlowPermissions.startFlowPermission<RedeemTD.RedemptionInitiator>(),
             FlowPermissions.startFlowPermission<RedeemTD.RedemptionAcceptor>(),
             //FlowPermissions.startFlowPermission<RolloverTD.RolloverAcceptor>(),
-            FlowPermissions.startFlowPermission<RolloverTD.RolloverInitiator>()
-            )
+            FlowPermissions.startFlowPermission<RolloverTD.RolloverInitiator>(),
+            FlowPermissions.startFlowPermission<PromptActivate.Prompter>(),
+            FlowPermissions.startFlowPermission<PromptActivate.Acceptor>()
+
+    )
 
     fun allocateBankPermissions() : Set<String> = setOf(
             FlowPermissions.startFlowPermission<IssueOffer.Initiator>(),
