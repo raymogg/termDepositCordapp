@@ -88,7 +88,7 @@ object RolloverTD {
                 //Setup the txn with interest being returned to sender
                 val tx = TermDeposit().generateRolloever(builder, termDeposit, notary, newStartDate, newEndDate, false)
                 //Return the interest earned
-                val (ptx, cashKeys) = Cash.generateSpend(serviceHub, tx, Amount((termDeposit.state.data.depositAmount.quantity * termDeposit.state.data.interestPercent).toLong(), USD),
+                val (ptx, cashKeys) = Cash.generateSpend(serviceHub, tx, Amount((termDeposit.state.data.depositAmount.quantity/100 * termDeposit.state.data.interestPercent).toLong(), USD),
                         termDeposit.state.data.owner)
                 toSignTx = ptx
                 keys = cashKeys

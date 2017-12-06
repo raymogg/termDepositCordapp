@@ -74,10 +74,10 @@ open class TermDeposit : Contract {
             is Commands.Rollover -> requireThat {
                 //TD Rollover verification
                 //"The term deposit has not yet expired" using (td.endDate.isBefore(LocalDateTime.now())) todo: add this in once finished testing
-                "Only one input must be present" using (tx.inputStates.size == 1)
-                "Only one output must be present" using (tx.outputStates.size == 1)
-                val input = tx.inputStates.first() as TermDeposit.State
-                val output = tx.outputStates.first() as TermDeposit.State
+                "Only one term deposit input must be present" using (tx.inputStates.filterIsInstance<TermDeposit.State>().size == 1)
+                "Only one term deposit output must be present" using (tx.outputStates.filterIsInstance<TermDeposit.State>().size == 1)
+                val input = tx.inputStates.filterIsInstance<TermDeposit.State>().first() as TermDeposit.State
+                val output = tx.outputStates.filterIsInstance<TermDeposit.State>().first() as TermDeposit.State
                 "Input and Output issuer must be the same" using (input.institue == output.institue)
 
             }
