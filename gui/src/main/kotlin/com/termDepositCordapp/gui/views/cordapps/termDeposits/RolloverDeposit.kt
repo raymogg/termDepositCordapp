@@ -110,15 +110,8 @@ class RolloverDeposit : Fragment() {
         val notariesNotNullBinding = Bindings.createBooleanBinding({ notaries.isNotEmpty() }, arrayOf(notaries))
         val enableProperty = myIdentity.isNotNull().and(rpcProxy.isNotNull()).and(notariesNotNullBinding)
         root.disableProperty().bind(enableProperty.not())
-        //refresh loan states
 
-
-
-        // Party A textfield always display my identity name, not editable.
-        //partyATextField.isEditable = false
-        //partyATextField.textProperty().bind(myIdentity.map { it?.legalIdentity?.let { PartyNameFormatter.short.format(it.name) } ?: "" })
-        //partyALabel.textProperty().bind(transactionTypeCB.valueProperty().map { it?.partyNameA?.let { "$it : " } })
-        //partyATextField.visibleProperty().bind(transactionTypeCB.valueProperty().map { it?.partyNameA }.isNotNull())
+        //Load in the states that can be attempted to rollover
         withInterestLabel.text = "Rollover Interest?"
         withInterestChoiceBox.items = listOf(true, false).observable()
         offerLabel.text = "Offers"

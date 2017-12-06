@@ -75,7 +75,7 @@ open class TermDepositOffer : Contract {
         class CreateTD : Commands
     }
 
-    public fun generateIssue(builder: TransactionBuilder, startDate: LocalDateTime, endDate: LocalDateTime, interestPercent: Float,
+    public fun generateIssue(builder: TransactionBuilder, endDate: LocalDateTime, interestPercent: Float,
                              institue: Party, notary: Party, receiver: Party): TransactionBuilder {
         val state = TransactionState(data = TermDepositOffer.State(endDate, interestPercent, institue, receiver), notary = notary, contract = TERMDEPOSIT_OFFER_CONTRACT_ID)
         builder.addOutputState(state)

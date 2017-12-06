@@ -29,12 +29,10 @@ import java.time.LocalDateTime
 class AcceptOffer : Fragment() {
     override val root by fxml<DialogPane>()
     // Components
-    private val transactionTypeCB by fxid<ChoiceBox<TermDepositOffer>>()
     private val offerChoiceBox by fxid<ChoiceBox<StateAndRef<TermDepositOffer.State>>>()
     private val offerLabel by fxid<Label>()
     private val depositLabel by fxid<Label>()
     private val depositTextField by fxid<TextField>()
-    private val issueRef = SimpleObjectProperty<Byte>()
     // Inject data
     private val parties by observableList(NetworkIdentityModel::parties)
     private val offerStates by observableList(TermDepositsModel::offerStates)
@@ -113,17 +111,12 @@ class AcceptOffer : Fragment() {
 
 
 
-        // Party A textfield always display my identity name, not editable.
-        //partyATextField.isEditable = false
-        //partyATextField.textProperty().bind(myIdentity.map { it?.legalIdentity?.let { PartyNameFormatter.short.format(it.name) } ?: "" })
-        //partyALabel.textProperty().bind(transactionTypeCB.valueProperty().map { it?.partyNameA?.let { "$it : " } })
-        //partyATextField.visibleProperty().bind(transactionTypeCB.valueProperty().map { it?.partyNameA }.isNotNull())
+
 
         offerLabel.text = "Offers"
         depositLabel.text = "Deposit Amount"
         // Loan Selection
         offerChoiceBox.apply {
-//            partyBLabel.textProperty().bind(transactionTypeCB.valueProperty().map { it?.partyNameB?.let { "$it : " } })
             items = offerStates
             converter = stringConverter { "Issuing Institue: " + it.state.data.institue.toString() +
                  "\n Interest: "+ it.state.data.interestPercent+"%" +

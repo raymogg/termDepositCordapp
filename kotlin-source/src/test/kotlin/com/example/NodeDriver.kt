@@ -178,10 +178,10 @@ class Simulation(options: String) {
         }
 
         println("Simulations")
-        //Send an offer to parties for a TD - 0 is the issuing institue, 1 is receiever
-        sendTDOffers(banks[0].second, parties[0].second, LocalDateTime.MIN, LocalDateTime.MAX, 3.4f)
+        //Send an offer to parties for a TD - 0 is the issuing institue, 1 is receiever. Using min and max local date time as standardised start and end time for testing purposes
+        sendTDOffers(banks[0].second, parties[0].second, LocalDateTime.MAX, 3.4f)
         //sendTDOffers(parties[0].second, parties[1].second, LocalDateTime.MIN, LocalDateTime.MAX, 3.8f)
-        sendTDOffers(banks[1].second, parties[0].second, LocalDateTime.MIN, LocalDateTime.MAX, 3.2f)
+        sendTDOffers(banks[1].second, parties[0].second, LocalDateTime.MAX, 3.2f)
         //STOP HERE FOR NOW TO DO GUI TESTING AND CONSTRUCTION
         //Accept this offer
         RequestTD(parties[0].second, banks[0].second, LocalDateTime.MIN, LocalDateTime.MAX, 3.4f, Amount<Currency>(300000, USD))
@@ -198,9 +198,9 @@ class Simulation(options: String) {
 //        Redeem(parties[1].second, banks[0].second, LocalDateTime.MIN, LocalDateTime.MAX, 3.4f, Amount<Currency>(310200, USD)) //3102 USD due to the rollover interest in previous txn
     }
 
-    fun sendTDOffers(me : CordaRPCOps, receiver: CordaRPCOps, startDate: LocalDateTime, endDate: LocalDateTime,
+    fun sendTDOffers(me : CordaRPCOps, receiver: CordaRPCOps, endDate: LocalDateTime,
                      interestPercent: Float) {
-        val returnVal = me.startFlow(IssueOffer::Initiator, startDate, endDate, interestPercent, me.nodeInfo().legalIdentities.first(), receiver.nodeInfo().legalIdentities.first(),
+        val returnVal = me.startFlow(IssueOffer::Initiator, endDate, interestPercent, me.nodeInfo().legalIdentities.first(), receiver.nodeInfo().legalIdentities.first(),
                 "Example_TD_Contract.pdf").returnValue.getOrThrow()
         //println("TD Offers Issued")
     }

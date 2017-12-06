@@ -33,20 +33,19 @@ object IssueOffer {
     @CordaSerializable
     @StartableByRPC
     @InitiatingFlow
-    open class Initiator(val startDateTime: LocalDateTime, val endDate: LocalDateTime, val interestPercent: Float,
+    open class Initiator(val endDate: LocalDateTime, val interestPercent: Float,
                     val issuingInstitue: Party, val otherParty: Party, val contractName: String) : FlowLogic<SignedTransaction>() {//FlowLogic<SignedTransaction>() {
         @Suspendable
         override fun call(): SignedTransaction {
             //STEP 1: Create TDOffer and build txn - including adding the term deposit terms as an attachment
             val notary = serviceHub.networkMapCache.notaryIdentities.single()
             val tx = TransactionBuilder()
-            val partTx = TermDepositOffer().generateIssue(tx, startDateTime, endDate, interestPercent, issuingInstitue, notary, otherParty)
+            val partTx = TermDepositOffer().generateIssue(tx, endDate, interestPercent, issuingInstitue, notary, otherParty)
             val flowSession = initiateFlow(otherParty)
             //Attach the term deposit terms
             val secureHash = getFileHash(contractName)
             //For now we simply attach this hash as a attachment and the other side verifies that this hash matches there document - would require nodes to send attachments before the txn
             //partTx.addAttachment(secureHash) //TODO: For some reason adding this attachment causes flows to freeze
-            println("Attachment Added")
             //Send the Transaction to the other party
             flowSession.send(Pair(partTx, contractName))
 
@@ -68,7 +67,7 @@ object IssueOffer {
     open class Reciever(val flow: FlowSession) : FlowLogic<SignedTransaction>() {
         @Suspendable
         override fun call(): SignedTransaction {
-            //STEP 2: Recieve txn from issuing institue
+            //STEP 2: Receive txn from issuing institute
             val tx = flow.receive<Pair<TransactionBuilder, String>>().unwrap {
                 //println("Recieved Txn")
                 requireThat {

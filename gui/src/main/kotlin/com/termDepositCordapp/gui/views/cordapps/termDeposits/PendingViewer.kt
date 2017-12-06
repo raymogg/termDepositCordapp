@@ -98,6 +98,7 @@ class PendingViewer : CordaView("Pending Term Deposits") {
         val institueValueLabel: Label by fxid()
         val interestValueLabel: Label by fxid()
         val depositValueLabel: Label by fxid()
+        val startDateValueLabel: Label by fxid()
         val endDateValueLabel: Label by fxid()
         val internalStateValueLabel: Label by fxid()
 
@@ -115,6 +116,7 @@ class PendingViewer : CordaView("Pending Term Deposits") {
             institueValueLabel.apply { tooltip(resolvedIssuer.nameOrNull()?.let { PartyNameFormatter.full.format(it) } ?: "Anonymous") }
             interestValueLabel.text = stateRow.stateAndRef.state.data.interestPercent.toString()
             depositValueLabel.text = stateRow.stateAndRef.state.data.depositAmount.toString()
+            startDateValueLabel.text = stateRow.stateAndRef.state.data.startDate.toString()
             endDateValueLabel.text = stateRow.stateAndRef.state.data.endDate.toString()
             internalStateValueLabel.text = stateRow.stateAndRef.state.data.internalState.toString()
         }
@@ -168,8 +170,7 @@ class PendingViewer : CordaView("Pending Term Deposits") {
 //                         * TODO Perhaps we shouldn't do this here, but rather have a generic way of binding nodes to the treetable once.
 //                         */
                     treeItem.isExpanded = true
-//                        val children: List<TreeItem<out ViewerNode.ExchangeNode>> = treeItem.children
-//                        Bindings.bindContent(children, stockNodes)
+
                     treeItem
                 }
 
@@ -191,23 +192,8 @@ class PendingViewer : CordaView("Pending Term Deposits") {
             when (node) {
             // TODO: Anonymous should probably be italicised or similar
                 is ViewerNode.ExchangeNode -> SimpleStringProperty(node.exchange.let { PartyNameFormatter.short.format(it.nameOrNull()!!) } ?: "Anonymous")
-            //is ViewerNode.QuantityNode -> node.states.map { it.state.data.code }.first()
             }
         }
-//            claimViewerTableQuantity.apply {
-//                setCellValueFactory {
-//                    val node = it.value.value
-//                    when (node) {
-//                        is ViewerNode.ExchangeNode -> null.lift()
-//                        //is ViewerNode.QuantityNode -> node.quantity.map { it }
-//                    }
-//                }
-//                cellFactory = quantityCellFactory
-//                /**
-//                 * We must set this, otherwise on sort an exception will be thrown, as it will try to compare Amounts of differing currency
-//                 */
-//                isSortable = false
-//            }
 
         // Right Pane.
         totalPositionsLabel.textProperty().bind(claimStatesList.itemsProperty().map {

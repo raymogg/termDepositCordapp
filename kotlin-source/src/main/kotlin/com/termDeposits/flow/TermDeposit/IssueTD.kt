@@ -1,7 +1,6 @@
 package com.termDeposits.flow.TermDeposit
 
 import co.paralleluniverse.fibers.Suspendable
-import com.termDeposits.contract.TermDeposit.Companion.TERMDEPOSIT_CONTRACT_ID
 import com.termDeposits.contract.TermDeposit
 import com.termDeposits.contract.TermDepositOffer
 import net.corda.confidential.IdentitySyncFlow
@@ -11,16 +10,12 @@ import net.corda.core.contracts.requireThat
 import net.corda.core.flows.*
 import net.corda.core.identity.Party
 import net.corda.core.identity.groupPublicKeysByWellKnownParty
-import net.corda.core.internal.ResolveTransactionsFlow
 import net.corda.core.serialization.CordaSerializable
 import net.corda.core.transactions.SignedTransaction
 import net.corda.core.transactions.TransactionBuilder
-import net.corda.core.utilities.unwrap
 import net.corda.finance.contracts.asset.Cash
-import net.corda.finance.utils.sumCashBy
 import java.time.LocalDateTime
 import java.util.*
-import javax.annotation.Signed
 
 
 /** Flow for issuing a TD. Called by a client (eg AMM Advisor) with the opposing party being the issuer of the TD (who
@@ -44,10 +39,7 @@ object IssueTD {
             val flow = initiateFlow(issuingInstitue)
             val notary = serviceHub.networkMapCache.notaryIdentities.first()
             val TDOffers = subFlow(OfferRetrievalFlow(startDate, endDate, issuingInstitue, interestPercent))
-            if (TDOffers.size > 1) {
-                //TODO Decide which offer is being taken - this shouldnt matter as the offers are identical
-            }
-            val TDOffer = TDOffers.first()
+            val TDOffer = TDOffers.first() //Doesnt matter if there is more than one offer as they will be identical
 
             //STEP 2: Build Txn with TDOffer as input and TDOffer + TDState as output TODO Work in attachments and send client KYC data here
             val builder = TransactionBuilder(notary = notary)
@@ -65,12 +57,9 @@ object IssueTD {
             subFlow(IdentitySyncFlow.Send(flow, ptx.toWireTransaction(serviceHub)))
 
             //STEP 3: Send to the issuing institue for verification/acceptance
-            //val ftx = flow.sendAndReceive<SignedTransaction>(stx).unwrap { it }
             val otherPartySig = subFlow(CollectSignaturesFlow(stx, setOf(flow), CollectSignaturesFlow.tracker()))
             //STEP 7: Receieve back txn, sign and commit to ledger
-            //subFlow(ResolveTransactionsFlow(ftx, flow))
             val twiceSignedTx = stx.plus(otherPartySig.sigs)
-            //val unnotarisedTx = serviceHub.addSignature(stx, serviceHub.myInfo.legalIdentities.first().owningKey)
             println("TD Issued to ${stx.tx.outputStates.filterIsInstance<TermDeposit.State>().first().owner} by ${issuingInstitue.name} at $interestPercent%")
             return subFlow(FinalityFlow(twiceSignedTx, setOf(issuingInstitue) + groupPublicKeysByWellKnownParty(serviceHub,cashKeys).keys ))
 
@@ -90,6 +79,7 @@ object IssueTD {
             // be asked to sign
             subFlow(IdentitySyncFlow.Receive(counterPartySession))
 
+            //Sign the txn
             val signTransactionFlow = object : SignTransactionFlow(counterPartySession, SignTransactionFlow.tracker()) {
                 override fun checkTransaction(stx: SignedTransaction)  {
                     requireThat {

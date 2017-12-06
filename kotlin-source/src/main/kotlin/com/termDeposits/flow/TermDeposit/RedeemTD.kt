@@ -68,7 +68,10 @@ object RedeemTD {
         override fun call(): SignedTransaction {
             //STEP 3: Receive the TD from the client that is being redeemed
             val TermDeposit = flow.receive<StateAndRef<TermDeposit.State>>().unwrap {
-                //TODO: any required validation
+                requireThat {
+                    //TODO: any required validation
+                    //it.state.data.endDate.isAfter(LocalDateTime.now()) add back in after testing phase
+                }
                 it
             }
 
@@ -79,7 +82,6 @@ object RedeemTD {
             //Add our required cash
             val (tx, cashKeys) = Cash.generateSpend(serviceHub, builder2, Amount((TermDeposit.state.data.depositAmount.quantity * (100+TermDeposit.state.data.interestPercent)/100).toLong(), USD),
                     flow.counterparty)
-            println("Redeem added cash ${Amount((TermDeposit.state.data.depositAmount.quantity * (100+TermDeposit.state.data.interestPercent)/100).toLong(), USD)}")
 
             //STEP 5: Get the client to sign the transaction
             val partSignedTxn = serviceHub.signInitialTransaction(tx, cashKeys.plus(serviceHub.myInfo.legalIdentities.first().owningKey))

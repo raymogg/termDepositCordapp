@@ -1,10 +1,7 @@
-package com.example.client
+package com.termDeposits.client
 
-import com.example.state.IOUState
 import com.termDeposits.contract.TermDeposit
-import com.termDeposits.contract.TermDepositOffer
 import net.corda.client.rpc.CordaRPCClient
-import net.corda.core.contracts.ContractState
 import net.corda.core.contracts.StateAndRef
 import net.corda.core.utilities.NetworkHostAndPort
 import net.corda.core.utilities.loggerFor

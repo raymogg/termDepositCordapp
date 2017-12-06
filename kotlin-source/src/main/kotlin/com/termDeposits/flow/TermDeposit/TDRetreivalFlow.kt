@@ -44,7 +44,6 @@ object TDRetreivalFlows {
             //Filter offer states to get the states we want
             //Active Filter
             if (state == TermDeposit.internalState.active) {
-                //println("Active Filter")
                 filteredStates = offerStates.states.filter {
                     it.state.data.endDate.isAfter(LocalDateTime.now()) && it.state.data.startDate == startDate &&
                             it.state.data.endDate == endDate && it.state.data.institue == offeringInstitute &&
@@ -55,7 +54,6 @@ object TDRetreivalFlows {
 
             //Pending filter
             else if (state == TermDeposit.internalState.pending) {
-                //println("Pending Filter")
                 filteredStates = offerStates.states.filter {
                     it.state.data.endDate.isAfter(LocalDateTime.now()) && it.state.data.startDate == startDate &&
                             it.state.data.endDate == endDate && it.state.data.institue == offeringInstitute &&
@@ -66,7 +64,6 @@ object TDRetreivalFlows {
 
             //Deposits that are "expired" (i.e end date done, but not actually consumed)
             else if (state == TermDeposit.internalState.exited) {
-                //println("Expired Filter")
                 filteredStates = offerStates.states.filter {
                     //it.state.data.endDate.isBefore(LocalDateTime.now()) &&
                     it.state.data.startDate == startDate &&

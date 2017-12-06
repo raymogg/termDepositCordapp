@@ -186,23 +186,9 @@ class OfferViewer : CordaView("Term Deposit Offers") {
                 when (node) {
                 // TODO: Anonymous should probably be italicised or similar
                     is ViewerNode.ExchangeNode -> SimpleStringProperty(node.exchange.let { PartyNameFormatter.short.format(it.nameOrNull()!!) } ?: "Anonymous")
-                    //is ViewerNode.QuantityNode -> node.states.map { it.state.data.code }.first()
                 }
             }
-//            claimViewerTableQuantity.apply {
-//                setCellValueFactory {
-//                    val node = it.value.value
-//                    when (node) {
-//                        is ViewerNode.ExchangeNode -> null.lift()
-//                        //is ViewerNode.QuantityNode -> node.quantity.map { it }
-//                    }
-//                }
-//                cellFactory = quantityCellFactory
-//                /**
-//                 * We must set this, otherwise on sort an exception will be thrown, as it will try to compare Amounts of differing currency
-//                 */
-//                isSortable = false
-//            }
+
 
             // Right Pane.
             totalPositionsLabel.textProperty().bind(claimStatesList.itemsProperty().map {
@@ -227,6 +213,7 @@ class OfferViewer : CordaView("Term Deposit Offers") {
             }
         }
 
+    //This is the widget that is diplayed in the dashboard view on the homepage
         private class OfferWidget : BorderPane() {
             //private val partiallyResolvedTransactions by observableListReadOnly(TransactionDataModel::partiallyResolvedTransactions)
             private val claimStates by observableList(TermDepositsModel::offerStates)
@@ -238,9 +225,7 @@ class OfferViewer : CordaView("Term Deposit Offers") {
                     label {
                         val hash = SecureHash.randomSHA256()
                         graphic = identicon(hash, 30.0)
-                        var totalStock = 0;
                         textProperty().bind(Bindings.size(claimStates).map(Number::toString))
-                        //textProperty().bind(Bindings.concat(totalStock))
                         BorderPane.setAlignment(this, Pos.BOTTOM_RIGHT)
                     }
                 }

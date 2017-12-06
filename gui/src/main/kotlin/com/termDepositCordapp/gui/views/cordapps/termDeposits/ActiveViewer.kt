@@ -100,12 +100,13 @@ class ActiveViewer : CordaView("Active Term Deposits") {
         val interestValueLabel: Label by fxid()
         val depositValueLabel: Label by fxid()
         val endDateValueLabel: Label by fxid()
+        val startDateValueLabel: Label by fxid()
         val internalStateValueLabel: Label by fxid()
 
 
         init {
             val resolvedIssuer: AbstractParty = stateRow.stateAndRef.state.data.institue
-
+            //This sets up the data for each state being viewed -> the formatting is set in the ActiveViwer.fxml file
             stateIdValueLabel.apply {
                 text = stateRow.stateAndRef.ref.toString().substring(0, 16) + "...[${stateRow.stateAndRef.ref.index}]"
                 graphic = identicon(stateRow.stateAndRef.ref.txhash, 30.0)
@@ -117,6 +118,7 @@ class ActiveViewer : CordaView("Active Term Deposits") {
             institueValueLabel.apply { tooltip(resolvedIssuer.nameOrNull()?.let { PartyNameFormatter.full.format(it) } ?: "Anonymous") }
             interestValueLabel.text = stateRow.stateAndRef.state.data.interestPercent.toString()
             depositValueLabel.text = stateRow.stateAndRef.state.data.depositAmount.toString()
+            startDateValueLabel.text = stateRow.stateAndRef.state.data.startDate.toString()
             endDateValueLabel.text = stateRow.stateAndRef.state.data.endDate.toString()
             internalStateValueLabel.text = stateRow.stateAndRef.state.data.internalState.toString()
         }
