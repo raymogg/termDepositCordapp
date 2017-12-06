@@ -3,9 +3,13 @@ package com.termDeposits.client
 import com.termDeposits.contract.TermDeposit
 import net.corda.client.rpc.CordaRPCClient
 import net.corda.core.contracts.StateAndRef
+import net.corda.core.crypto.SecureHash
+import net.corda.core.messaging.CordaRPCOps
 import net.corda.core.utilities.NetworkHostAndPort
 import net.corda.core.utilities.loggerFor
 import org.slf4j.Logger
+import java.io.File
+import java.util.jar.JarInputStream
 
 /**
  *  Demonstration of using the CordaRPCClient to connect to a Corda Node and
@@ -42,10 +46,27 @@ private class ExampleClientRPC {
             update.produced.forEach { logState(it) }
         }
 
-        // Log the 'placed' TD states and listen for new ones.
-//        snapshot2.states.forEach { logState(it) }
-//        updates2.toBlocking().subscribe { update ->
-//            update.produced.forEach { logState(it) }
-//        }
+        //Upload the attachments
+
+        //val attachmentHash = uploadAttachment(proxy, "src/main/resources/Example_TD_Contract.pdf")
+        val attachmentHash = uploadAttachment(proxy, "C:\\Users\\raymondm\\Documents\\termDepositsCordapp\\kotlin-source\\src\\main\\resources\\Example_TD_Contract.zip")
+        val attachmentJar = downloadAttachment(proxy, attachmentHash)
+    }
+
+    //Functions for attachment use
+    /**
+     * Uploads the attachment at [attachmentPath] to the node.
+     */
+    private fun uploadAttachment(proxy: CordaRPCOps, attachmentPath: String): SecureHash {
+        val attachmentUploadInputStream = File(attachmentPath).inputStream()
+        return proxy.uploadAttachment(attachmentUploadInputStream)
+    }
+
+    /**
+     * Downloads the attachment with hash [attachmentHash] from the node.
+     */
+    private fun downloadAttachment(proxy: CordaRPCOps, attachmentHash: SecureHash): JarInputStream {
+        val attachmentDownloadInputStream = proxy.openAttachment(attachmentHash)
+        return JarInputStream(attachmentDownloadInputStream)
     }
 }

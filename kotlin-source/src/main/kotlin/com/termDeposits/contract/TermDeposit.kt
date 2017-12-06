@@ -67,7 +67,7 @@ open class TermDeposit : Contract {
                 val td = tx.inputStates.filterIsInstance<TermDeposit.State>().first()
                 val outputCash = tx.outputStates.sumCashBy(td.owner).quantity
                 "Term Deposit amount must match output cash amount" using (outputCash == (td.depositAmount.quantity * (100+td.interestPercent)/100).toLong() )
-                "The term deposit has not yet expired" using (td.endDate.isBefore(LocalDateTime.now()))
+                //"The term deposit has not yet expired" using (td.endDate.isBefore(LocalDateTime.now()))
 
             }
 
@@ -78,7 +78,7 @@ open class TermDeposit : Contract {
                 val input = tx.inputStates.filterIsInstance<TermDeposit.State>().first() as TermDeposit.State
                 val output = tx.outputStates.filterIsInstance<TermDeposit.State>().first() as TermDeposit.State
                 "Input and Output issuer must be the same" using (input.institue == output.institue)
-                "The term deposit has not yet expired" using (input.endDate.isBefore(LocalDateTime.now()))
+                //"The term deposit has not yet expired" using (input.endDate.isBefore(LocalDateTime.now()))
 
             }
         }

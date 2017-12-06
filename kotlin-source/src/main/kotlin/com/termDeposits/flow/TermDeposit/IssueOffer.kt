@@ -34,7 +34,7 @@ object IssueOffer {
     @StartableByRPC
     @InitiatingFlow
     open class Initiator(val endDate: LocalDateTime, val interestPercent: Float,
-                    val issuingInstitue: Party, val otherParty: Party, val contractName: String) : FlowLogic<SignedTransaction>() {//FlowLogic<SignedTransaction>() {
+                    val issuingInstitue: Party, val otherParty: Party, val attachmentID: SecureHash) : FlowLogic<SignedTransaction>() {//FlowLogic<SignedTransaction>() {
         @Suspendable
         override fun call(): SignedTransaction {
             //STEP 1: Create TDOffer and build txn - including adding the term deposit terms as an attachment
@@ -42,12 +42,12 @@ object IssueOffer {
             val tx = TransactionBuilder()
             val partTx = TermDepositOffer().generateIssue(tx, endDate, interestPercent, issuingInstitue, notary, otherParty)
             val flowSession = initiateFlow(otherParty)
+
             //Attach the term deposit terms
-            val secureHash = getFileHash(contractName)
-            //For now we simply attach this hash as a attachment and the other side verifies that this hash matches there document - would require nodes to send attachments before the txn
-            //partTx.addAttachment(secureHash) //TODO: For some reason adding this attachment causes flows to freeze
+            partTx.addAttachment(attachmentID)
+
             //Send the Transaction to the other party
-            flowSession.send(Pair(partTx, contractName))
+            flowSession.send(Pair(partTx, attachmentID))
 
             //STEP 4: Receieve back txn
             val stx = flowSession.receive<SignedTransaction>().unwrap { it }
@@ -68,7 +68,7 @@ object IssueOffer {
         @Suspendable
         override fun call(): SignedTransaction {
             //STEP 2: Receive txn from issuing institute
-            val tx = flow.receive<Pair<TransactionBuilder, String>>().unwrap {
+            val tx = flow.receive<Pair<TransactionBuilder, SecureHash>>().unwrap {
                 //println("Recieved Txn")
                 requireThat {
                     //"Contract hash matches" using (it.first.attachments().first() == getFileHash(it.second)) //TODO Instead of receiving this, check with our contracts - if we dont have this hash need to download

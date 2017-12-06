@@ -24,9 +24,12 @@ import net.corda.testing.driver.driver
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.ExpectedException
+import java.io.File
 import java.math.BigDecimal
 import java.time.LocalDateTime
 import java.util.*
+import kotlin.test.assertFailsWith
+import kotlin.test.assertTrue
 
 /**
  * This file is exclusively for being able to run your nodes through an IDE (as opposed to running deployNodes)
@@ -97,8 +100,8 @@ class Simulation(options: String) {
 
 
             setup_nodes()
-            //runSimulation()
-            runTests()
+            runSimulation()
+            //runTests()
             waitForAllNodesToFinish()
         }
     }
@@ -172,10 +175,84 @@ class Simulation(options: String) {
     )
 
 
+    /** TESTING FOR FLOWS */
+    @Test
+    fun expiredTDOffer() {
+        sendTDOffers(banks[0].second, parties[0].second, LocalDateTime.now(), 3.4f)
+        Thread.sleep(1000)
+        //Should throw an error due to the offer already expirying/no states being found.
+        var error = false
+        try {
+            RequestTD(parties[0].second, banks[0].second, LocalDateTime.now(),
+                LocalDateTime.now().plusWeeks(6), 3.4f, Amount(30000, USD))
+        } catch (e: Exception) {
+            error = true
+            println("Test Passed")
+        }
+        assertTrue(error)
+    }
+
+    @Test
+    fun exitNonExpiredTD() {
+        var error = false
+        sendTDOffers(banks[0].second, parties[0].second, LocalDateTime.MAX, 3.4f)
+        val startTime = LocalDateTime.now()
+        RequestTD(parties[0].second, banks[0].second, startTime, startTime.plusWeeks(6), 3.4f, Amount(30000, USD))
+        Activate(banks[0].second, parties[0].second, startTime, startTime.plusWeeks(6), 3.4f, Amount(30000, USD))
+        //Should throw an error due to this term deposit not yet being able to exit
+        try {
+            Redeem(parties[0].second, banks[0].second, startTime, startTime.plusWeeks(6), 3.4f, Amount(30000, USD))
+        } catch (e: Exception) {
+            error = true
+            println("Test Passed")
+        }
+
+        assertTrue(error)
+    }
+
+    @Test
+    fun rolloverWithInterestNonExpiredTD() {
+        var error = false
+        sendTDOffers(banks[0].second, parties[0].second, LocalDateTime.MAX, 3.4f)
+        val startTime = LocalDateTime.now()
+        RequestTD(parties[0].second, banks[0].second, startTime, startTime.plusWeeks(6), 3.4f, Amount(30000, USD))
+        Activate(banks[0].second, parties[0].second, startTime, startTime.plusWeeks(6), 3.4f, Amount(30000, USD))
+        //Should throw an error due to this term deposit not yet being able to exit
+        try {
+            Rollover(parties[0].second, banks[0].second, startTime, startTime.plusWeeks(6), LocalDateTime.now(), LocalDateTime.now().plusWeeks(6),
+                    3.4f, Amount(30000, USD), true)
+        } catch (e: Exception) {
+            error = true
+            println("Test Passed")
+        }
+
+        assertTrue(error)
+    }
+
+    @Test
+    fun rolloverWOInterestNonExpiredTD() {
+        var error = false
+        sendTDOffers(banks[0].second, parties[0].second, LocalDateTime.MAX, 3.4f)
+        val startTime = LocalDateTime.now()
+        RequestTD(parties[0].second, banks[0].second, startTime, startTime.plusWeeks(6), 3.4f, Amount(30000, USD))
+        Activate(banks[0].second, parties[0].second, startTime, startTime.plusWeeks(6), 3.4f, Amount(30000, USD))
+        //Should throw an error due to this term deposit not yet being able to exit
+        try {
+            Rollover(parties[0].second, banks[0].second, startTime, startTime.plusWeeks(6), LocalDateTime.now(), LocalDateTime.now().plusWeeks(6),
+                    3.4f, Amount(30000, USD), false)
+        } catch (e: Exception) {
+            error = true
+            println("Test Passed")
+        }
+
+        assertTrue(error)
+    }
+
+
 
     fun runTests() {
         //The following is some basic tests
-        //TODO: Write proper tests using a testing framework - rather than testing with exceptions thrown
+        //TODO: Write proper tests using a testing framework - rather than testing with exceptions thrown - possibly follow the example on corda tutorials
 
         //Issue cash to ensure that cash isnt the reason for flow errors
         parties.forEach {
@@ -186,50 +263,15 @@ class Simulation(options: String) {
             issueCash(it.second, it.second.notaryIdentities().first())
         }
 
-        /** ###PASSED###
-        //TEST 1 - Trying to start a TD using an expired TD Offer - #PASSED
-        sendTDOffers(banks[0].second, parties[0].second, LocalDateTime.now(), 3.4f)
-        Thread.sleep(1000)
-        //Should throw an error due to the offer already expirying/no states being found.
-        RequestTD(parties[0].second, banks[0].second, LocalDateTime.now(), LocalDateTime.now().plusWeeks(6), 3.4f, Amount(30000, USD))
-         */
-
-        /** ###PASSED###
-        //TEST 2 - Trying to exit a TD which hasnt expired yet
-        sendTDOffers(banks[0].second, parties[0].second, LocalDateTime.MAX, 3.4f)
-        val startTime = LocalDateTime.now()
-        RequestTD(parties[0].second, banks[0].second, startTime, startTime.plusWeeks(6), 3.4f, Amount(30000, USD))
-        Activate(banks[0].second, parties[0].second, startTime, startTime.plusWeeks(6), 3.4f, Amount(30000, USD))
-        //Should throw an error due to this term deposit not yet being able to exit
-        Redeem(parties[0].second, banks[0].second, startTime, startTime.plusWeeks(6), 3.4f, Amount(30000, USD))
-         */
-
-        /** ###PASSED###
-        //TEST 3 - Rollover with interest with a TD which hasnt expired yet
-        sendTDOffers(banks[0].second, parties[0].second, LocalDateTime.MAX, 3.4f)
-        val startTime = LocalDateTime.now()
-        RequestTD(parties[0].second, banks[0].second, startTime, startTime.plusWeeks(6), 3.4f, Amount(30000, USD))
-        Activate(banks[0].second, parties[0].second, startTime, startTime.plusWeeks(6), 3.4f, Amount(30000, USD))
-        //Should throw an error due to this term deposit not yet being able to exit
-        Rollover(parties[0].second, banks[0].second, startTime, startTime.plusWeeks(6), LocalDateTime.now(), LocalDateTime.now().plusWeeks(6),
-        3.4f, Amount(30000, USD), true)
-         */
-
-        /** ###PASSED###
-        //TEST 4 - Rollover without interest with a TD which hasnt expired yet
-        sendTDOffers(banks[0].second, parties[0].second, LocalDateTime.MAX, 3.4f)
-        val startTime = LocalDateTime.now()
-        RequestTD(parties[0].second, banks[0].second, startTime, startTime.plusWeeks(6), 3.4f, Amount(30000, USD))
-        Activate(banks[0].second, parties[0].second, startTime, startTime.plusWeeks(6), 3.4f, Amount(30000, USD))
-        //Should throw an error due to this term deposit not yet being able to exit
-        Rollover(parties[0].second, banks[0].second, startTime, startTime.plusWeeks(6), LocalDateTime.now(), LocalDateTime.now().plusWeeks(6),
-        3.4f, Amount(30000, USD), false)
-         */
-
-
+        //Run the tests
+        expiredTDOffer()
+        exitNonExpiredTD()
+        rolloverWithInterestNonExpiredTD()
+        rolloverWOInterestNonExpiredTD()
 
     }
-    //Flow test suite for TD flows
+
+    /** Simulations for Cordapp */
     fun runSimulation() {
         //Issue some cash to each party
         parties.forEach {
@@ -252,8 +294,12 @@ class Simulation(options: String) {
 
     fun sendTDOffers(me : CordaRPCOps, receiver: CordaRPCOps, endDate: LocalDateTime,
                      interestPercent: Float) {
+        //Get attachment hash for the txn before starting the flow
+        //TODO: This hardcoding of a very specific file path probably isnt that great
+        val attachmentInputStream = File("C:\\Users\\raymondm\\Documents\\termDepositsCordapp\\kotlin-source\\src\\main\\resources\\Example_TD_Contract.zip").inputStream()
+        val attachmentHash = me.uploadAttachment(attachmentInputStream)
         val returnVal = me.startFlow(IssueOffer::Initiator, endDate, interestPercent, me.nodeInfo().legalIdentities.first(), receiver.nodeInfo().legalIdentities.first(),
-                "Example_TD_Contract.pdf").returnValue.getOrThrow()
+                attachmentHash).returnValue.getOrThrow()
         //println("TD Offers Issued")
     }
 
