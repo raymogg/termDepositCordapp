@@ -157,7 +157,6 @@ class Simulation(options: String) {
             FlowPermissions.startFlowPermission<RolloverTD.RolloverInitiator>(),
             FlowPermissions.startFlowPermission<PromptActivate.Prompter>(),
             FlowPermissions.startFlowPermission<PromptActivate.Acceptor>()
-
     )
 
     fun allocateBankPermissions() : Set<String> = setOf(
@@ -175,7 +174,7 @@ class Simulation(options: String) {
     )
 
 
-    /** TESTING FOR FLOWS */
+    /** TESTING FOR FLOW ERRORS */
     @Test
     fun expiredTDOffer() {
         sendTDOffers(banks[0].second, parties[0].second, LocalDateTime.now(), 3.4f)
@@ -248,6 +247,33 @@ class Simulation(options: String) {
         assertTrue(error)
     }
 
+    @Test
+    fun requestNonExistentTD() {
+        var error = false
+        val startTime = LocalDateTime.now()
+        try {
+            RequestTD(parties[0].second, banks[0].second, startTime, startTime.plusWeeks(6), 3.9f, Amount(65000, USD))
+        } catch (e: Exception) {
+            println("Test Passed")
+            error = true
+        }
+        assertTrue(error)
+    }
+
+    @Test
+    fun activateNonExistentTD() {
+        var error = false
+        val startTime = LocalDateTime.now()
+        try {
+            Activate(banks[0].second, parties[0].second, startTime, startTime.plusWeeks(6), 5.5f, Amount(75000, USD))
+        } catch (e: Exception) {
+            println("Test Passed")
+            error = true
+        }
+        assertTrue(error)
+    }
+
+
 
 
     fun runTests() {
@@ -268,7 +294,11 @@ class Simulation(options: String) {
         exitNonExpiredTD()
         rolloverWithInterestNonExpiredTD()
         rolloverWOInterestNonExpiredTD()
+        requestNonExistentTD()
+        activateNonExistentTD()
 
+
+        println("All Tests Passed")
     }
 
     /** Simulations for Cordapp */
