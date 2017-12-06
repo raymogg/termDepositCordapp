@@ -67,18 +67,18 @@ open class TermDeposit : Contract {
                 val td = tx.inputStates.filterIsInstance<TermDeposit.State>().first()
                 val outputCash = tx.outputStates.sumCashBy(td.owner).quantity
                 "Term Deposit amount must match output cash amount" using (outputCash == (td.depositAmount.quantity * (100+td.interestPercent)/100).toLong() )
-                //"The term deposit has not yet expired" using (td.endDate.isBefore(LocalDateTime.now())) todo: add this in once finished testing
+                "The term deposit has not yet expired" using (td.endDate.isBefore(LocalDateTime.now()))
 
             }
 
             is Commands.Rollover -> requireThat {
                 //TD Rollover verification
-                //"The term deposit has not yet expired" using (td.endDate.isBefore(LocalDateTime.now())) todo: add this in once finished testing
                 "Only one term deposit input must be present" using (tx.inputStates.filterIsInstance<TermDeposit.State>().size == 1)
                 "Only one term deposit output must be present" using (tx.outputStates.filterIsInstance<TermDeposit.State>().size == 1)
                 val input = tx.inputStates.filterIsInstance<TermDeposit.State>().first() as TermDeposit.State
                 val output = tx.outputStates.filterIsInstance<TermDeposit.State>().first() as TermDeposit.State
                 "Input and Output issuer must be the same" using (input.institue == output.institue)
+                "The term deposit has not yet expired" using (input.endDate.isBefore(LocalDateTime.now()))
 
             }
         }
@@ -137,7 +137,7 @@ open class TermDeposit : Contract {
                          notary: Party): TransactionBuilder {
         builder.addInputState(TDState)
         //todo: remove localdatetime.min and make this localdatetime.now (min is just used for testing purposes)
-        builder.addOutputState(TransactionState(data = TDState.state.data.copy(internalState = internalState.active, startDate = LocalDateTime.MIN), notary = TDState.state.notary, contract = TERMDEPOSIT_CONTRACT_ID))
+        builder.addOutputState(TransactionState(data = TDState.state.data.copy(internalState = internalState.active), notary = TDState.state.notary, contract = TERMDEPOSIT_CONTRACT_ID))
         builder.addCommand(TermDeposit.Commands.Activate(), TDState.state.data.institue.owningKey, TDConsumer.owningKey)
         return builder
     }

@@ -49,7 +49,8 @@ object IssueTD {
             //Add cash as output
             val (tx, cashKeys) = Cash.generateSpend(serviceHub, builder, depositAmount, issuingInstitue)
             builder.addCommand(Command(TermDepositOffer.Commands.CreateTD(), TDOffer.state.data.owner.owningKey))
-            val ptx = TermDeposit().generateIssue(tx,TDOffer, notary, depositAmount, serviceHub.myInfo.legalIdentities.first(), LocalDateTime.MIN, LocalDateTime.MAX)
+            //val ptx = TermDeposit().generateIssue(tx,TDOffer, notary, depositAmount, serviceHub.myInfo.legalIdentities.first(), LocalDateTime.MIN, LocalDateTime.MAX)
+            val ptx = TermDeposit().generateIssue(tx,TDOffer, notary, depositAmount, serviceHub.myInfo.legalIdentities.first(), startDate, endDate)
             //Sign txn
             val stx = serviceHub.signInitialTransaction(ptx, cashKeys+serviceHub.myInfo.legalIdentities.first().owningKey)
 

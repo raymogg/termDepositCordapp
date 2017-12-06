@@ -33,7 +33,7 @@ class OfferRetrievalFlow(val startDate: LocalDateTime, val endDate: LocalDateTim
                     it.state.data.interestPercent == interest
         }
         if (filteredStates.isEmpty()) {
-            throw FlowException("No Offer states found")
+            throw FlowException("No Offer states found that are active")
         }
         return filteredStates
     }

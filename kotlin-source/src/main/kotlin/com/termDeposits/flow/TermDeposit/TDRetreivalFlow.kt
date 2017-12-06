@@ -55,7 +55,8 @@ object TDRetreivalFlows {
             //Pending filter
             else if (state == TermDeposit.internalState.pending) {
                 filteredStates = offerStates.states.filter {
-                    it.state.data.endDate.isAfter(LocalDateTime.now()) && it.state.data.startDate == startDate &&
+                    it.state.data.endDate.isAfter(LocalDateTime.now()) &&
+                            it.state.data.startDate == startDate &&
                             it.state.data.endDate == endDate && it.state.data.institue == offeringInstitute &&
                             it.state.data.interestPercent == interest && it.state.data.internalState == TermDeposit.internalState.pending
                             && it.state.data.depositAmount == depositAmount

@@ -7,7 +7,7 @@ import org.bouncycastle.asn1.x500.X500Name
 
 object PartyNameFormatter {
     val short = object : Formatter<CordaX500Name> {
-        override fun format(value: CordaX500Name): String = value.toString()
+        override fun format(value: CordaX500Name): String = value.organisation
     }
 
     val full = object : Formatter<CordaX500Name> {

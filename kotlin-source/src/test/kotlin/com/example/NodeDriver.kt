@@ -3,6 +3,7 @@ package com.example
 import com.termDeposits.contract.TermDeposit
 import com.termDeposits.flow.TermDeposit.*
 import net.corda.core.contracts.Amount
+import net.corda.core.flows.FlowException
 import net.corda.core.identity.CordaX500Name
 import net.corda.core.identity.Party
 import net.corda.core.messaging.CordaRPCOps
@@ -20,6 +21,9 @@ import net.corda.nodeapi.User
 import net.corda.nodeapi.internal.ServiceInfo
 import net.corda.testing.driver.NodeHandle
 import net.corda.testing.driver.driver
+import org.junit.Rule
+import org.junit.Test
+import org.junit.rules.ExpectedException
 import java.math.BigDecimal
 import java.time.LocalDateTime
 import java.util.*
@@ -93,7 +97,8 @@ class Simulation(options: String) {
 
 
             setup_nodes()
-            runSimulation()
+            //runSimulation()
+            runTests()
             waitForAllNodesToFinish()
         }
     }
@@ -166,6 +171,64 @@ class Simulation(options: String) {
             FlowPermissions.startFlowPermission<CashIssueAndPaymentFlow>()
     )
 
+
+
+    fun runTests() {
+        //The following is some basic tests
+        //TODO: Write proper tests using a testing framework - rather than testing with exceptions thrown
+
+        //Issue cash to ensure that cash isnt the reason for flow errors
+        parties.forEach {
+            issueCash(it.second, it.second.notaryIdentities().first())
+        }
+        //Issue some cash to each of the banks
+        banks.forEach{
+            issueCash(it.second, it.second.notaryIdentities().first())
+        }
+
+        /** ###PASSED###
+        //TEST 1 - Trying to start a TD using an expired TD Offer - #PASSED
+        sendTDOffers(banks[0].second, parties[0].second, LocalDateTime.now(), 3.4f)
+        Thread.sleep(1000)
+        //Should throw an error due to the offer already expirying/no states being found.
+        RequestTD(parties[0].second, banks[0].second, LocalDateTime.now(), LocalDateTime.now().plusWeeks(6), 3.4f, Amount(30000, USD))
+         */
+
+        /** ###PASSED###
+        //TEST 2 - Trying to exit a TD which hasnt expired yet
+        sendTDOffers(banks[0].second, parties[0].second, LocalDateTime.MAX, 3.4f)
+        val startTime = LocalDateTime.now()
+        RequestTD(parties[0].second, banks[0].second, startTime, startTime.plusWeeks(6), 3.4f, Amount(30000, USD))
+        Activate(banks[0].second, parties[0].second, startTime, startTime.plusWeeks(6), 3.4f, Amount(30000, USD))
+        //Should throw an error due to this term deposit not yet being able to exit
+        Redeem(parties[0].second, banks[0].second, startTime, startTime.plusWeeks(6), 3.4f, Amount(30000, USD))
+         */
+
+        /** ###PASSED###
+        //TEST 3 - Rollover with interest with a TD which hasnt expired yet
+        sendTDOffers(banks[0].second, parties[0].second, LocalDateTime.MAX, 3.4f)
+        val startTime = LocalDateTime.now()
+        RequestTD(parties[0].second, banks[0].second, startTime, startTime.plusWeeks(6), 3.4f, Amount(30000, USD))
+        Activate(banks[0].second, parties[0].second, startTime, startTime.plusWeeks(6), 3.4f, Amount(30000, USD))
+        //Should throw an error due to this term deposit not yet being able to exit
+        Rollover(parties[0].second, banks[0].second, startTime, startTime.plusWeeks(6), LocalDateTime.now(), LocalDateTime.now().plusWeeks(6),
+        3.4f, Amount(30000, USD), true)
+         */
+
+        /** ###PASSED###
+        //TEST 4 - Rollover without interest with a TD which hasnt expired yet
+        sendTDOffers(banks[0].second, parties[0].second, LocalDateTime.MAX, 3.4f)
+        val startTime = LocalDateTime.now()
+        RequestTD(parties[0].second, banks[0].second, startTime, startTime.plusWeeks(6), 3.4f, Amount(30000, USD))
+        Activate(banks[0].second, parties[0].second, startTime, startTime.plusWeeks(6), 3.4f, Amount(30000, USD))
+        //Should throw an error due to this term deposit not yet being able to exit
+        Rollover(parties[0].second, banks[0].second, startTime, startTime.plusWeeks(6), LocalDateTime.now(), LocalDateTime.now().plusWeeks(6),
+        3.4f, Amount(30000, USD), false)
+         */
+
+
+
+    }
     //Flow test suite for TD flows
     fun runSimulation() {
         //Issue some cash to each party
@@ -230,16 +293,5 @@ class Simulation(options: String) {
         val returnVal = me.startFlow(RolloverTD::RolloverInitiator, startDate, endDate, interestPercent, issuer.nodeInfo().legalIdentities.first(),
                 depositAmount, rolloverTerms).returnValue.getOrThrow()
     }
-
-
-    /** ERROR NOTES/LOG
-     *
-     * 1. Redeem flow has an issue with adding cash states if offers are requested in two directions (i.e A starts a TD with B, B starts a TD with A). Random cash output stsates are added to the txn
-     *    Question has been posted on SO.
-     *
-     *
-     *
-     */
-
 
 }
