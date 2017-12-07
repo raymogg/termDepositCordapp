@@ -29,13 +29,13 @@ object RedeemTD {
     @InitiatingFlow
     @StartableByRPC
     @CordaSerializable
-    class RedemptionInitiator(val startDate: LocalDateTime, val endDate: LocalDateTime, val interestPercent: Float,
+    class RedemptionInitiator(val dateData: TermDeposit.DateData, val interestPercent: Float,
     val issuingInstitue: Party, val depositAmount: Amount<Currency>) : FlowLogic<SignedTransaction>() {
         @Suspendable
         override fun call(): SignedTransaction {
 
             //STEP 1: Retrieve the TD to Redeem and begin flow with other party
-            val TermDeposits = subFlow(TDRetreivalFlows.TDRetreivalFlow(startDate,endDate, issuingInstitue, interestPercent, depositAmount, TermDeposit.internalState.exited))
+            val TermDeposits = subFlow(TDRetreivalFlows.TDRetreivalFlow(dateData, issuingInstitue, interestPercent, depositAmount, TermDeposit.internalState.exited))
             val flowSession = initiateFlow(issuingInstitue)
 
             //STEP 2: Send the term deposit to the other party

@@ -33,11 +33,12 @@ object TDRetreivalFlows {
 
     @StartableByRPC
     @CordaSerializable
-    class TDRetreivalFlow(val startDate: LocalDateTime, val endDate: LocalDateTime, val offeringInstitute: Party,
+    class TDRetreivalFlow(val dateData: TermDeposit.DateData, val offeringInstitute: Party,
                           val interest: Float, val depositAmount: Amount<Currency>, val state: String = internalState.active) : FlowLogic<List<StateAndRef<TermDeposit.State>>>() {
         @Suspendable
         override fun call(): List<StateAndRef<TermDeposit.State>> {
             //Query the vault for unconsumed states and then for Security loan states
+            println("Retrieval Start ${dateData.startDate} End ${dateData.endDate}")
             val criteria = QueryCriteria.VaultQueryCriteria(status = Vault.StateStatus.UNCONSUMED)
             val offerStates = serviceHub.vaultService.queryBy<TermDeposit.State>(criteria)
             val filteredStates: List<StateAndRef<TermDeposit.State>>
@@ -45,9 +46,9 @@ object TDRetreivalFlows {
             //Active Filter
             if (state == TermDeposit.internalState.active) {
                 filteredStates = offerStates.states.filter {
-                    it.state.data.endDate.isAfter(LocalDateTime.now()) &&
-                            it.state.data.startDate == startDate &&
-                            //it.state.data.endDate == endDate && for now dont do this -> because of duration being added into the tdo state
+                    //it.state.data.endDate.isAfter(LocalDateTime.now()) &&
+                            it.state.data.startDate == dateData.startDate &&
+                            it.state.data.endDate == dateData.endDate && //for now dont do this -> because of duration being added into the tdo state
                             it.state.data.institue == offeringInstitute &&
                             it.state.data.interestPercent == interest &&
                             it.state.data.internalState == TermDeposit.internalState.active
@@ -58,11 +59,13 @@ object TDRetreivalFlows {
             //Pending filter
             else if (state == TermDeposit.internalState.pending) {
                 filteredStates = offerStates.states.filter {
-                    it.state.data.endDate.isAfter(LocalDateTime.now()) &&
-                            it.state.data.startDate == startDate &&
-                            it.state.data.endDate == endDate && it.state.data.institue == offeringInstitute &&
-                            it.state.data.interestPercent == interest && it.state.data.internalState == TermDeposit.internalState.pending
-                            && it.state.data.depositAmount == depositAmount
+                    //it.state.data.endDate.isAfter(LocalDateTime.now()) &&
+                            it.state.data.startDate == dateData.startDate &&
+                            it.state.data.endDate == dateData.endDate &&
+                            it.state.data.institue == offeringInstitute &&
+                            it.state.data.interestPercent == interest &&
+                            it.state.data.internalState == TermDeposit.internalState.pending &&
+                            it.state.data.depositAmount == depositAmount
                 }
             }
 
@@ -70,8 +73,9 @@ object TDRetreivalFlows {
             else if (state == TermDeposit.internalState.exited) {
                 filteredStates = offerStates.states.filter {
                     it.state.data.endDate.isBefore(LocalDateTime.now()) &&
-                    it.state.data.startDate == startDate &&
-                            it.state.data.endDate == endDate && it.state.data.institue == offeringInstitute &&
+                    it.state.data.startDate == dateData.startDate &&
+                            it.state.data.endDate == dateData.endDate &&
+                            it.state.data.institue == offeringInstitute &&
                             it.state.data.interestPercent == interest &&
                             it.state.data.depositAmount == depositAmount
                 }

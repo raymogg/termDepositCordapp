@@ -25,13 +25,13 @@ object ActivateTD {
     @CordaSerializable
     @StartableByRPC
     @InitiatingFlow
-    open class Activator(val startDate: LocalDateTime, val endDate: LocalDateTime, val interestPercent: Float,
+    open class Activator(val dateData: TermDeposit.DateData, val interestPercent: Float,
                          val issuingInstitue: Party, val client: Party, val depositAmount: Amount<Currency>) : FlowLogic<SignedTransaction>() {
     @Suspendable
     override fun call(): SignedTransaction {
         //STEP 1: Notify other party of activation
         val flow = initiateFlow(client)
-        flow.send(listOf(startDate, endDate, interestPercent, issuingInstitue, client, depositAmount))
+        flow.send(listOf(dateData, interestPercent, issuingInstitue, client, depositAmount))
 
         //STEP 6: Recieve back the signed txn and commit it to the ledger
         val ptx = flow.receive<SignedTransaction>()
@@ -56,8 +56,8 @@ object ActivateTD {
             val args = flow.receive<List<*>>().unwrap { it }
 
             //STEP 3: Prepare the txn
-            val TD = subFlow(TDRetreivalFlows.TDRetreivalFlow(args[0] as LocalDateTime, args[1] as LocalDateTime,
-                    args[3] as Party, args[2] as Float, args[5] as Amount<Currency>, TermDeposit.internalState.pending))
+            val TD = subFlow(TDRetreivalFlows.TDRetreivalFlow(args[0] as TermDeposit.DateData,
+                    args[2] as Party, args[1] as Float, args[4] as Amount<Currency>, TermDeposit.internalState.pending))
 
             //STEP 4: Generate the Activate Txn
             val tx = TransactionBuilder(notary = notary)

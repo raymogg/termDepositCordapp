@@ -36,7 +36,7 @@ object RolloverTD {
     @CordaSerializable
     @InitiatingFlow
     @StartableByRPC
-    open class RolloverInitiator(val startDate: LocalDateTime, val endDate: LocalDateTime,val interestPercent: Float, val issuingInstitue: Party,
+    open class RolloverInitiator(val dateData: TermDeposit.DateData,val interestPercent: Float, val issuingInstitue: Party,
                             val depositAmount: Amount<Currency>, val rolloverTerms: TermDeposit.RolloverTerms) : FlowLogic<SignedTransaction>() {
 
         @Suspendable
@@ -44,7 +44,7 @@ object RolloverTD {
 
             //STEP 1: Send the TD to rollover with instruction on interest
             val flowSession = initiateFlow(issuingInstitue)
-            val termDeposit = subFlow(TDRetreivalFlows.TDRetreivalFlow(startDate, endDate, issuingInstitue, interestPercent, depositAmount))
+            val termDeposit = subFlow(TDRetreivalFlows.TDRetreivalFlow(dateData, issuingInstitue, interestPercent, depositAmount))
             flowSession.send(listOf(termDeposit.first(), rolloverTerms.withInterest, rolloverTerms.newStartDate, rolloverTerms.newEndDate))
 
             val signTransactionFlow = object : SignTransactionFlow(flowSession, SignTransactionFlow.tracker()) {

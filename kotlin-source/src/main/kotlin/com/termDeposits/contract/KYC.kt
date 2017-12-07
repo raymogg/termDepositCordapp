@@ -16,10 +16,10 @@ import net.corda.core.transactions.TransactionBuilder
 /**
  * Term Deposit
  *
- * Class for Term Deposits. Contains all the verification logic needed for different transactions, as well as a class
- * that defines the term deposit state.
- *
- * See IssueTD, ActivateTD, RedeemdTD and RolloverTD to see the flows which use this state and transaction types.
+ * Class for KnowYourClient Data. This state is used in transactions where a term deposit is issued - it allows
+ * banks to capture the KYC data state and is also used to produce the correct TermDeposit. The KYC states linear
+ * id is linked to the term deposit state - meaning each TD points to a specific KYC state related to the customer that
+ * has opened that TD.
  */
 
 @CordaSerializable

@@ -59,8 +59,8 @@ object IssueTD {
             tx.addCommand(Command(TermDepositOffer.Commands.CreateTD(), TDOffer.state.data.owner.owningKey))
             tx.addCommand(Command(KYC.Commands.IssueTD(), KYCData.first().state.data.owner.owningKey))
             val ptx = TermDeposit().generateIssue(tx,TDOffer, notary, depositAmount, serviceHub.myInfo.legalIdentities.first(), dateData.startDate,
-                    dateData.endDate, KYCData.first())
-                    //dateData.startDate.plusMonths(dateData.duration.toLong()), KYCData.first()) not doing this for testing purposes atm
+                    //dateData.endDate, KYCData.first())
+                    dateData.startDate.plusMonths(dateData.duration.toLong()), KYCData.first()) //not doing this for testing purposes atm
             //Sign txn
             val stx = serviceHub.signInitialTransaction(ptx, cashKeys+serviceHub.myInfo.legalIdentities.first().owningKey)
 
@@ -72,6 +72,7 @@ object IssueTD {
             //STEP 7: Receieve back txn, sign and commit to ledger
             val twiceSignedTx = stx.plus(otherPartySig.sigs)
             println("TD Issued to ${stx.tx.outputStates.filterIsInstance<TermDeposit.State>().first().owner} by ${issuingInstitue.name} at $interestPercent%")
+            println("TD Start ${stx.tx.outputStates.filterIsInstance<TermDeposit.State>().first().startDate} End ${stx.tx.outputStates.filterIsInstance<TermDeposit.State>().first().endDate}")
             return subFlow(FinalityFlow(twiceSignedTx, setOf(issuingInstitue) + groupPublicKeysByWellKnownParty(serviceHub,cashKeys).keys ))
 
         }
