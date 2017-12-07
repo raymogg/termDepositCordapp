@@ -76,8 +76,8 @@ open class TermDepositOffer : Contract {
     }
 
     fun generateIssue(builder: TransactionBuilder, endDate: LocalDateTime, interestPercent: Float,
-                             institue: Party, notary: Party, receiver: Party): TransactionBuilder {
-        val state = TransactionState(data = TermDepositOffer.State(endDate, interestPercent, institue, receiver), notary = notary, contract = TERMDEPOSIT_OFFER_CONTRACT_ID)
+                             institue: Party, notary: Party, receiver: Party, duration: Int): TransactionBuilder {
+        val state = TransactionState(data = TermDepositOffer.State(endDate, duration, interestPercent, institue, receiver), notary = notary, contract = TERMDEPOSIT_OFFER_CONTRACT_ID)
         builder.addOutputState(state)
         builder.addCommand(TermDepositOffer.Commands.Issue(), institue.owningKey)
         return builder
@@ -94,7 +94,7 @@ open class TermDepositOffer : Contract {
      * Potential other terms : minimum deposit amount, max deposit amount, fees - (todo would these be kept within contract or just in the attachment?)
      */
     @CordaSerializable
-    data class State(val validTill: LocalDateTime,
+    data class State(val validTill: LocalDateTime, val duration: Int,
                                      val interestPercent: Float, val institue: Party, override val owner: AbstractParty) : QueryableState, OwnableState, ContractState {
 
         override val participants: List<AbstractParty> get() = listOf(owner)

@@ -19,8 +19,8 @@ import java.time.LocalDateTime
  * will only present states that are still able to be redeemed (i.e the current date is before the end date for the offer)
  */
 
-class OfferRetrievalFlow(val startDate: LocalDateTime, val endDate: LocalDateTime, val offeringInstitute: Party,
-                         val interest: Float): FlowLogic<List<StateAndRef<TermDepositOffer.State>>>() {
+class OfferRetrievalFlow(val offeringInstitute: Party,
+                         val interest: Float, val duration: Int): FlowLogic<List<StateAndRef<TermDepositOffer.State>>>() {
     @Suspendable
     override fun call(): List<StateAndRef<TermDepositOffer.State>> {
         //Query the vault for unconsumed states and then for Security loan states
@@ -30,7 +30,8 @@ class OfferRetrievalFlow(val startDate: LocalDateTime, val endDate: LocalDateTim
         val filteredStates = offerStates.states.filter {
             it.state.data.validTill.isAfter(LocalDateTime.now())  &&
                     it.state.data.institue == offeringInstitute &&
-                    it.state.data.interestPercent == interest
+                    it.state.data.interestPercent == interest &&
+                    it.state.data.duration == duration
         }
         if (filteredStates.isEmpty()) {
             throw FlowException("No Offer states found that are active")

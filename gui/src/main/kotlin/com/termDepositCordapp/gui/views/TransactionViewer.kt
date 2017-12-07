@@ -42,6 +42,7 @@ import com.termDepositCordapp.gui.model.ReportingCurrencyModel
 import com.termDepositCordapp.gui.model.SettingsModel
 import com.termDepositCordapp.gui.sign
 import com.termDepositCordapp.gui.ui.setCustomCellFactory
+import com.termDeposits.contract.KYC
 import com.termDeposits.contract.TermDeposit
 import com.termDeposits.contract.TermDepositOffer
 import net.corda.finance.contracts.asset.Cash
@@ -313,6 +314,12 @@ class TransactionViewer : CordaView("Transactions") {
                                 label(data.validTill.toString())
                             }
 
+                            row {
+                                label("Deposit Duration (Months) : ") {gridpaneConstraints { hAlignment = HPos.RIGHT }}
+                                label(data.duration.toString())
+                            }
+
+
                         }
 
                         is TermDeposit.State -> {
@@ -337,35 +344,29 @@ class TransactionViewer : CordaView("Transactions") {
                             }
 
                             row {
+                                label("Client Ref : ") {gridpaneConstraints { hAlignment = HPos.RIGHT }}
+                                label(data.clientIdentifier.toString())
+                            }
+
+                            row {
                                 label("Internal State : ") {gridpaneConstraints { hAlignment = HPos.RIGHT }}
                                 label(data.internalState.toString())
                             }
 
                         }
-//                        is SecurityClaim.State -> {
-//                            row {
-//                                label("Instrument : ") { gridpaneConstraints { hAlignment = HPos.RIGHT } }
-//                                label(STOCKS[CODES.indexOf(data.code)])
-//                            }
-//                            row {
-//                                label("Quantity : ") { gridpaneConstraints { hAlignment = HPos.RIGHT } }
-//                                label(AmountFormatter.formatStock(data.quantity))
-//                            }
-//                            row {
-//                                label("Owner :") { gridpaneConstraints { hAlignment = HPos.RIGHT } }
-//                                label(PartyNameFormatter.short.format(data.owner.nameOrNull()!!))
-//                            }
-//                            row {
-//                                label("Issuer :") { gridpaneConstraints { hAlignment = HPos.RIGHT } }
-//                                val anonymousIssuer: AbstractParty = data.issuance.party
-//                                val issuer: AbstractParty = anonymousIssuer.resolveIssuer().value ?: anonymousIssuer
-//                                // TODO: Anonymous should probably be italicised or similar
-//                                label(issuer.nameOrNull()?.let { PartyNameFormatter.short.format(it) } ?: "Anonymous") {
-//                                    tooltip(anonymousIssuer.owningKey.toBase58String())
-//                                }
-//                            }
+
+                        is KYC.State -> {
+                            row {
+                                label("Client Name : ") {gridpaneConstraints { hAlignment = HPos.RIGHT }}
+                                label(data.firstName +" "+ data.lastName)
+                            }
+
+                            row {
+                                label("Account Number : ") {gridpaneConstraints { hAlignment = HPos.RIGHT }}
+                                label(data.accountNum)
+                            }
+                        }
 //
-//                        }
 //                        is SecurityLoan.State -> {
 //                            row {
 //                                label("Type : ") { gridpaneConstraints { hAlignment = HPos.RIGHT } }

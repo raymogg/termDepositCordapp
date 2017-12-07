@@ -99,11 +99,11 @@ open class TermDeposit : Contract {
      */
     fun generateIssue(builder: TransactionBuilder, TDOffer: StateAndRef<TermDepositOffer.State>,
                       notary: Party, depositAmount: Amount<Currency>, to: Party, startDate: LocalDateTime,
-                      endDate: LocalDateTime): TransactionBuilder {
+                      endDate: LocalDateTime, kyc: StateAndRef<KYC.State>): TransactionBuilder {
         val offerState = TDOffer.state.data
         //TODO Rather than hardcoding values, have start and end past in as a paramater
         val TDState = TransactionState(data = TermDeposit.State(startDate, endDate, offerState.interestPercent, offerState.institue,
-                depositAmount, internalState.pending, to), notary = notary, contract = TERMDEPOSIT_CONTRACT_ID)
+                depositAmount, internalState.pending, to, clientIdentifier = kyc.state.data.linearId), notary = notary, contract = TERMDEPOSIT_CONTRACT_ID)
         //Add tje TermDeposit as the output
         builder.addOutputState(TDState)
         //Add the issue command
@@ -163,7 +163,7 @@ open class TermDeposit : Contract {
     @CordaSerializable
     data class State(val startDate: LocalDateTime, val endDate: LocalDateTime, val interestPercent: Float,
                      val institue: Party, val depositAmount: Amount<Currency>, val internalState: String, override val owner: AbstractParty,
-                     override val linearId: UniqueIdentifier = UniqueIdentifier()) : QueryableState, OwnableState, ContractState, LinearState {
+                     override val linearId: UniqueIdentifier = UniqueIdentifier(), val clientIdentifier: UniqueIdentifier) : QueryableState, OwnableState, ContractState, LinearState {
 
         override val participants: List<AbstractParty> get() = listOf(owner)
 
@@ -196,4 +196,7 @@ open class TermDeposit : Contract {
      */
     @CordaSerializable
     data class RolloverTerms(val newStartDate: LocalDateTime, val newEndDate: LocalDateTime, val withInterest: Boolean)
+
+    @CordaSerializable
+    data class DateData(val startDate: LocalDateTime, val endDate: LocalDateTime, val duration: Int)
 }

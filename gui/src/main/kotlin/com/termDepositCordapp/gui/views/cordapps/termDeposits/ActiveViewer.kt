@@ -102,6 +102,7 @@ class ActiveViewer : CordaView("Active Term Deposits") {
         val endDateValueLabel: Label by fxid()
         val startDateValueLabel: Label by fxid()
         val internalStateValueLabel: Label by fxid()
+        val clientRefValueLabel : Label by fxid()
 
 
         init {
@@ -121,6 +122,7 @@ class ActiveViewer : CordaView("Active Term Deposits") {
             startDateValueLabel.text = stateRow.stateAndRef.state.data.startDate.toString()
             endDateValueLabel.text = stateRow.stateAndRef.state.data.endDate.toString()
             internalStateValueLabel.text = stateRow.stateAndRef.state.data.internalState.toString()
+            clientRefValueLabel.text = stateRow.stateAndRef.state.data.clientIdentifier.toString()
         }
     }
 

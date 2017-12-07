@@ -179,14 +179,14 @@ class Simulation(options: String) {
     /** TESTING FOR FLOW ERRORS */
     @Test
     fun expiredTDOffer() {
-        sendTDOffers(banks[0].second, parties[0].second, LocalDateTime.now(), 3.4f)
+        sendTDOffers(banks[0].second, parties[0].second, LocalDateTime.now(), 3.4f, 6)
         CreateKYC(parties[0].second, "Bob", "Smith", "1234")
         Thread.sleep(1000)
         //Should throw an error due to the offer already expirying/no states being found.
         var error = false
         try {
             RequestTD(parties[0].second, banks[0].second, LocalDateTime.now(),
-                LocalDateTime.now().plusWeeks(6), 3.4f, Amount(30000, USD), "Bob", "Smith", "1234")
+                LocalDateTime.now().plusWeeks(6), 3.4f, Amount(30000, USD), "Bob", "Smith", "1234", 6)
         } catch (e: Exception) {
             error = true
             println("Test Passed")
@@ -197,10 +197,10 @@ class Simulation(options: String) {
     @Test
     fun exitNonExpiredTD() {
         var error = false
-        sendTDOffers(banks[0].second, parties[0].second, LocalDateTime.MAX, 3.4f)
+        sendTDOffers(banks[0].second, parties[0].second, LocalDateTime.MAX, 3.4f, 6)
         CreateKYC(parties[0].second, "Bob", "Smith", "1234")
         val startTime = LocalDateTime.now()
-        RequestTD(parties[0].second, banks[0].second, startTime, startTime.plusWeeks(6), 3.4f, Amount(30000, USD), "Bob", "Smith", "1234")
+        RequestTD(parties[0].second, banks[0].second, startTime, startTime.plusWeeks(6), 3.4f, Amount(30000, USD), "Bob", "Smith", "1234", 6)
         Activate(banks[0].second, parties[0].second, startTime, startTime.plusWeeks(6), 3.4f, Amount(30000, USD))
         //Should throw an error due to this term deposit not yet being able to exit
         try {
@@ -216,10 +216,10 @@ class Simulation(options: String) {
     @Test
     fun rolloverWithInterestNonExpiredTD() {
         var error = false
-        sendTDOffers(banks[0].second, parties[0].second, LocalDateTime.MAX, 3.4f)
+        sendTDOffers(banks[0].second, parties[0].second, LocalDateTime.MAX, 3.4f,6)
         CreateKYC(parties[0].second, "Bob", "Smith", "1234")
         val startTime = LocalDateTime.now()
-        RequestTD(parties[0].second, banks[0].second, startTime, startTime.plusWeeks(6), 3.4f, Amount(30000, USD), "Bob", "Smith", "1234")
+        RequestTD(parties[0].second, banks[0].second, startTime, startTime.plusWeeks(6), 3.4f, Amount(30000, USD), "Bob", "Smith", "1234",6)
         Activate(banks[0].second, parties[0].second, startTime, startTime.plusWeeks(6), 3.4f, Amount(30000, USD))
         //Should throw an error due to this term deposit not yet being able to exit
         try {
@@ -236,10 +236,10 @@ class Simulation(options: String) {
     @Test
     fun rolloverWOInterestNonExpiredTD() {
         var error = false
-        sendTDOffers(banks[0].second, parties[0].second, LocalDateTime.MAX, 3.4f)
+        sendTDOffers(banks[0].second, parties[0].second, LocalDateTime.MAX, 3.4f, 6)
         CreateKYC(parties[0].second, "Bob", "Smith", "1234")
         val startTime = LocalDateTime.now()
-        RequestTD(parties[0].second, banks[0].second, startTime, startTime.plusWeeks(6), 3.4f, Amount(30000, USD), "Bob", "Smith", "1234")
+        RequestTD(parties[0].second, banks[0].second, startTime, startTime.plusWeeks(6), 3.4f, Amount(30000, USD), "Bob", "Smith", "1234",6)
         Activate(banks[0].second, parties[0].second, startTime, startTime.plusWeeks(6), 3.4f, Amount(30000, USD))
         //Should throw an error due to this term deposit not yet being able to exit
         try {
@@ -260,7 +260,7 @@ class Simulation(options: String) {
         CreateKYC(parties[0].second, "Bob", "Smith", "1234")
 
         try {
-            RequestTD(parties[0].second, banks[0].second, startTime, startTime.plusWeeks(6), 3.9f, Amount(65000, USD), "Bob", "Smith", "1234")
+            RequestTD(parties[0].second, banks[0].second, startTime, startTime.plusWeeks(6), 3.9f, Amount(65000, USD), "Bob", "Smith", "1234",6)
         } catch (e: Exception) {
             println("Test Passed")
             error = true
@@ -330,35 +330,36 @@ class Simulation(options: String) {
 
         println("Simulations")
         //Send out offers from the two banks at different interest percentages
-        sendTDOffers(banks[0].second, parties[0].second, LocalDateTime.MAX, 2.55f)
-        sendTDOffers(banks[0].second, parties[0].second, LocalDateTime.MAX, 2.65f)
-        sendTDOffers(banks[0].second, parties[0].second, LocalDateTime.MAX, 3.1f)
-        sendTDOffers(banks[1].second, parties[0].second, LocalDateTime.MAX, 2.7f)
-        sendTDOffers(banks[1].second, parties[0].second, LocalDateTime.MAX, 3.0f)
-        sendTDOffers(banks[1].second, parties[0].second, LocalDateTime.MAX, 2.95f)
+        sendTDOffers(banks[0].second, parties[0].second, LocalDateTime.MAX, 2.55f,6)
+        sendTDOffers(banks[0].second, parties[0].second, LocalDateTime.MAX, 2.65f,12)
+        sendTDOffers(banks[0].second, parties[0].second, LocalDateTime.MAX, 3.1f,18)
+        sendTDOffers(banks[1].second, parties[0].second, LocalDateTime.MAX, 2.7f,6)
+        sendTDOffers(banks[1].second, parties[0].second, LocalDateTime.MAX, 3.0f,12)
+        sendTDOffers(banks[1].second, parties[0].second, LocalDateTime.MAX, 2.95f,18)
 
         //Accept some td offers
         RequestTD(parties[0].second, banks[0].second, LocalDateTime.MIN, LocalDateTime.MAX, 2.65f, Amount(30000,USD), "Bob", "Smith",
-                "1234")
+                "1234",12)
         Activate(banks[0].second, parties[0].second, LocalDateTime.MIN, LocalDateTime.MAX, 2.65f, Amount(30000,USD))
     }
 
     fun sendTDOffers(me : CordaRPCOps, receiver: CordaRPCOps, endDate: LocalDateTime,
-                     interestPercent: Float) {
+                     interestPercent: Float, duration: Int) {
         //Get attachment hash for the txn before starting the flow
         //TODO: This hardcoding of a very specific file path probably isnt that great
         val attachmentInputStream = File("C:\\Users\\raymondm\\Documents\\termDepositsCordapp\\kotlin-source\\src\\main\\resources\\Example_TD_Contract.zip").inputStream()
         val attachmentHash = me.uploadAttachment(attachmentInputStream)
         val returnVal = me.startFlow(IssueOffer::Initiator, endDate, interestPercent, me.nodeInfo().legalIdentities.first(), receiver.nodeInfo().legalIdentities.first(),
-                attachmentHash).returnValue.getOrThrow()
+                attachmentHash, duration).returnValue.getOrThrow()
         //println("TD Offers Issued")
     }
 
     fun RequestTD(me : CordaRPCOps, issuer: CordaRPCOps, startDate: LocalDateTime, endDate: LocalDateTime,
-                  interestPercent: Float, depositAmount: Amount<Currency>, firstName: String, lastName: String, accountNumber: String) {
+                  interestPercent: Float, depositAmount: Amount<Currency>, firstName: String, lastName: String, accountNumber: String, duration: Int) {
         //Request a TD at $300 USD
         val kycData = KYC.KYCNameData(firstName, lastName, accountNumber)
-        val returnVal = me.startFlow(IssueTD::Initiator, startDate, endDate, interestPercent, issuer.nodeInfo().legalIdentities.first(), depositAmount,
+        val dateData = TermDeposit.DateData(startDate, endDate, duration)
+        val returnVal = me.startFlow(IssueTD::Initiator, dateData, interestPercent, issuer.nodeInfo().legalIdentities.first(), depositAmount,
                 kycData).returnValue.getOrThrow()
         //println("TD Requested")
     }

@@ -97,6 +97,7 @@ class OfferViewer : CordaView("Term Deposit Offers") {
             val institueValueLabel: Label by fxid()
             val originatedValueLabel: Label by fxid()
             val interestValueLabel: Label by fxid()
+            val durationValueLabel: Label by fxid()
 
             init {
                 val resolvedIssuer: AbstractParty = stateRow.stateAndRef.state.data.institue
@@ -112,6 +113,7 @@ class OfferViewer : CordaView("Term Deposit Offers") {
                 institueValueLabel.apply { tooltip(resolvedIssuer.nameOrNull()?.let { PartyNameFormatter.full.format(it) } ?: "Anonymous") }
                 originatedValueLabel.text = stateRow.stateAndRef.state.data.validTill.toString()
                 interestValueLabel.text = stateRow.stateAndRef.state.data.interestPercent.toString()
+                durationValueLabel.text = stateRow.stateAndRef.state.data.duration.toString()
             }
         }
 

@@ -2,6 +2,8 @@ package com.termDepositCordapp.gui.views.cordapps.termDeposits
 
 import com.termDepositCordapp.gui.views.stringConverter
 import com.termDepositCordapp.gui.model.TermDepositsModel
+import com.termDeposits.contract.KYC
+import com.termDeposits.contract.TermDeposit
 import com.termDeposits.contract.TermDepositOffer
 import com.termDeposits.flow.TermDeposit.IssueTD
 import javafx.beans.binding.Bindings
@@ -94,8 +96,10 @@ class AcceptOffer : Fragment() {
             when (it) {
                 executeButton -> {
                     //TODO Execute accept offer
-                    rpcProxy.value?.startFlow(IssueTD::Initiator, LocalDateTime.MIN, LocalDateTime.MAX, offerChoiceBox.value.state.data.interestPercent,
-                            offerChoiceBox.value.state.data.institue,  Amount(depositTextField.text.toLong()*100, USD))
+                    val dateData = TermDeposit.DateData(LocalDateTime.MIN, LocalDateTime.MAX, 6)
+                    val kycData = KYC.KYCNameData("Bob", "Smith", "1234")
+                    rpcProxy.value?.startFlow(IssueTD::Initiator, dateData, offerChoiceBox.value.state.data.interestPercent,
+                            offerChoiceBox.value.state.data.institue,  Amount(depositTextField.text.toLong()*100, USD), kycData)
                }
                 else -> null
             }

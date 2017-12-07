@@ -101,6 +101,7 @@ class PendingViewer : CordaView("Pending Term Deposits") {
         val startDateValueLabel: Label by fxid()
         val endDateValueLabel: Label by fxid()
         val internalStateValueLabel: Label by fxid()
+        val clientRefValueLabel: Label by fxid()
 
         init {
             val resolvedIssuer: AbstractParty = stateRow.stateAndRef.state.data.institue
@@ -119,6 +120,8 @@ class PendingViewer : CordaView("Pending Term Deposits") {
             startDateValueLabel.text = stateRow.stateAndRef.state.data.startDate.toString()
             endDateValueLabel.text = stateRow.stateAndRef.state.data.endDate.toString()
             internalStateValueLabel.text = stateRow.stateAndRef.state.data.internalState.toString()
+            clientRefValueLabel.text = stateRow.stateAndRef.state.data.clientIdentifier.toString()
+
         }
     }
 

@@ -45,9 +45,12 @@ object TDRetreivalFlows {
             //Active Filter
             if (state == TermDeposit.internalState.active) {
                 filteredStates = offerStates.states.filter {
-                    it.state.data.endDate.isAfter(LocalDateTime.now()) && it.state.data.startDate == startDate &&
-                            it.state.data.endDate == endDate && it.state.data.institue == offeringInstitute &&
-                            it.state.data.interestPercent == interest && it.state.data.internalState == TermDeposit.internalState.active
+                    it.state.data.endDate.isAfter(LocalDateTime.now()) &&
+                            it.state.data.startDate == startDate &&
+                            //it.state.data.endDate == endDate && for now dont do this -> because of duration being added into the tdo state
+                            it.state.data.institue == offeringInstitute &&
+                            it.state.data.interestPercent == interest &&
+                            it.state.data.internalState == TermDeposit.internalState.active
                             && it.state.data.depositAmount == depositAmount
                 }
             }
@@ -66,7 +69,7 @@ object TDRetreivalFlows {
             //Deposits that are "expired" (i.e end date done, but not actually consumed)
             else if (state == TermDeposit.internalState.exited) {
                 filteredStates = offerStates.states.filter {
-                    //it.state.data.endDate.isBefore(LocalDateTime.now()) &&
+                    it.state.data.endDate.isBefore(LocalDateTime.now()) &&
                     it.state.data.startDate == startDate &&
                             it.state.data.endDate == endDate && it.state.data.institue == offeringInstitute &&
                             it.state.data.interestPercent == interest &&
