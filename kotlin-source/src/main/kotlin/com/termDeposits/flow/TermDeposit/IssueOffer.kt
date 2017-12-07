@@ -6,15 +6,12 @@ import net.corda.core.contracts.requireThat
 import net.corda.core.crypto.SecureHash
 import net.corda.core.flows.*
 import net.corda.core.identity.Party
-import net.corda.core.internal.InputStreamAndHash
 import net.corda.core.internal.ResolveTransactionsFlow
 import net.corda.core.serialization.CordaSerializable
 import net.corda.core.transactions.SignedTransaction
 import net.corda.core.transactions.TransactionBuilder
 import net.corda.core.utilities.unwrap
 import java.io.File
-import java.nio.file.Files
-import java.nio.file.Paths
 import java.security.DigestInputStream
 import java.security.MessageDigest
 import java.time.LocalDateTime

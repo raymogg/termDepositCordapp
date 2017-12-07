@@ -1,6 +1,7 @@
 package com.termDeposits.flow.TermDeposit
 
 import co.paralleluniverse.fibers.Suspendable
+import com.termDeposits.contract.KYC
 import com.termDeposits.contract.TermDeposit
 import com.termDeposits.contract.TermDepositOffer
 import net.corda.confidential.IdentitySyncFlow
@@ -32,7 +33,7 @@ object IssueTD {
     @InitiatingFlow
     @StartableByRPC
     class Initiator(val startDate: LocalDateTime, val endDate: LocalDateTime, val interestPercent: Float,
-    val issuingInstitue: Party, val depositAmount: Amount<Currency>) : FlowLogic<SignedTransaction>() {//FlowLogic<SignedTransaction>() {
+    val issuingInstitue: Party, val depositAmount: Amount<Currency>, val KYCData: KYC.KYCNameData) : FlowLogic<SignedTransaction>() {//FlowLogic<SignedTransaction>() {
         @Suspendable
         override fun call(): SignedTransaction {//SignedTransaction {
             //STEP 1: Retrieve TD Offer from vault with the provided terms
@@ -40,16 +41,23 @@ object IssueTD {
             val notary = serviceHub.networkMapCache.notaryIdentities.first()
             val TDOffers = subFlow(OfferRetrievalFlow(startDate, endDate, issuingInstitue, interestPercent))
             val TDOffer = TDOffers.first() //Doesnt matter if there is more than one offer as they will be identical
+            val KYCData = subFlow(KYCRetrievalFlow(KYCData.firstName, KYCData.lastName, KYCData.accountNum))
 
             //STEP 2: Build Txn with TDOffer as input and TDOffer + TDState as output TODO Work in attachments and send client KYC data here
             val builder = TransactionBuilder(notary = notary)
             //Add TD Offer as input
             builder.addInputState(TDOffer)
             builder.addOutputState(TDOffer.state.copy())
+            //Add KYC data as input
+            builder.addInputState(KYCData.first())
+            builder.addOutputState(KYCData.first().state.copy())
+
             //Add cash as output
             val (tx, cashKeys) = Cash.generateSpend(serviceHub, builder, depositAmount, issuingInstitue)
-            builder.addCommand(Command(TermDepositOffer.Commands.CreateTD(), TDOffer.state.data.owner.owningKey))
-            //val ptx = TermDeposit().generateIssue(tx,TDOffer, notary, depositAmount, serviceHub.myInfo.legalIdentities.first(), LocalDateTime.MIN, LocalDateTime.MAX)
+
+            //Add required commands
+            tx.addCommand(Command(TermDepositOffer.Commands.CreateTD(), TDOffer.state.data.owner.owningKey))
+            tx.addCommand(Command(KYC.Commands.IssueTD(), KYCData.first().state.data.owner.owningKey))
             val ptx = TermDeposit().generateIssue(tx,TDOffer, notary, depositAmount, serviceHub.myInfo.legalIdentities.first(), startDate, endDate)
             //Sign txn
             val stx = serviceHub.signInitialTransaction(ptx, cashKeys+serviceHub.myInfo.legalIdentities.first().owningKey)

@@ -309,7 +309,7 @@ class TransactionViewer : CordaView("Transactions") {
                             }
 
                             row {
-                                label("Duration : ") {gridpaneConstraints { hAlignment = HPos.RIGHT }}
+                                label("Valid Until : ") {gridpaneConstraints { hAlignment = HPos.RIGHT }}
                                 label(data.validTill.toString())
                             }
 

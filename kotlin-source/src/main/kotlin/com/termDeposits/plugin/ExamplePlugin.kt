@@ -2,6 +2,7 @@ package com.termDeposits.plugin
 
 import com.termDeposits.contract.*
 import com.termDeposits.flow.TermDeposit.*
+import net.corda.core.contracts.UniqueIdentifier
 import net.corda.core.messaging.CordaRPCOps
 import net.corda.core.serialization.SerializationWhitelist
 import net.corda.core.transactions.TransactionBuilder
@@ -37,6 +38,9 @@ class SerilizationPlugin: SerializationWhitelist {
             IssueOffer.Initiator::class.java,
             IssueTD.Initiator::class.java,
             IssueTD.Acceptor::class.java,
+            KYC::class.java,
+            KYC.State::class.java,
+            CreateKYC.Creator::class.java,
             RolloverTD.RolloverInitiator::class.java,
             RolloverTD.RolloverAcceptor::class.java,
             RedeemTD.RedemptionAcceptor::class.java,
@@ -45,6 +49,7 @@ class SerilizationPlugin: SerializationWhitelist {
             TDRetreivalFlows.TDRetreivalFlowID::class.java,
             OfferRetrievalFlow::class.java,
             TransactionBuilder::class.java,
-            Boolean::class.java
+            Boolean::class.java,
+            UniqueIdentifier::class.java
     )
 }
