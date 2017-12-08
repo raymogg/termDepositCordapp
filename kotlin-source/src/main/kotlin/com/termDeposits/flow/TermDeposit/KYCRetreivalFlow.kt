@@ -46,3 +46,29 @@ import java.util.*
             return filteredStates
         }
     }
+
+
+
+    /** Vault query for finding KYC data by its unique ID */
+    @StartableByRPC
+    @CordaSerializable
+    class KYCRetrievalFlowID(val linearID: UniqueIdentifier) : FlowLogic<List<StateAndRef<KYC.State>>>() {
+        @Suspendable
+        override fun call(): List<StateAndRef<KYC.State>> {
+            //Query the vault for unconsumed states and then for Security loan states
+            val criteria = QueryCriteria.VaultQueryCriteria(status = Vault.StateStatus.UNCONSUMED)
+            val filteredStates = serviceHub.vaultService.queryBy<KYC.State>(criteria).states.filter {
+                it.state.data.linearId == linearID
+            }
+
+            if (filteredStates.isEmpty()) {
+                throw FlowException("No Client KYC Data found")
+            } else if (filteredStates.size > 1) {
+                throw FlowException("Too many KYC states found for this client")
+            }
+
+            return filteredStates
+        }
+    }
+
+

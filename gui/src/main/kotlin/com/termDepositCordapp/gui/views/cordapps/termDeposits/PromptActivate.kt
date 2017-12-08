@@ -3,7 +3,9 @@ package com.termDepositCordapp.gui.views.cordapps.termDeposits
 
 import com.termDepositCordapp.gui.views.stringConverter
 import com.termDepositCordapp.gui.model.TermDepositsModel
+import com.termDeposits.contract.KYC
 import com.termDeposits.contract.TermDeposit
+import com.termDeposits.flow.TermDeposit.KYCRetrievalFlowID
 import com.termDeposits.flow.TermDeposit.PromptActivate
 import javafx.beans.binding.Bindings
 import javafx.beans.binding.BooleanBinding
@@ -18,8 +20,10 @@ import net.corda.client.jfx.utils.isNotNull
 import net.corda.core.contracts.*
 import net.corda.core.flows.FlowException
 import net.corda.core.messaging.startFlow
+import net.corda.core.utilities.getOrThrow
 import org.controlsfx.dialog.ExceptionDialog
 import tornadofx.*
+import java.time.Period
 
 /**
  * Created by raymondm on 14/08/2017.
@@ -91,8 +95,16 @@ class PromptActivate : Fragment() {
             when (it) {
                 executeButton -> {
                     //TODO Execute accept offer
-                    rpcProxy.value?.startFlow(PromptActivate::Prompter, offerChoiceBox.value.state.data.startDate, offerChoiceBox.value.state.data.endDate,
-                            offerChoiceBox.value.state.data.interestPercent, offerChoiceBox.value.state.data.institue, rpcProxy.value?.nodeInfo()!!.legalIdentities.first(),  offerChoiceBox.value.state.data.depositAmount)
+                    val linearID = offerChoiceBox.value.state.data.clientIdentifier
+                    println("Linear ID ${offerChoiceBox.value.state.data.clientIdentifier}")
+                    val kycData = rpcProxy.value?.startFlow(::KYCRetrievalFlowID, linearID)!!.returnValue.getOrThrow().first()
+                    val kycNameData = KYC.KYCNameData(kycData.state.data.firstName, kycData.state.data.lastName, kycData.state.data.accountNum)
+                    println("${kycData.state.data.firstName} ${kycData.state.data.lastName}")
+                    val difference: Int = Period.between(offerChoiceBox.value.state.data.startDate.toLocalDate(),offerChoiceBox.value.state.data.endDate.toLocalDate()).months
+                    val dateData = TermDeposit.DateData(offerChoiceBox.value.state.data.startDate,offerChoiceBox.value.state.data.endDate,difference)
+                    rpcProxy.value?.startFlow(PromptActivate::Prompter, dateData, offerChoiceBox.value.state.data.interestPercent,
+                            offerChoiceBox.value.state.data.institue, rpcProxy.value?.nodeInfo()!!.legalIdentities.first(),  offerChoiceBox.value.state.data.depositAmount,
+                            kycNameData)
                 }
                 else -> null
             }

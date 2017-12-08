@@ -37,7 +37,7 @@ object RedeemTD {
 
             //STEP 1: Retrieve the TD to Redeem and begin flow with other party
             val clientID = subFlow(KYCRetrievalFlow(kycNameData.firstName, kycNameData.lastName, kycNameData.accountNum)).first().state.data.linearId
-            val TermDeposits = subFlow(TDRetreivalFlows.TDRetreivalFlow(dateData, issuingInstitue, interestPercent, depositAmount, TermDeposit.internalState.exited, clientID))
+            val TermDeposits = subFlow(TDRetreivalFlows.TDRetreivalFlow(dateData, issuingInstitue, interestPercent, depositAmount, TermDeposit.internalState.active, clientID))
             val flowSession = initiateFlow(issuingInstitue)
 
             //STEP 2: Send the term deposit to the other party

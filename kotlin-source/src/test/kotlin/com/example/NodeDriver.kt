@@ -4,6 +4,7 @@ import com.termDeposits.contract.KYC
 import com.termDeposits.contract.TermDeposit
 import com.termDeposits.flow.TermDeposit.*
 import net.corda.core.contracts.Amount
+import net.corda.core.contracts.UniqueIdentifier
 import net.corda.core.flows.FlowException
 import net.corda.core.identity.CordaX500Name
 import net.corda.core.identity.Party
@@ -158,7 +159,9 @@ class Simulation(options: String) {
             FlowPermissions.startFlowPermission<RolloverTD.RolloverInitiator>(),
             FlowPermissions.startFlowPermission<PromptActivate.Prompter>(),
             FlowPermissions.startFlowPermission<PromptActivate.Acceptor>(),
-            FlowPermissions.startFlowPermission<CreateKYC.Creator>()
+            FlowPermissions.startFlowPermission<CreateKYC.Creator>(),
+            FlowPermissions.startFlowPermission<KYCRetrievalFlow>(),
+            FlowPermissions.startFlowPermission<KYCRetrievalFlowID>()
     )
 
     fun allocateBankPermissions() : Set<String> = setOf(
@@ -331,9 +334,13 @@ class Simulation(options: String) {
         val client1 = CreateKYC(parties[0].second, "Bob", "Smith", "1234")
         val client2 = CreateKYC(parties[0].second, "Jane", "Doe", "9384")
         val client3 = CreateKYC(parties[0].second, "Alice", "Anon", "6820")
-        val client4 = CreateKYC(parties[1].second, "Elon", "Musk", "5236")
-        val client5 = CreateKYC(parties[1].second, "Bill", "Gates", "0384")
-        val client6 = CreateKYC(parties[1].second, "Matt", "Rose", "2893")
+        val client4 = CreateKYC(parties[0].second, "Elon", "Musk", "5236")
+        val client5 = CreateKYC(parties[0].second, "Bill", "Gates", "0384")
+        val client6 = CreateKYC(parties[0].second, "Matt", "Rose", "2893")
+
+        //Test retrieving  client data based of unique ID
+        val clientKYC = getClientData(parties[0].second, client4)
+        println("${clientKYC.firstName} ${clientKYC.lastName} ${client4}")
 
         println("Simulations")
         //Send out offers from the two banks at different interest percentages
@@ -412,8 +419,15 @@ class Simulation(options: String) {
                 depositAmount, rolloverTerms, kycNameData).returnValue.getOrThrow()
     }
 
-    fun CreateKYC(me: CordaRPCOps, firstName: String, lastName: String, accountNumber: String) {
+    fun CreateKYC(me: CordaRPCOps, firstName: String, lastName: String, accountNumber: String): UniqueIdentifier {
         val returnVal = me.startFlow(CreateKYC::Creator, firstName, lastName, accountNumber).returnValue.getOrThrow()
+        return returnVal
+    }
+
+    fun getClientData(me: CordaRPCOps, linearID: UniqueIdentifier): KYC.KYCNameData {
+        val returnVal = me.startFlow(::KYCRetrievalFlowID, linearID).returnValue.getOrThrow().first().state.data
+        val kycNameData = KYC.KYCNameData(returnVal.firstName, returnVal.lastName, returnVal.accountNum)
+        return kycNameData
     }
 
 }
