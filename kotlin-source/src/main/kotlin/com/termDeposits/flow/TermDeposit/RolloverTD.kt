@@ -1,6 +1,7 @@
 package com.termDeposits.flow.TermDeposit
 
 import co.paralleluniverse.fibers.Suspendable
+import com.termDeposits.contract.KYC
 import com.termDeposits.contract.TermDeposit
 import net.corda.core.contracts.Amount
 import net.corda.core.contracts.StateAndRef
@@ -37,14 +38,15 @@ object RolloverTD {
     @InitiatingFlow
     @StartableByRPC
     open class RolloverInitiator(val dateData: TermDeposit.DateData,val interestPercent: Float, val issuingInstitue: Party,
-                            val depositAmount: Amount<Currency>, val rolloverTerms: TermDeposit.RolloverTerms) : FlowLogic<SignedTransaction>() {
+                            val depositAmount: Amount<Currency>, val rolloverTerms: TermDeposit.RolloverTerms, val kycNameData: KYC.KYCNameData) : FlowLogic<SignedTransaction>() {
 
         @Suspendable
         override fun call(): SignedTransaction {
 
             //STEP 1: Send the TD to rollover with instruction on interest
             val flowSession = initiateFlow(issuingInstitue)
-            val termDeposit = subFlow(TDRetreivalFlows.TDRetreivalFlow(dateData, issuingInstitue, interestPercent, depositAmount))
+            val clientID = subFlow(KYCRetrievalFlow(kycNameData.firstName, kycNameData.lastName, kycNameData.accountNum)).first().state.data.linearId
+            val termDeposit = subFlow(TDRetreivalFlows.TDRetreivalFlow(dateData, issuingInstitue, interestPercent, depositAmount, clientIdentifier = clientID))
             flowSession.send(listOf(termDeposit.first(), rolloverTerms.withInterest, rolloverTerms.newStartDate, rolloverTerms.newEndDate))
 
             val signTransactionFlow = object : SignTransactionFlow(flowSession, SignTransactionFlow.tracker()) {

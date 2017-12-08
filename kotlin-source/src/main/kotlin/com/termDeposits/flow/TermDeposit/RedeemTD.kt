@@ -1,6 +1,7 @@
 package com.termDeposits.flow.TermDeposit
 
 import co.paralleluniverse.fibers.Suspendable
+import com.termDeposits.contract.KYC
 import com.termDeposits.contract.TermDeposit
 import net.corda.confidential.IdentitySyncFlow
 import net.corda.core.contracts.Amount
@@ -30,12 +31,13 @@ object RedeemTD {
     @StartableByRPC
     @CordaSerializable
     class RedemptionInitiator(val dateData: TermDeposit.DateData, val interestPercent: Float,
-    val issuingInstitue: Party, val depositAmount: Amount<Currency>) : FlowLogic<SignedTransaction>() {
+    val issuingInstitue: Party, val depositAmount: Amount<Currency>, val kycNameData: KYC.KYCNameData) : FlowLogic<SignedTransaction>() {
         @Suspendable
         override fun call(): SignedTransaction {
 
             //STEP 1: Retrieve the TD to Redeem and begin flow with other party
-            val TermDeposits = subFlow(TDRetreivalFlows.TDRetreivalFlow(dateData, issuingInstitue, interestPercent, depositAmount, TermDeposit.internalState.exited))
+            val clientID = subFlow(KYCRetrievalFlow(kycNameData.firstName, kycNameData.lastName, kycNameData.accountNum)).first().state.data.linearId
+            val TermDeposits = subFlow(TDRetreivalFlows.TDRetreivalFlow(dateData, issuingInstitue, interestPercent, depositAmount, TermDeposit.internalState.exited, clientID))
             val flowSession = initiateFlow(issuingInstitue)
 
             //STEP 2: Send the term deposit to the other party

@@ -34,7 +34,8 @@ object TDRetreivalFlows {
     @StartableByRPC
     @CordaSerializable
     class TDRetreivalFlow(val dateData: TermDeposit.DateData, val offeringInstitute: Party,
-                          val interest: Float, val depositAmount: Amount<Currency>, val state: String = internalState.active) : FlowLogic<List<StateAndRef<TermDeposit.State>>>() {
+                          val interest: Float, val depositAmount: Amount<Currency>, val state: String = internalState.active,
+                          val clientIdentifier: UniqueIdentifier) : FlowLogic<List<StateAndRef<TermDeposit.State>>>() {
         @Suspendable
         override fun call(): List<StateAndRef<TermDeposit.State>> {
             //Query the vault for unconsumed states and then for Security loan states
@@ -51,8 +52,9 @@ object TDRetreivalFlows {
                             it.state.data.endDate == dateData.endDate && //for now dont do this -> because of duration being added into the tdo state
                             it.state.data.institue == offeringInstitute &&
                             it.state.data.interestPercent == interest &&
-                            it.state.data.internalState == TermDeposit.internalState.active
-                            && it.state.data.depositAmount == depositAmount
+                            it.state.data.internalState == TermDeposit.internalState.active &&
+                            it.state.data.depositAmount == depositAmount &&
+                            it.state.data.clientIdentifier == clientIdentifier
                 }
             }
 
@@ -65,7 +67,8 @@ object TDRetreivalFlows {
                             it.state.data.institue == offeringInstitute &&
                             it.state.data.interestPercent == interest &&
                             it.state.data.internalState == TermDeposit.internalState.pending &&
-                            it.state.data.depositAmount == depositAmount
+                            it.state.data.depositAmount == depositAmount &&
+                            it.state.data.clientIdentifier == clientIdentifier
                 }
             }
 
@@ -77,7 +80,8 @@ object TDRetreivalFlows {
                             it.state.data.endDate == dateData.endDate &&
                             it.state.data.institue == offeringInstitute &&
                             it.state.data.interestPercent == interest &&
-                            it.state.data.depositAmount == depositAmount
+                            it.state.data.depositAmount == depositAmount &&
+                            it.state.data.clientIdentifier == clientIdentifier
                 }
             } else {
                 throw FlowException("Invalid Term Deposit State provided")
