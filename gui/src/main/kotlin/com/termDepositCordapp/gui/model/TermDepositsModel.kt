@@ -1,5 +1,6 @@
 package com.termDepositCordapp.gui.model
 
+import com.termDeposits.contract.KYC
 import com.termDeposits.contract.TermDeposit
 import com.termDeposits.contract.TermDepositOffer
 import javafx.collections.FXCollections
@@ -42,6 +43,15 @@ class TermDepositsModel {
         Diff(it.added.filterOfferStateAndRef(), it.removed.filterOfferStateAndRef())
     }
     val offerStates: ObservableList<StateAndRef<TermDepositOffer.State>> = offerStatesDiff.fold(FXCollections.observableArrayList()) { list: MutableList<StateAndRef<TermDepositOffer.State>>, statesDiff ->
+        list.removeIf { it in statesDiff.removed }
+        list.addAll(statesDiff.added)
+    }
+
+    private val KYCStatesDiff: Observable<Diff<KYC.State>> = contractStatesDiff.map {
+        Diff(it.added.filterKYCStateAndRef(), it.removed.filterKYCStateAndRef())
+    }
+
+    val KYCStates: ObservableList<StateAndRef<KYC.State>> = KYCStatesDiff.fold(FXCollections.observableArrayList()) { list: MutableList<StateAndRef<KYC.State>>, statesDiff ->
         list.removeIf { it in statesDiff.removed }
         list.addAll(statesDiff.added)
     }
@@ -97,6 +107,18 @@ class TermDepositsModel {
                 } else {
                     null
                 }
+            } else {
+                null
+            }
+        }.filterNotNull()
+    }
+
+    private fun Collection<StateAndRef<ContractState>>.filterKYCStateAndRef(): List<StateAndRef<KYC.State>> {
+        return this.map { stateAndRef ->
+            @Suppress("UNCHECKED_CAST")
+            if (stateAndRef.state.data is KYC.State) {
+                // Kotlin doesn't unify here for some reason
+                stateAndRef as StateAndRef<KYC.State>
             } else {
                 null
             }

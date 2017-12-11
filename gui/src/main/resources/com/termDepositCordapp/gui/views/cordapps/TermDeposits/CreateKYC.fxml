@@ -8,18 +8,16 @@
     <content>
         <GridPane hgap="10" vgap="10">
 
-            <Label fx:id="depositLabel" GridPane.halignment="RIGHT" GridPane.rowIndex="1"/>
-            <TextField fx:id="depositTextField" maxWidth="Infinity" GridPane.columnIndex="1" GridPane.columnSpan="4"
+            <Label fx:id="firstNameLabel" GridPane.halignment="RIGHT" GridPane.rowIndex="1"/>
+            <TextField fx:id="firstNameTextField" maxWidth="Infinity" GridPane.columnIndex="1" GridPane.columnSpan="4"
                        GridPane.fillWidth="true" GridPane.hgrow="ALWAYS" GridPane.rowIndex="1"/>
 
-            <!-- Row 2 -->
-            <Label fx:id="kycLabel" GridPane.halignment="RIGHT" GridPane.rowIndex="2"/>
-            <ChoiceBox fx:id="kycChoiceBox" maxWidth="Infinity" GridPane.columnIndex="1" GridPane.columnSpan="4"
+            <Label fx:id="lastNameLabel" GridPane.halignment="RIGHT" GridPane.rowIndex="2"/>
+            <TextField fx:id="lastNameTextField" maxWidth="Infinity" GridPane.columnIndex="1" GridPane.columnSpan="4"
                        GridPane.fillWidth="true" GridPane.hgrow="ALWAYS" GridPane.rowIndex="2"/>
 
-            <!-- Row 2 -->
-            <Label fx:id="offerLabel" GridPane.halignment="RIGHT" GridPane.rowIndex="3"/>
-            <ChoiceBox fx:id="offerChoiceBox" maxWidth="Infinity" GridPane.columnIndex="1" GridPane.columnSpan="4"
+            <Label fx:id="accountNumLabel" GridPane.halignment="RIGHT" GridPane.rowIndex="3"/>
+            <TextField fx:id="accountNumTextField" maxWidth="Infinity" GridPane.columnIndex="1" GridPane.columnSpan="4"
                        GridPane.fillWidth="true" GridPane.hgrow="ALWAYS" GridPane.rowIndex="3"/>
 
 

@@ -20,6 +20,7 @@ import com.termDepositCordapp.gui.views.LoginView
 import com.termDepositCordapp.gui.views.MainView
 import com.termDepositCordapp.gui.views.cordapps.cash.CashViewer
 import com.termDepositCordapp.gui.views.cordapps.termDeposits.ActiveViewer
+import com.termDepositCordapp.gui.views.cordapps.termDeposits.KYCViewer
 import com.termDepositCordapp.gui.views.cordapps.termDeposits.OfferViewer
 import com.termDepositCordapp.gui.views.cordapps.termDeposits.PendingViewer
 import com.termDepositCordapp.gui.views.runInFxApplicationThread
@@ -113,6 +114,7 @@ class Main : App(MainView::class) {
             registerView<OfferViewer>()
             registerView<ActiveViewer>()
             registerView<PendingViewer>()
+            registerView<KYCViewer>()
             // Tools.
             registerView<Network>()
             registerView<Settings>()
