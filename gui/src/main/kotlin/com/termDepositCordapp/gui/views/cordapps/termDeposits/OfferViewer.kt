@@ -31,6 +31,7 @@ import com.termDepositCordapp.gui.views.*
 import com.termDeposits.contract.TermDepositOffer
 import javafx.geometry.Pos
 import net.corda.core.crypto.SecureHash
+import net.corda.core.identity.CordaX500Name
 import tornadofx.*
 import java.time.LocalDateTime
 
@@ -124,16 +125,25 @@ class OfferViewer : CordaView("Term Deposit Offers") {
             val searchField = SearchField(claimStates,
                     "Interest" to { state, text -> state.state.data.interestPercent.toString().contains(text, true) }
             )
+
             root.top = hbox(5.0) {
-                button("Accept Offer", FontAwesomeIconView(FontAwesomeIcon.PLUS)) {
+                    button("Accept Offer", FontAwesomeIconView(FontAwesomeIcon.PLUS)) {
+                        setOnMouseClicked {
+                            if (it.button == MouseButton.PRIMARY) {
+                                find<AcceptOffer>().show(this@OfferViewer.root.scene.window)
+
+                            }
+                        }
+                    }
+
+                button("Issue Offer", FontAwesomeIconView(FontAwesomeIcon.PLUS)) {
                     setOnMouseClicked {
                         if (it.button == MouseButton.PRIMARY) {
-                            //TODO - Some offer button
-                            find<AcceptOffer>().show(this@OfferViewer.root.scene.window)
-
+                            find<IssueOffer>().show(this@OfferViewer.root.scene.window)
                         }
                     }
                 }
+
                 HBox.setHgrow(searchField.root, Priority.ALWAYS)
                 add(searchField.root)
             }

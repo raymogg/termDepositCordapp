@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<DialogPane stylesheets="@../../../css/corda.css" xmlns="http://javafx.com/javafx/8.0.76-ea"
+            xmlns:fx="http://javafx.com/fxml/1">
+    <content>
+        <GridPane hgap="10" vgap="10">
+
+            <Label fx:id="interestLabel" GridPane.halignment="RIGHT" GridPane.rowIndex="1"/>
+            <TextField fx:id="interestTextField" maxWidth="Infinity" GridPane.columnIndex="1" GridPane.columnSpan="4"
+                       GridPane.fillWidth="true" GridPane.hgrow="ALWAYS" GridPane.rowIndex="1"/>
+
+            <!-- Row 2 -->
+            <Label fx:id="endDateLabel" GridPane.halignment="RIGHT" GridPane.rowIndex="2"/>
+            <TextField fx:id="endDateTextField" maxWidth="Infinity" GridPane.columnIndex="1" GridPane.columnSpan="4"
+                       GridPane.fillWidth="true" GridPane.hgrow="ALWAYS" GridPane.rowIndex="2"/>
+
+            <!-- Row 2 -->
+            <Label fx:id="durationLabel" GridPane.halignment="RIGHT" GridPane.rowIndex="3"/>
+            <TextField fx:id="durationTextField" maxWidth="Infinity" GridPane.columnIndex="1" GridPane.columnSpan="4"
+                       GridPane.fillWidth="true" GridPane.hgrow="ALWAYS" GridPane.rowIndex="3"/>
+
+            <Label fx:id="toLabel" GridPane.halignment="RIGHT" GridPane.rowIndex="4"/>
+            <ChoiceBox fx:id="toChoiceBox" maxWidth="Infinity" GridPane.columnIndex="1" GridPane.columnSpan="4"
+                       GridPane.fillWidth="true" GridPane.hgrow="ALWAYS" GridPane.rowIndex="4"/>
+
+
+            <padding>
+                <Insets bottom="20.0" left="30.0" right="30.0" top="30.0"/>
+            </padding>
+        </GridPane>
+    </content>
+</DialogPane>
