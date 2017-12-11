@@ -63,6 +63,11 @@ object ActivateTD {
             val TD = subFlow(TDRetreivalFlows.TDRetreivalFlow(args[0] as TermDeposit.DateData,
                     args[2] as Party, args[1] as Float, args[4] as Amount<Currency>, TermDeposit.internalState.pending, kycData.first().state.data.linearId))
 
+            //Ensure that the caller of the flow was not the owner (i.e client) of the state
+            if (TD.first().state.data.owner == flow.counterparty) {
+                throw FlowException("Owner of a TD cannot activate it")
+            }
+
             //STEP 4: Generate the Activate Txn
             val tx = TransactionBuilder(notary = notary)
             TermDeposit().generateActivate(tx, TD.first(), args[3] as Party, notary)

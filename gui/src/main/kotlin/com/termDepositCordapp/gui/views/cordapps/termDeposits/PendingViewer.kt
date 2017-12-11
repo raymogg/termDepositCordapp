@@ -147,7 +147,7 @@ class PendingViewer : CordaView("Pending Term Deposits") {
                 setOnMouseClicked {
                     if (it.button == MouseButton.PRIMARY) {
                         //TODO - Some offer button
-                        find<PromptActivate>().show(this@PendingViewer.root.scene.window)
+                        find<TDActivate>().show(this@PendingViewer.root.scene.window)
 
                     }
                 }
