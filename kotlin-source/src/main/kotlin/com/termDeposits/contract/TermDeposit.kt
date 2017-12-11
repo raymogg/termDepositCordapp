@@ -162,12 +162,13 @@ open class TermDeposit : Contract {
 
     @CordaSerializable
     data class State(val startDate: LocalDateTime, val endDate: LocalDateTime, val interestPercent: Float,
-                     val institue: Party, val depositAmount: Amount<Currency>, val internalState: String, override val owner: AbstractParty,
-                     override val linearId: UniqueIdentifier = UniqueIdentifier(), val clientIdentifier: UniqueIdentifier) : QueryableState, OwnableState, ContractState, LinearState {
+                     val institue: Party, val depositAmount: Amount<Currency>, val internalState: String, val owner: AbstractParty,
+                     override val linearId: UniqueIdentifier = UniqueIdentifier(), val clientIdentifier: UniqueIdentifier) : QueryableState, ContractState, LinearState {
 
-        override val participants: List<AbstractParty> get() = listOf(owner)
+        //Participants store this state in their vault - therefor this should be both the owner (whoever has taken out the loan) and the issueing institute
+        override val participants: List<AbstractParty> get() = listOf(owner, institue)
 
-        override fun withNewOwner(newOwner: AbstractParty): CommandAndState = CommandAndState(TermDeposit.Commands.Issue(), copy(owner = newOwner))
+        //override fun withNewOwner(newOwner: AbstractParty): CommandAndState = CommandAndState(TermDeposit.Commands.Issue(), copy(owner = newOwner))
 
         override fun generateMappedObject(schema: MappedSchema): PersistentState {
             return when (schema) {

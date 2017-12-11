@@ -82,12 +82,13 @@ open class KYC : Contract {
     // **********************
 
     @CordaSerializable
-    data class State(val firstName: String, val lastName: String, val accountNum: String, override val owner: AbstractParty,
-                     override val linearId: UniqueIdentifier = UniqueIdentifier()) : QueryableState, OwnableState, ContractState, LinearState {
+    data class State(val firstName: String, val lastName: String, val accountNum: String, val owner: AbstractParty,
+                     override val linearId: UniqueIdentifier = UniqueIdentifier(), val banksInvolved: List<AbstractParty> = emptyList()) : QueryableState, ContractState, LinearState {
 
-        override val participants: List<AbstractParty> get() = listOf(owner)
+        //Each time a TD is issued with this KYC data, the bank it is issued to is added to this banks involved list, meaning the data is now stored in that banks vault
+        override val participants: List<AbstractParty> get() = banksInvolved.plus(owner)
 
-        override fun withNewOwner(newOwner: AbstractParty): CommandAndState = CommandAndState(KYC.Commands.Issue(), copy(owner = newOwner))
+        //override fun withNewOwner(newOwner: AbstractParty): CommandAndState = CommandAndState(KYC.Commands.Issue(), copy(owner = newOwner))
 
         override fun generateMappedObject(schema: MappedSchema): PersistentState {
             return when (schema) {

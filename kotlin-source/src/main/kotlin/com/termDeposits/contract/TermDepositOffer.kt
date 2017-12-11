@@ -95,11 +95,11 @@ open class TermDepositOffer : Contract {
      */
     @CordaSerializable
     data class State(val validTill: LocalDateTime, val duration: Int,
-                                     val interestPercent: Float, val institue: Party, override val owner: AbstractParty) : QueryableState, OwnableState, ContractState {
+                                     val interestPercent: Float, val institue: Party, val owner: AbstractParty) : QueryableState, ContractState {
 
         override val participants: List<AbstractParty> get() = listOf(owner)
 
-        override fun withNewOwner(newOwner: AbstractParty): CommandAndState = CommandAndState(Commands.Issue(), copy(owner = newOwner))
+        //override fun withNewOwner(newOwner: AbstractParty): CommandAndState = CommandAndState(Commands.Issue(), copy(owner = newOwner))
 
         override fun toString(): String {
             return "Term Deposit Offer: From ${institue} at ${interestPercent}%"

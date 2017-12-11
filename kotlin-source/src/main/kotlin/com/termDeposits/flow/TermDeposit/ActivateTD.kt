@@ -41,6 +41,7 @@ object ActivateTD {
         val stx = serviceHub.addSignature(ptx.unwrap { it })
         subFlow(ResolveTransactionsFlow(stx, flow))
         println("Term Deposit: from $issuingInstitue to $client now activated")
+        println("Participants ${stx.tx.outputStates.filterIsInstance<TermDeposit.State>().first().participants}")
         return subFlow(FinalityFlow(stx, setOf(client)))
         }
     }

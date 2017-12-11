@@ -48,9 +48,10 @@ object IssueTD {
             //Add TD Offer as input
             builder.addInputState(TDOffer)
             builder.addOutputState(TDOffer.state.copy())
-            //Add KYC data as input
+            //Add KYC data as input -> for the output change the states participants to both the client and the bank node
             builder.addInputState(KYCData.first())
-            builder.addOutputState(KYCData.first().state.copy())
+            builder.addOutputState(KYCData.first().state.copy(data = KYCData.first().state.data.copy(
+                    banksInvolved = KYCData.first().state.data.banksInvolved.plus(issuingInstitue)))) //Same state but with a new bank involved - i.e able to view this KYC data
 
             //Add cash as output
             val (tx, cashKeys) = Cash.generateSpend(serviceHub, builder, depositAmount, issuingInstitue)
@@ -72,6 +73,7 @@ object IssueTD {
             //STEP 7: Receieve back txn, sign and commit to ledger
             val twiceSignedTx = stx.plus(otherPartySig.sigs)
             println("TD Issued to ${stx.tx.outputStates.filterIsInstance<TermDeposit.State>().first().owner} by ${issuingInstitue.name} at $interestPercent%")
+        println("Participants ${stx.tx.outputStates.filterIsInstance<TermDeposit.State>().first().participants}")
             println("TD Start ${stx.tx.outputStates.filterIsInstance<TermDeposit.State>().first().startDate} End ${stx.tx.outputStates.filterIsInstance<TermDeposit.State>().first().endDate}")
             return subFlow(FinalityFlow(twiceSignedTx, setOf(issuingInstitue) + groupPublicKeysByWellKnownParty(serviceHub,cashKeys).keys ))
 

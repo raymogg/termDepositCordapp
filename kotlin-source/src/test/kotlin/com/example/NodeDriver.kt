@@ -84,7 +84,7 @@ class Simulation(options: String) {
             startNode(providedName = CordaX500Name("Controller", "London", "GB"), advertisedServices = setOf(ServiceInfo(ValidatingNotaryService.type)))
             val cBank = startNode(providedName = CordaX500Name("CentralBank", "Brisbane", "AU"), rpcUsers = listOf(cashIssuer)).getOrThrow()
             val (nodeA, nodeB, nodeC, aBank, bBank) = listOf(
-                    startNode(providedName = CordaX500Name("ClientA", "London", "GB"), rpcUsers = listOf(stdUser)),
+                    startNode(providedName = CordaX500Name("AMM", "London", "GB"), rpcUsers = listOf(stdUser)),
                     startNode(providedName = CordaX500Name("ClientB", "New York", "US"), rpcUsers = listOf(stdUser)),
                     startNode(providedName = CordaX500Name("ClientC", "Paris", "FR"), rpcUsers = listOf(stdUser)),
                     startNode(providedName = CordaX500Name("BankA", "Munich", "DE"), rpcUsers = listOf(bank)),
@@ -141,7 +141,7 @@ class Simulation(options: String) {
 
         cashIssuers.add(cbrpc.nodeInfo().legalIdentities.first() to cbrpc
         )
-        arrayOf(aNode, bNode, cNode).forEach {
+        arrayOf(aNode, bNode, cNode, bankA, bankB).forEach {
             println("${it.nodeInfo.legalIdentities.first()} started on ${it.configuration.rpcAddress}")
         }
     }

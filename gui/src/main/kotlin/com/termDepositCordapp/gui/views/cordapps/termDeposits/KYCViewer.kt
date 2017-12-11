@@ -217,7 +217,7 @@ class KYCViewer : CordaView("KYC Data") {
     //This is the widget that is diplayed in the dashboard view on the homepage
     private class OfferWidget : BorderPane() {
         //private val partiallyResolvedTransactions by observableListReadOnly(TransactionDataModel::partiallyResolvedTransactions)
-        private val claimStates by observableList(TermDepositsModel::offerStates)
+        private val claimStates by observableList(TermDepositsModel::KYCStates)
 
         // TODO : Add a scrolling table to show latest transaction.
         // TODO : Add a chart to show types of transactions.
