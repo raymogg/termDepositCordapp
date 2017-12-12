@@ -43,12 +43,13 @@ object RolloverTD {
         @Suspendable
         override fun call(): SignedTransaction {
 
-            //STEP 1: Send the TD to rollover with instruction on interest
+            //STEP 1: Gather KYC Data and TD. Send these to other party with rollover instructions
             val flowSession = initiateFlow(issuingInstitue)
             val clientID = subFlow(KYCRetrievalFlow(kycNameData.firstName, kycNameData.lastName, kycNameData.accountNum)).first().state.data.linearId
             val termDeposit = subFlow(TDRetreivalFlows.TDRetreivalFlow(dateData, issuingInstitue, interestPercent, depositAmount, clientIdentifier = clientID))
             flowSession.send(listOf(termDeposit.first(), rolloverTerms.withInterest, rolloverTerms.newStartDate, rolloverTerms.newEndDate))
 
+            //STEP 5: Sign the transaction and return to the other party
             val signTransactionFlow = object : SignTransactionFlow(flowSession, SignTransactionFlow.tracker()) {
                 override fun checkTransaction(stx: SignedTransaction)  {
                     requireThat {
@@ -57,7 +58,7 @@ object RolloverTD {
 
                 }
             }
-
+            //Sign and then wait for transaction to be commited to the ledger
             val stx = subFlow(signTransactionFlow)
             return waitForLedgerCommit(stx.id)
         }
@@ -100,7 +101,7 @@ object RolloverTD {
             val stx = serviceHub.signInitialTransaction(toSignTx, keys)
             val otherPartySig = subFlow(CollectSignaturesFlow(stx, setOf(flowSession), CollectSignaturesFlow.tracker()))
 
-            //STEP 5: Receieve back and commit to ledger
+            //STEP 6: Receieve back and commit to ledger
             val twiceSignedTx = stx.plus(otherPartySig.sigs)
             val td = toSignTx.outputStates().filterIsInstance<TransactionState<TermDeposit.State>>().first()
             println("Term Deposit Rollover ${td.data} ${td.data.depositAmount}")

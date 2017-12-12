@@ -38,26 +38,32 @@ open class TermDeposit : Contract {
     override fun verify(tx: LedgerTransaction) {
         val command = tx.commands.requireSingleCommand<TermDeposit.Commands>()
         when (command.value) {
-            is Commands.Issue -> requireThat {
-                //TD Issue verification
-                "more than two outputs are required" using (tx.outputStates.size > 2) //output should be a replica TDOffer state and the newly created TD State, plus various cash states
-                "More than one input allowed" using (tx.inputStates.size > 1) //input should be a single TDOffer state plus cash
-                "input state must be a term deposit offer" using ((tx.inputStates.filterIsInstance<TermDepositOffer.State>().size == 1))
-
+            is Commands.Issue -> {
+                val outputTD = tx.outputStates.filterIsInstance<TermDeposit.State>().first()
+                requireThat {
+                    //TD Issue verification
+                    "more than two outputs are required" using (tx.outputStates.size > 2) //output should be a replica TDOffer state and the newly created TD State, plus various cash states
+                    "More than one input allowed" using (tx.inputStates.size > 1) //input should be a single TDOffer state plus cash
+                    "input state must be a term deposit offer" using ((tx.inputStates.filterIsInstance<TermDepositOffer.State>().size == 1))
+                    "Owner must have signed the command" using (outputTD.owner.owningKey in command.signers)
+                }
             }
 
-            is Commands.Activate -> requireThat {
-                //Pending to active verification
-                "Only one input allowed" using (tx.inputStates.size == 1)
-                "Only one output allowed" using (tx.outputStates.size == 1)
-                "Input must be a term deposit" using (tx.inputStates.first() is TermDeposit.State)
-                "Output must be a term deposit" using (tx.outputStates.first() is TermDeposit.State)
-                val input = tx.inputStates.first() as TermDeposit.State
-                val output = tx.outputStates.first() as TermDeposit.State
-                "Deposit amounts must match" using (input.depositAmount == output.depositAmount)
-                "End dates must match" using (input.endDate == output.endDate)
-                "Issuing institue must match" using (input.institue == output.institue)
-                "interest percent must match" using (input.interestPercent == output.interestPercent)
+            is Commands.Activate -> {
+                requireThat {
+                    //Pending to active verification
+                    "Only one input allowed" using (tx.inputStates.size == 1)
+                    "Only one output allowed" using (tx.outputStates.size == 1)
+                    "Input must be a term deposit" using (tx.inputStates.first() is TermDeposit.State)
+                    "Output must be a term deposit" using (tx.outputStates.first() is TermDeposit.State)
+                    val input = tx.inputStates.filterIsInstance<TermDeposit.State>().first()
+                    val output = tx.outputStates.filterIsInstance<TermDeposit.State>().first()
+                    "Deposit amounts must match" using (input.depositAmount == output.depositAmount)
+                    "End dates must match" using (input.endDate == output.endDate)
+                    "Issuing institue must match" using (input.institue == output.institue)
+                    "interest percent must match" using (input.interestPercent == output.interestPercent)
+                    "Owner must have signed the command" using (output.owner.owningKey in command.signers)
+                }
             }
 
             is Commands.Redeem -> requireThat {
@@ -68,6 +74,7 @@ open class TermDeposit : Contract {
                 val outputCash = tx.outputStates.sumCashBy(td.owner).quantity
                 "Term Deposit amount must match output cash amount" using (outputCash == (td.depositAmount.quantity * (100+td.interestPercent)/100).toLong() )
                 //"The term deposit has not yet expired" using (td.endDate.isBefore(LocalDateTime.now()))
+                "Owner must have signed the command" using (td.owner.owningKey in command.signers)
 
             }
 
@@ -75,11 +82,11 @@ open class TermDeposit : Contract {
                 //TD Rollover verification
                 "Only one term deposit input must be present" using (tx.inputStates.filterIsInstance<TermDeposit.State>().size == 1)
                 "Only one term deposit output must be present" using (tx.outputStates.filterIsInstance<TermDeposit.State>().size == 1)
-                val input = tx.inputStates.filterIsInstance<TermDeposit.State>().first() as TermDeposit.State
-                val output = tx.outputStates.filterIsInstance<TermDeposit.State>().first() as TermDeposit.State
+                val input = tx.inputStates.filterIsInstance<TermDeposit.State>().first()
+                val output = tx.outputStates.filterIsInstance<TermDeposit.State>().first()
                 "Input and Output issuer must be the same" using (input.institue == output.institue)
                 //"The term deposit has not yet expired" using (input.endDate.isBefore(LocalDateTime.now()))
-
+                "Owner must have signed the command" using (output.owner.owningKey in command.signers)
             }
         }
     }
@@ -101,7 +108,6 @@ open class TermDeposit : Contract {
                       notary: Party, depositAmount: Amount<Currency>, to: Party, startDate: LocalDateTime,
                       endDate: LocalDateTime, kyc: StateAndRef<KYC.State>): TransactionBuilder {
         val offerState = TDOffer.state.data
-        //TODO Rather than hardcoding values, have start and end past in as a paramater
         val TDState = TransactionState(data = TermDeposit.State(startDate, endDate, offerState.interestPercent, offerState.institue,
                 depositAmount, internalState.pending, to, clientIdentifier = kyc.state.data.linearId), notary = notary, contract = TERMDEPOSIT_CONTRACT_ID)
         //Add tje TermDeposit as the output
@@ -136,7 +142,6 @@ open class TermDeposit : Contract {
     fun generateActivate(builder: TransactionBuilder, TDState: StateAndRef<TermDeposit.State>, TDConsumer: Party,
                          notary: Party): TransactionBuilder {
         builder.addInputState(TDState)
-        //todo: remove localdatetime.min and make this localdatetime.now (min is just used for testing purposes)
         builder.addOutputState(TransactionState(data = TDState.state.data.copy(internalState = internalState.active), notary = TDState.state.notary, contract = TERMDEPOSIT_CONTRACT_ID))
         builder.addCommand(TermDeposit.Commands.Activate(), TDState.state.data.institue.owningKey, TDConsumer.owningKey)
         return builder
@@ -168,8 +173,6 @@ open class TermDeposit : Contract {
         //Participants store this state in their vault - therefor this should be both the owner (whoever has taken out the loan) and the issueing institute
         override val participants: List<AbstractParty> get() = listOf(owner, institue)
 
-        //override fun withNewOwner(newOwner: AbstractParty): CommandAndState = CommandAndState(TermDeposit.Commands.Issue(), copy(owner = newOwner))
-
         override fun generateMappedObject(schema: MappedSchema): PersistentState {
             return when (schema) {
                 is TDSchemaV1 -> TDSchemaV1.PersistentTDSchema(
@@ -198,6 +201,8 @@ open class TermDeposit : Contract {
     @CordaSerializable
     data class RolloverTerms(val newStartDate: LocalDateTime, val newEndDate: LocalDateTime, val withInterest: Boolean)
 
+
+    /** Data Class to hold required date data. Needed for same reason as rolloverTerms data class above */
     @CordaSerializable
     data class DateData(val startDate: LocalDateTime, val endDate: LocalDateTime, val duration: Int)
 }

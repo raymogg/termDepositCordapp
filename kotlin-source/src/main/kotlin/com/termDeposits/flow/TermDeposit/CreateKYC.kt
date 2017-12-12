@@ -5,9 +5,7 @@ import com.termDeposits.contract.KYC
 import net.corda.core.contracts.TransactionState
 import net.corda.core.contracts.UniqueIdentifier
 import net.corda.core.flows.*
-import net.corda.core.internal.ResolveTransactionsFlow
 import net.corda.core.serialization.CordaSerializable
-import net.corda.core.transactions.SignedTransaction
 import net.corda.core.transactions.TransactionBuilder
 
 
@@ -27,9 +25,7 @@ object CreateKYC {
             val tx = KYC().generateIssue(builder, firstName, lastName, accountNum, notary, serviceHub.myInfo.legalIdentities.first())
 
             //STEP 2: Sign and commit txn
-            //val flow = initiateFlow(serviceHub.myInfo.legalIdentities.first())
             val stx = serviceHub.signInitialTransaction(tx)
-            //subFlow(ResolveTransactionsFlow(stx, flow)) //This is required for notary validation to pass
             val finalTx = subFlow(FinalityFlow(stx))
             println("KYC Created: $firstName $lastName")
             return tx.outputStates().filterIsInstance<TransactionState<KYC.State>>().first().data.linearId

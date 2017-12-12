@@ -15,7 +15,6 @@ import net.corda.core.serialization.CordaSerializable
 import net.corda.core.transactions.SignedTransaction
 import net.corda.core.transactions.TransactionBuilder
 import net.corda.finance.contracts.asset.Cash
-import java.time.LocalDateTime
 import java.util.*
 
 
@@ -36,14 +35,14 @@ object IssueTD {
     val issuingInstitue: Party, val depositAmount: Amount<Currency>, val KYCData: KYC.KYCNameData) : FlowLogic<SignedTransaction>() {//FlowLogic<SignedTransaction>() {
         @Suspendable
         override fun call(): SignedTransaction {//SignedTransaction {
-            //STEP 1: Retrieve TD Offer from vault with the provided terms
+            //STEP 1: Retrieve TD Offer and KYC data from vault
             val flow = initiateFlow(issuingInstitue)
             val notary = serviceHub.networkMapCache.notaryIdentities.first()
             val TDOffers = subFlow(OfferRetrievalFlow(issuingInstitue, interestPercent, dateData.duration))
-            val TDOffer = TDOffers.first() //Doesnt matter if there is more than one offer as they will be identical
+            val TDOffer = TDOffers.first() //Doesnt matter if there is more than one offer as they will be identical offer states
             val KYCData = subFlow(KYCRetrievalFlow(KYCData.firstName, KYCData.lastName, KYCData.accountNum))
 
-            //STEP 2: Build Txn with TDOffer as input and TDOffer + TDState as output TODO Work in attachments and send client KYC data here
+            //STEP 2: Build Txn with TDOffer as input and TDOffer + TDState as output TODO Work in attachments
             val builder = TransactionBuilder(notary = notary)
             //Add TD Offer as input
             builder.addInputState(TDOffer)
@@ -57,10 +56,9 @@ object IssueTD {
             val (tx, cashKeys) = Cash.generateSpend(serviceHub, builder, depositAmount, issuingInstitue)
 
             //Add required commands
-            tx.addCommand(Command(TermDepositOffer.Commands.CreateTD(), TDOffer.state.data.owner.owningKey))
+            tx.addCommand(Command(TermDepositOffer.Commands.CreateTD(), TDOffer.state.data.institue.owningKey))
             tx.addCommand(Command(KYC.Commands.IssueTD(), KYCData.first().state.data.owner.owningKey))
             val ptx = TermDeposit().generateIssue(tx,TDOffer, notary, depositAmount, serviceHub.myInfo.legalIdentities.first(), dateData.startDate,
-                    //dateData.endDate, KYCData.first())
                     dateData.startDate.plusMonths(dateData.duration.toLong()), KYCData.first()) //not doing this for testing purposes atm
             //Sign txn
             val stx = serviceHub.signInitialTransaction(ptx, cashKeys+serviceHub.myInfo.legalIdentities.first().owningKey)
@@ -70,11 +68,10 @@ object IssueTD {
 
             //STEP 3: Send to the issuing institue for verification/acceptance
             val otherPartySig = subFlow(CollectSignaturesFlow(stx, setOf(flow), CollectSignaturesFlow.tracker()))
-            //STEP 7: Receieve back txn, sign and commit to ledger
+
+            //STEP 5: Receieve back txn, sign and commit to ledger
             val twiceSignedTx = stx.plus(otherPartySig.sigs)
             println("TD Issued to ${stx.tx.outputStates.filterIsInstance<TermDeposit.State>().first().owner} by ${issuingInstitue.name} at $interestPercent%")
-        println("Participants ${stx.tx.outputStates.filterIsInstance<TermDeposit.State>().first().participants}")
-            println("TD Start ${stx.tx.outputStates.filterIsInstance<TermDeposit.State>().first().startDate} End ${stx.tx.outputStates.filterIsInstance<TermDeposit.State>().first().endDate}")
             return subFlow(FinalityFlow(twiceSignedTx, setOf(issuingInstitue) + groupPublicKeysByWellKnownParty(serviceHub,cashKeys).keys ))
 
         }
@@ -102,6 +99,7 @@ object IssueTD {
                 }
             }
 
+            //Return to the other party and wait for this state to hit the ledger
             val stx = subFlow(signTransactionFlow)
             return waitForLedgerCommit(stx.id)
         }

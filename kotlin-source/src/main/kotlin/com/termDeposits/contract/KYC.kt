@@ -35,23 +35,36 @@ open class KYC : Contract {
     override fun verify(tx: LedgerTransaction) {
         val command = tx.commands.requireSingleCommand<KYC.Commands>()
         when (command.value) {
-            is Commands.Issue -> requireThat {
-                //KYC Data Issue verification
-                "No inputs are present" using tx.inputStates.isEmpty()
-                "One output is present" using (tx.outputStates.size == 1)
+            is Commands.Issue -> {
+                val inputKYC = tx.outputStates.filterIsInstance<KYC.State>().first()
+                requireThat {
+                    //KYC Data Issue verification
+                    "No inputs are present" using tx.inputStates.isEmpty()
+                    "One output is present" using (tx.outputStates.size == 1)
+                    "The owner has signed the command" using (inputKYC.owner.owningKey in command.signers)
+
+                }
             }
 
-            is Commands.Update -> requireThat {
-                println("Command Update Validation")
-                //KYC Update verification
-                "One input is present" using (tx.inputStates.size == 1)
-                "One output is present" using (tx.outputStates.size == 1)
+            is Commands.Update -> {
+                val inputKYC = tx.outputStates.filterIsInstance<KYC.State>().first()
+                requireThat {
+                    println("Command Update Validation")
+                    //KYC Update verification
+                    "One input is present" using (tx.inputStates.size == 1)
+                    "One output is present" using (tx.outputStates.size == 1)
+                    "The owner has signed the command" using (inputKYC.owner.owningKey in command.signers)
+                }
             }
 
-            is Commands.IssueTD -> requireThat {
-                //KYC Issue Term Deposit command
-                "One KYC input is present" using (tx.inputStates.filterIsInstance<KYC.State>().size == 1)
-                "One KYC output is present" using (tx.outputStates.filterIsInstance<KYC.State>().size == 1)
+            is Commands.IssueTD -> {
+                val inputKYC = tx.outputStates.filterIsInstance<KYC.State>().first()
+                requireThat {
+                    //KYC Issue Term Deposit command
+                    "One KYC input is present" using (tx.inputStates.filterIsInstance<KYC.State>().size == 1)
+                    "One KYC output is present" using (tx.outputStates.filterIsInstance<KYC.State>().size == 1)
+                    "The owner has signed the command" using (inputKYC.owner.owningKey in command.signers)
+                }
             }
         }
     }
@@ -99,9 +112,7 @@ open class KYC : Contract {
 
         //Each time a TD is issued with this KYC data, the bank it is issued to is added to this banks involved list, meaning the data is now stored in that banks vault
         override val participants: List<AbstractParty> get() = banksInvolved.plus(owner)
-        //override val participants: List<AbstractParty> get() = listOf(owner)
 
-        //override fun withNewOwner(newOwner: AbstractParty): CommandAndState = CommandAndState(KYC.Commands.Issue(), copy(owner = newOwner))
 
         override fun generateMappedObject(schema: MappedSchema): PersistentState {
             return when (schema) {

@@ -34,37 +34,42 @@ open class TermDepositOffer : Contract {
         // Verification logic for each of the TDOffer commands
         val command = tx.commands.requireSingleCommand<TermDepositOffer.Commands>()
         when (command.value) {
-            is Commands.CreateTD -> requireThat {
-                //Requirements for creating a TD from a TDOffer
-                tx.inputStates.size == 1
-                tx.outputStates.size == 2 //One TDOffer state, one TD state
-                ((tx.outputStates[0] is TermDepositOffer.State) || (tx.outputStates[1] is TermDepositOffer.State) &&
-                        (tx.outputStates[0] is TermDeposit.State) || (tx.outputStates[1] is TermDeposit.State))
-                val TDTerms = listOf<String>()
-                val TDOTerms = listOf<String>()
-                //Validate the individual terms match
-                tx.outputStates.forEach {
-                    if (it is TermDeposit.State) {
-                        TDTerms.plus(it.startDate.toString())
-                        TDTerms.plus(it.endDate.toString())
-                        TDTerms.plus(it.interestPercent.toString())
-                        TDTerms.plus(it.institue.name.commonName.toString())
-                    } else if (it is State) {
-                        TDOTerms.plus(it.validTill.toString())
-                        TDOTerms.plus(it.interestPercent.toString())
-                        TDOTerms.plus(it.institue.name.commonName.toString())
+            is Commands.CreateTD -> {
+                val offer = tx.inputStates.filterIsInstance<TermDepositOffer.State>().first()
+                requireThat {
+                    //Requirements for creating a TD from a TDOffer
+                    tx.inputStates.size == 1
+                    tx.outputStates.size == 2 //One TDOffer state, one TD state
+                    ((tx.outputStates[0] is TermDepositOffer.State) || (tx.outputStates[1] is TermDepositOffer.State) &&
+                            (tx.outputStates[0] is TermDeposit.State) || (tx.outputStates[1] is TermDeposit.State))
+                    val TDTerms = listOf<String>()
+                    val TDOTerms = listOf<String>()
+                    //Validate the individual terms match
+                    tx.outputStates.forEach {
+                        if (it is TermDeposit.State) {
+                            TDTerms.plus(it.startDate.toString())
+                            TDTerms.plus(it.endDate.toString())
+                            TDTerms.plus(it.interestPercent.toString())
+                            TDTerms.plus(it.institue.name.commonName.toString())
+                        } else if (it is State) {
+                            TDOTerms.plus(it.validTill.toString())
+                            TDOTerms.plus(it.interestPercent.toString())
+                            TDOTerms.plus(it.institue.name.commonName.toString())
+                        }
                     }
+                    TDTerms.equals(TDOTerms) //all terms should match
+                    "Issuing party has signed the command" using (offer.institue in command.signingParties)
                 }
-                TDTerms.equals(TDOTerms) //all terms should match
-                }
+            }
 
             is Commands.Issue -> requireThat {
                 //Requirements for issuing a new TDOffer
                 tx.inputStates.isEmpty()
                 tx.outputStates.size == 1
-                val offerState = tx.outputStates.first() as State
+                val offerState = tx.outputStates.filterIsInstance<TermDepositOffer.State>().first()
                 //Individual requirements for offer states - e.g non negative values
-                offerState.interestPercent > 0
+                "Interest percent must be greater than zero" using (offerState.interestPercent > 0)
+                "Issuing institue must have signed the command" using (offerState.institue in command.signingParties)
             }
         }
     }

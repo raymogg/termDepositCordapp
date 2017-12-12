@@ -66,11 +66,9 @@ object IssueOffer {
         override fun call(): SignedTransaction {
             //STEP 2: Receive txn from issuing institute
             val tx = flow.receive<Pair<TransactionBuilder, SecureHash>>().unwrap {
-                //println("Recieved Txn")
                 requireThat {
                     //"Contract hash matches" using (it.first.attachments().first() == getFileHash(it.second)) //TODO Instead of receiving this, check with our contracts - if we dont have this hash need to download
                 }
-                //TODO: Any checks that need to be done on the offer (shouldnt need to be any) or potential logging of offers recieved
                 it
             }
 

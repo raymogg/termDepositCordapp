@@ -2,20 +2,15 @@ package com.termDeposits.flow.TermDeposit
 
 import co.paralleluniverse.fibers.Suspendable
 import com.termDeposits.contract.KYC
-import com.termDeposits.contract.TermDeposit
-import net.corda.core.contracts.Amount
 import net.corda.core.contracts.StateAndRef
 import net.corda.core.contracts.UniqueIdentifier
 import net.corda.core.flows.FlowException
 import net.corda.core.flows.FlowLogic
 import net.corda.core.flows.StartableByRPC
-import net.corda.core.identity.Party
 import net.corda.core.node.services.Vault
 import net.corda.core.node.services.queryBy
 import net.corda.core.node.services.vault.QueryCriteria
 import net.corda.core.serialization.CordaSerializable
-import java.time.LocalDateTime
-import java.util.*
 
 /**
  * Created by raymondm on 7/12/2017.

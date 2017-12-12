@@ -6,12 +6,9 @@ import com.termDeposits.contract.TermDeposit
 import net.corda.core.contracts.Amount
 import net.corda.core.flows.*
 import net.corda.core.identity.Party
-import net.corda.core.internal.ResolveTransactionsFlow
 import net.corda.core.serialization.CordaSerializable
 import net.corda.core.transactions.SignedTransaction
-import net.corda.core.transactions.TransactionBuilder
 import net.corda.core.utilities.unwrap
-import java.time.LocalDateTime
 import java.util.*
 
 /**
@@ -33,7 +30,6 @@ object PromptActivate {
         val flow = initiateFlow(issuingInstitue)
         flow.send(listOf(dateData, interestPercent, issuingInstitue, client, depositAmount, kycNameData))
 
-        //STEP 6: Recieve back the signed txn and commit it to the ledger
         return
 
     }
@@ -52,7 +48,6 @@ object PromptActivate {
 
             //STEP 3: Prepare the txn
             val kycNameData = args[5] as KYC.KYCNameData
-            //val kycData = subFlow(KYCRetrievalFlow(kycNameData.firstName, kycNameData.lastName, kycNameData.accountNum))
             val TD = subFlow(ActivateTD.Activator(args[0] as TermDeposit.DateData, args[1] as Float, args[2] as Party,
                     args[3] as Party, args[4] as Amount<Currency>, kycNameData))
 

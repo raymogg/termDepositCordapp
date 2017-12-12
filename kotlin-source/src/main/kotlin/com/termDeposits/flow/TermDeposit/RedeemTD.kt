@@ -16,7 +16,6 @@ import net.corda.core.utilities.unwrap
 import net.corda.finance.USD
 import net.corda.finance.contracts.asset.Cash
 import net.corda.finance.utils.sumCashBy
-import java.time.LocalDateTime
 import java.util.*
 
 /** Flow for redeeming a TD. This flow is invoked by a client/node that "owns" the term deposit (i.e have given money to the
@@ -43,11 +42,11 @@ object RedeemTD {
             //STEP 2: Send the term deposit to the other party
             flowSession.send(TermDeposits.first())
 
+            //STEP 6: Sync confidential identities and sign the transaction from the other party
             // Sync identities to ensure we know all of the identities involved in the transaction we're about to
             // be asked to sign
             subFlow(IdentitySyncFlow.Receive(flowSession))
 
-            //Sign transaction when sent back from other party
             val signTransactionFlow = object : SignTransactionFlow(flowSession, SignTransactionFlow.tracker()) {
                 override fun checkTransaction(stx: SignedTransaction)  {
                     val cashProvided = stx.tx.outputStates.sumCashBy(serviceHub.myInfo.legalIdentities.first()).quantity
@@ -57,7 +56,7 @@ object RedeemTD {
                     }
                 }
             }
-
+            //Sign and wait for this transaction to be commited to the ledger
             val stx = subFlow(signTransactionFlow)
             return waitForLedgerCommit(stx.id)
         }
@@ -77,7 +76,7 @@ object RedeemTD {
                 it
             }
 
-            //STEP 4: Build the Ttransaction
+            //STEP 4: Build the Transaction
             val notary = serviceHub.networkMapCache.notaryIdentities.first()
             val builder = TransactionBuilder(notary)
             val builder2 = TermDeposit().genereateRedeem(builder, TermDeposit)
@@ -85,12 +84,13 @@ object RedeemTD {
             val (tx, cashKeys) = Cash.generateSpend(serviceHub, builder2, Amount((TermDeposit.state.data.depositAmount.quantity * (100+TermDeposit.state.data.interestPercent)/100).toLong(), USD),
                     flow.counterparty)
 
-            //STEP 5: Get the client to sign the transaction
+            //STEP 5: Sign transaction and get the client to sign the transaction
             val partSignedTxn = serviceHub.signInitialTransaction(tx, cashKeys.plus(serviceHub.myInfo.legalIdentities.first().owningKey))
             // Sync up confidential identities in the transaction with our counterparty
             subFlow(IdentitySyncFlow.Send(flow, tx.toWireTransaction(serviceHub)))
             val otherPartySig = subFlow(CollectSignaturesFlow(partSignedTxn, listOf(flow), CollectSignaturesFlow.tracker()))
-            //STEP 6: Merge all signatures and commit this to the ledger
+
+            //STEP 7: Merge all signatures and commit this to the ledger
             val twiceSignedTx = partSignedTxn.plus(otherPartySig.sigs) //This is different to tutorial so hopefully works
             println("Term Deposit Redeemed: ${TermDeposit.state.data.toString()}")
             return subFlow(FinalityFlow(twiceSignedTx, setOf(flow.counterparty)))

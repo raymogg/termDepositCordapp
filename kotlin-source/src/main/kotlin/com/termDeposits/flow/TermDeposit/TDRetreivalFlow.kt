@@ -2,7 +2,6 @@ package com.termDeposits.flow.TermDeposit
 
 import co.paralleluniverse.fibers.Suspendable
 import com.termDeposits.contract.TermDeposit
-import com.termDeposits.contract.TermDepositOffer
 import net.corda.core.flows.FlowLogic
 import net.corda.core.identity.Party
 import net.corda.core.node.services.Vault

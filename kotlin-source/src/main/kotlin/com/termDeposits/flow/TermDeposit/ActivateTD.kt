@@ -11,7 +11,6 @@ import net.corda.core.serialization.CordaSerializable
 import net.corda.core.transactions.SignedTransaction
 import net.corda.core.transactions.TransactionBuilder
 import net.corda.core.utilities.unwrap
-import java.time.LocalDateTime
 import java.util.*
 
 /**
@@ -37,11 +36,10 @@ object ActivateTD {
         //STEP 6: Recieve back the signed txn and commit it to the ledger
         val ptx = flow.receive<SignedTransaction>()
 
-        //STEP 5: Sign the txn and commit to the ledger
+        //STEP 7: Sign the txn and commit to the ledger
         val stx = serviceHub.addSignature(ptx.unwrap { it })
         subFlow(ResolveTransactionsFlow(stx, flow))
         println("Term Deposit: from $issuingInstitue to $client now activated")
-        println("Participants ${stx.tx.outputStates.filterIsInstance<TermDeposit.State>().first().participants}")
         return subFlow(FinalityFlow(stx, setOf(client)))
         }
     }
