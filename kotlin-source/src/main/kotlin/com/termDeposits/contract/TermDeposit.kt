@@ -124,8 +124,10 @@ open class TermDeposit : Contract {
     }
 
     fun generateRolloever(builder: TransactionBuilder, oldState: StateAndRef<TermDeposit.State>, notary: Party,
-                          newStartDate: LocalDateTime, newEndDate: LocalDateTime, withInterest: Boolean): TransactionBuilder {
+                          tdOffer: StateAndRef<TermDepositOffer.State>, withInterest: Boolean): TransactionBuilder {
         builder.addInputState(oldState)
+        val newStartDate = LocalDateTime.MIN //TODO Change this to time.now()
+        val newEndDate = newStartDate.plusMonths(tdOffer.state.data.duration.toLong())
         if (withInterest) {
             //Change the deposit amount to be the new amount plus interest
             builder.addOutputState(TransactionState(data = oldState.state.data.copy(startDate = newStartDate, endDate = newEndDate,
@@ -199,7 +201,7 @@ open class TermDeposit : Contract {
      * to a flow is limited to 6 - so these three need to be grouped into a single object.
      */
     @CordaSerializable
-    data class RolloverTerms(val newStartDate: LocalDateTime, val newEndDate: LocalDateTime, val withInterest: Boolean)
+    data class RolloverTerms(val interestPercent: Float, val offeringInstitue: Party, val duration: Int, val withInterest: Boolean)
 
 
     /** Data Class to hold required date data. Needed for same reason as rolloverTerms data class above */

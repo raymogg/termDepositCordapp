@@ -71,6 +71,12 @@ open class TermDepositOffer : Contract {
                 "Interest percent must be greater than zero" using (offerState.interestPercent > 0)
                 "Issuing institue must have signed the command" using (offerState.institue in command.signingParties)
             }
+
+            is Commands.Rollover -> {
+                requireThat {
+
+                }
+            }
         }
     }
 
@@ -78,6 +84,7 @@ open class TermDepositOffer : Contract {
     interface Commands : CommandData {
         class Issue : Commands
         class CreateTD : Commands
+        class Rollover: Commands
     }
 
     fun generateIssue(builder: TransactionBuilder, endDate: LocalDateTime, interestPercent: Float,

@@ -99,15 +99,15 @@ class RolloverDeposit : Fragment() {
         setResultConverter {
             when (it) {
                 executeButton -> {
-                    val newTerms = TermDeposit.RolloverTerms(LocalDateTime.MIN, LocalDateTime.MAX, withInterestChoiceBox.value)
-                    //TODO Execute accept offer
-                    val linearID = offerChoiceBox.value.state.data.clientIdentifier
-                    val kycData = rpcProxy.value?.startFlow(::KYCRetrievalFlowID, linearID)!!.returnValue.getOrThrow().first()
-                    val kycNameData = KYC.KYCNameData(kycData.state.data.firstName, kycData.state.data.lastName, kycData.state.data.accountNum)
-                    val difference: Int = Period.between(offerChoiceBox.value.state.data.startDate.toLocalDate(),offerChoiceBox.value.state.data.endDate.toLocalDate()).months
-                    val dateData = TermDeposit.DateData(offerChoiceBox.value.state.data.startDate,offerChoiceBox.value.state.data.endDate,difference)
-                    rpcProxy.value?.startFlow(RolloverTD::RolloverInitiator, dateData, offerChoiceBox.value.state.data.interestPercent,
-                            offerChoiceBox.value.state.data.institue,  offerChoiceBox.value.state.data.depositAmount, newTerms, kycNameData)
+//                    val newTerms = TermDeposit.RolloverTerms(LocalDateTime.MIN, LocalDateTime.MAX, withInterestChoiceBox.value)
+//                    //TODO Execute accept offer
+//                    val linearID = offerChoiceBox.value.state.data.clientIdentifier
+//                    val kycData = rpcProxy.value?.startFlow(::KYCRetrievalFlowID, linearID)!!.returnValue.getOrThrow().first()
+//                    val kycNameData = KYC.KYCNameData(kycData.state.data.firstName, kycData.state.data.lastName, kycData.state.data.accountNum)
+//                    val difference: Int = Period.between(offerChoiceBox.value.state.data.startDate.toLocalDate(),offerChoiceBox.value.state.data.endDate.toLocalDate()).months
+//                    val dateData = TermDeposit.DateData(offerChoiceBox.value.state.data.startDate,offerChoiceBox.value.state.data.endDate,difference)
+//                    rpcProxy.value?.startFlow(RolloverTD::RolloverInitiator, dateData, offerChoiceBox.value.state.data.interestPercent,
+//                            offerChoiceBox.value.state.data.institue,  offerChoiceBox.value.state.data.depositAmount, newTerms, kycNameData)
                 }
                 else -> null
             }

@@ -5,7 +5,6 @@ import com.termDeposits.contract.TermDeposit
 import com.termDeposits.flow.TermDeposit.*
 import net.corda.core.contracts.Amount
 import net.corda.core.contracts.UniqueIdentifier
-import net.corda.core.flows.FlowException
 import net.corda.core.identity.CordaX500Name
 import net.corda.core.identity.Party
 import net.corda.core.messaging.CordaRPCOps
@@ -23,14 +22,11 @@ import net.corda.nodeapi.User
 import net.corda.nodeapi.internal.ServiceInfo
 import net.corda.testing.driver.NodeHandle
 import net.corda.testing.driver.driver
-import org.junit.Rule
 import org.junit.Test
-import org.junit.rules.ExpectedException
 import java.io.File
 import java.math.BigDecimal
 import java.time.LocalDateTime
 import java.util.*
-import kotlin.test.assertFailsWith
 import kotlin.test.assertTrue
 
 /**
@@ -230,9 +226,9 @@ class Simulation(options: String) {
                 "Bob", "Smith", "1234")
         //Should throw an error due to this term deposit not yet being able to exit
         try {
-            Rollover(parties[0].second, banks[0].second, startTime, startTime.plusWeeks(6), LocalDateTime.now(), LocalDateTime.now().plusWeeks(6),
+            Rollover(parties[0].second, banks[0].second, startTime,
                     3.4f, Amount(30000, USD), true, 6,
-                    "Bob", "Smith", "1234")
+                    "Bob", "Smith", "1234", 3.4f, banks[0].first, 6)
         } catch (e: Exception) {
             error = true
             println("Test Passed")
@@ -252,9 +248,9 @@ class Simulation(options: String) {
                 "Bob", "Smith", "1234")
         //Should throw an error due to this term deposit not yet being able to exit
         try {
-            Rollover(parties[0].second, banks[0].second, startTime, startTime.plusWeeks(6), LocalDateTime.now(), LocalDateTime.now().plusWeeks(6),
+            Rollover(parties[0].second, banks[0].second, startTime,
                     3.4f, Amount(30000, USD), false, 6,
-                    "Bob", "Smith", "1234")
+                    "Bob", "Smith", "1234", 3.4f, banks[0].first, 6)
         } catch (e: Exception) {
             error = true
             println("Test Passed")
@@ -359,6 +355,9 @@ class Simulation(options: String) {
 
         //Update some KYC data
         updateKYC(parties[0].second, "NEWACCOUNT", client1)
+
+        Rollover(parties[0].second, banks[0].second, LocalDateTime.MIN, 2.65f, Amount(30000,USD), true, 12,
+                "Bob", "Smith", "NEWACCOUNT", 3.1f, banks[0].first, 18)
     }
 
     fun sendTDOffers(me : CordaRPCOps, receiver: CordaRPCOps, endDate: LocalDateTime,
@@ -410,13 +409,10 @@ class Simulation(options: String) {
         val returnVal = me.startFlow(RedeemTD::RedemptionInitiator, dateData, interestPercent, issuer.nodeInfo().legalIdentities.first(), depositAmount, kycNameData).returnValue.getOrThrow()
     }
 
-    fun Rollover(me: CordaRPCOps, issuer: CordaRPCOps, startDate: LocalDateTime, endDate: LocalDateTime, newStartDate: LocalDateTime,
-                 newEndDate: LocalDateTime, interestPercent: Float, depositAmount: Amount<Currency>, withInterest: Boolean, duration: Int,
-                 firstName: String, lastName: String, accountNumber: String) {
-//        val returnVal = me.startFlow(RolloverTD::RolloverInitiator, startDate, endDate, newStartDate, newEndDate, interestPercent, issuer.nodeInfo().legalIdentities.first(),
-//                depositAmount, withInterest).returnValue.getOrThow()
+    fun Rollover(me: CordaRPCOps, issuer: CordaRPCOps, startDate: LocalDateTime, interestPercent: Float, depositAmount: Amount<Currency>, withInterest: Boolean, duration: Int,
+                 firstName: String, lastName: String, accountNumber: String, newInterest: Float, newOfferingInstitue:Party, newDuration: Int) {
         val kycNameData = KYC.KYCNameData(firstName, lastName, accountNumber)
-        val rolloverTerms = TermDeposit.RolloverTerms(newStartDate, newEndDate, withInterest)
+        val rolloverTerms = TermDeposit.RolloverTerms(newInterest, newOfferingInstitue, newDuration, withInterest)
         val dateData = TermDeposit.DateData(startDate, startDate.plusMonths(duration.toLong()), duration)
         val returnVal = me.startFlow(RolloverTD::RolloverInitiator, dateData, interestPercent, issuer.nodeInfo().legalIdentities.first(),
                 depositAmount, rolloverTerms, kycNameData).returnValue.getOrThrow()

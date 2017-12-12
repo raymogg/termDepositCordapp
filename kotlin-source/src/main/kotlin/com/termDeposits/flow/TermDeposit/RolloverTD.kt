@@ -3,6 +3,7 @@ package com.termDeposits.flow.TermDeposit
 import co.paralleluniverse.fibers.Suspendable
 import com.termDeposits.contract.KYC
 import com.termDeposits.contract.TermDeposit
+import com.termDeposits.contract.TermDepositOffer
 import net.corda.core.contracts.Amount
 import net.corda.core.contracts.StateAndRef
 import net.corda.core.contracts.TransactionState
@@ -18,6 +19,7 @@ import net.corda.finance.contracts.asset.Cash
 import java.security.PublicKey
 import java.time.LocalDateTime
 import java.util.*
+import javax.swing.plaf.nimbus.State
 
 /** Flow for rolling over a TD. Takes in TermDeposit, calculates the final amount that should have been paid back to the client
  *
@@ -47,7 +49,8 @@ object RolloverTD {
             val flowSession = initiateFlow(issuingInstitue)
             val clientID = subFlow(KYCRetrievalFlow(kycNameData.firstName, kycNameData.lastName, kycNameData.accountNum)).first().state.data.linearId
             val termDeposit = subFlow(TDRetreivalFlows.TDRetreivalFlow(dateData, issuingInstitue, interestPercent, depositAmount, clientIdentifier = clientID))
-            flowSession.send(listOf(termDeposit.first(), rolloverTerms.withInterest, rolloverTerms.newStartDate, rolloverTerms.newEndDate))
+            val tdOffer = subFlow(OfferRetrievalFlow(rolloverTerms.offeringInstitue, rolloverTerms.interestPercent, rolloverTerms.duration))
+            flowSession.send(listOf(termDeposit.first(), rolloverTerms.withInterest, tdOffer.first())) //TODO: After testing, these localDateTime mins should be localDateTime.now()
 
             //STEP 5: Sign the transaction and return to the other party
             val signTransactionFlow = object : SignTransactionFlow(flowSession, SignTransactionFlow.tracker()) {
@@ -75,8 +78,11 @@ object RolloverTD {
             val params = flowSession.receive<List<*>>().unwrap { it }
             val termDeposit = params[0] as StateAndRef<TermDeposit.State>
             val withInterest = params[1] as Boolean
-            val newStartDate = params[2] as LocalDateTime
-            val newEndDate = params[3] as LocalDateTime
+//            val newStartDate = params[2] as LocalDateTime
+//            val newEndDate = params[3] as LocalDateTime
+            val tdOffer = params[2] as StateAndRef<TermDepositOffer.State>
+
+
 
             //STEP 3: Create the txn
             val builder = TransactionBuilder(notary)
@@ -84,18 +90,23 @@ object RolloverTD {
             val keys: List<PublicKey>
             if (withInterest) {
                 //Setup the txn with interest being reinvested
-                val tx = TermDeposit().generateRolloever(builder, termDeposit, notary, newStartDate, newEndDate, true)
+                val tx = TermDeposit().generateRolloever(builder, termDeposit, notary, tdOffer, true)
                 toSignTx = tx
                 keys = listOf(serviceHub.myInfo.legalIdentities.first().owningKey)
             } else {
                 //Setup the txn with interest being returned to sender
-                val tx = TermDeposit().generateRolloever(builder, termDeposit, notary, newStartDate, newEndDate, false)
+                val tx = TermDeposit().generateRolloever(builder, termDeposit, notary, tdOffer, false)
                 //Return the interest earned
                 val (ptx, cashKeys) = Cash.generateSpend(serviceHub, tx, Amount((termDeposit.state.data.depositAmount.quantity/100 * termDeposit.state.data.interestPercent).toLong(), USD),
                         termDeposit.state.data.owner)
                 toSignTx = ptx
                 keys = cashKeys
             }
+
+            //Add the TDStates and required command
+            builder.addInputState(tdOffer)
+            builder.addOutputState(tdOffer.state.copy())
+            builder.addCommand(TermDepositOffer.Commands.Rollover(), tdOffer.state.data.institue.owningKey)
 
             //STEP 4: Sign the initial transaction and invoke collect sigs flow
             val stx = serviceHub.signInitialTransaction(toSignTx, keys)
@@ -106,7 +117,6 @@ object RolloverTD {
             val td = toSignTx.outputStates().filterIsInstance<TransactionState<TermDeposit.State>>().first()
             println("Term Deposit Rollover ${td.data} ${td.data.depositAmount}")
             return subFlow(FinalityFlow(twiceSignedTx, setOf(flowSession.counterparty)))
-
         }
     }
 }
