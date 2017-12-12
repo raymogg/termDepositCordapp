@@ -161,7 +161,8 @@ class Simulation(options: String) {
             FlowPermissions.startFlowPermission<PromptActivate.Acceptor>(),
             FlowPermissions.startFlowPermission<CreateKYC.Creator>(),
             FlowPermissions.startFlowPermission<KYCRetrievalFlow>(),
-            FlowPermissions.startFlowPermission<KYCRetrievalFlowID>()
+            FlowPermissions.startFlowPermission<KYCRetrievalFlowID>(),
+            FlowPermissions.startFlowPermission<UpdateKYC.Updator>()
     )
 
     fun allocateBankPermissions() : Set<String> = setOf(
@@ -356,6 +357,9 @@ class Simulation(options: String) {
                 "1234",12)
         Activate(banks[0].second, parties[0].second, LocalDateTime.MIN, LocalDateTime.MAX, 2.65f, Amount(30000,USD), 12,
                 "Bob", "Smith", "1234")
+
+        //Update some KYC data
+        updateKYC(parties[0].second, "NEWACCOUNT", client4)
     }
 
     fun sendTDOffers(me : CordaRPCOps, receiver: CordaRPCOps, endDate: LocalDateTime,
@@ -428,6 +432,11 @@ class Simulation(options: String) {
         val returnVal = me.startFlow(::KYCRetrievalFlowID, linearID).returnValue.getOrThrow().first().state.data
         val kycNameData = KYC.KYCNameData(returnVal.firstName, returnVal.lastName, returnVal.accountNum)
         return kycNameData
+    }
+
+    fun updateKYC(me: CordaRPCOps, newAccountNum: String, clientID: UniqueIdentifier) {
+        val returnVal = me.startFlow(UpdateKYC::Updator, clientID, newAccountNum).returnValue.getOrThrow()
+        println("KYC Updated")
     }
 
 }

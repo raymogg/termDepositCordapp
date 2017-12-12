@@ -37,15 +37,20 @@ open class KYC : Contract {
         when (command.value) {
             is Commands.Issue -> requireThat {
                 //KYC Data Issue verification
-
+                "No inputs are present" using tx.inputStates.isEmpty()
+                "One output is present" using (tx.outputStates.size == 1)
             }
 
             is Commands.Update -> requireThat {
                 //KYC Update verification
+                "One input is present" using (tx.inputStates.size == 1)
+                "One output is present" using (tx.outputStates.size == 1)
             }
 
             is Commands.IssueTD -> requireThat {
                 //KYC Issue Term Deposit command
+                "One KYC input is present" using (tx.inputStates.filterIsInstance<KYC.State>().size == 1)
+                "One KYC output is present" using (tx.outputStates.filterIsInstance<KYC.State>().size == 1)
             }
         }
     }
@@ -71,7 +76,12 @@ open class KYC : Contract {
         return builder
     }
 
-    fun generateUpdate(builder: TransactionBuilder): TransactionBuilder {
+    fun generateUpdate(builder: TransactionBuilder, newAccountNum: String, originalKYC: StateAndRef<KYC.State>,
+                       notary: Party, selfReference: Party): TransactionBuilder {
+        val outputState = TransactionState(data = originalKYC.state.data.copy(accountNum = newAccountNum), notary = notary, contract = KYC_CONTRACT_ID)
+        builder.addInputState(originalKYC)
+        builder.addOutputState(outputState)
+        builder.addCommand(KYC.Commands.Update(), selfReference.owningKey)
         return builder
     }
 
