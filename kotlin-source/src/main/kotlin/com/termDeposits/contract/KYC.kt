@@ -42,6 +42,7 @@ open class KYC : Contract {
             }
 
             is Commands.Update -> requireThat {
+                println("Command Update Validation")
                 //KYC Update verification
                 "One input is present" using (tx.inputStates.size == 1)
                 "One output is present" using (tx.outputStates.size == 1)
@@ -78,6 +79,7 @@ open class KYC : Contract {
 
     fun generateUpdate(builder: TransactionBuilder, newAccountNum: String, originalKYC: StateAndRef<KYC.State>,
                        notary: Party, selfReference: Party): TransactionBuilder {
+        println("Start gen update")
         val outputState = TransactionState(data = originalKYC.state.data.copy(accountNum = newAccountNum), notary = notary, contract = KYC_CONTRACT_ID)
         builder.addInputState(originalKYC)
         builder.addOutputState(outputState)
@@ -97,6 +99,7 @@ open class KYC : Contract {
 
         //Each time a TD is issued with this KYC data, the bank it is issued to is added to this banks involved list, meaning the data is now stored in that banks vault
         override val participants: List<AbstractParty> get() = banksInvolved.plus(owner)
+        //override val participants: List<AbstractParty> get() = listOf(owner)
 
         //override fun withNewOwner(newOwner: AbstractParty): CommandAndState = CommandAndState(KYC.Commands.Issue(), copy(owner = newOwner))
 

@@ -7,11 +7,12 @@ import net.corda.core.flows.FlowLogic
 import net.corda.core.flows.InitiatingFlow
 import net.corda.core.flows.StartableByRPC
 import net.corda.core.identity.groupPublicKeysByWellKnownParty
+import net.corda.core.internal.ResolveTransactionsFlow
 import net.corda.core.serialization.CordaSerializable
 import net.corda.core.transactions.SignedTransaction
 import net.corda.core.transactions.TransactionBuilder
 
-
+@CordaSerializable
 object UpdateKYC {
 
     @CordaSerializable
@@ -22,11 +23,13 @@ object UpdateKYC {
         @Suspendable
         override fun call(): SignedTransaction {
             //STEP 1: Retrieve the KYC to be updated
+            println("KYC Retrieval Flow")
             val KYC = subFlow(KYCRetrievalFlowID(clientID))
             val notary = serviceHub.networkMapCache.notaryIdentities.first()
 
 
             //STEP 2: Generate the update (for now there isnt really fields that can be changed?)
+            println("Generate Update")
             val builder = TransactionBuilder(notary)
             val tx = com.termDeposits.contract.KYC().generateUpdate(builder, newAccountNum, KYC.first(), notary, serviceHub.myInfo.legalIdentities.first())
 
@@ -34,7 +37,8 @@ object UpdateKYC {
             val stx = serviceHub.signInitialTransaction(tx)
             val extraParties = groupPublicKeysByWellKnownParty(serviceHub, KYC.first().state.data.banksInvolved.toSet().map { it.owningKey }).keys
             //By sending to these extra parties the KYC data should be updated in all the banks vaults
-            return subFlow(FinalityFlow(stx, extraParticipants = extraParties ))
+            println("Commit to ledger")
+            return subFlow(FinalityFlow(stx))//, extraParticipants = extraParties ))
         }
 
     }

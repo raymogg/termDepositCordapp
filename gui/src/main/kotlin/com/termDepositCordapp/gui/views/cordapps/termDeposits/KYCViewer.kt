@@ -133,6 +133,15 @@ class KYCViewer : CordaView("KYC Data") {
                     }
                 }
             }
+            button("Update Client KYC", FontAwesomeIconView(FontAwesomeIcon.PLUS)) {
+                setOnMouseClicked {
+                    if (it.button == MouseButton.PRIMARY) {
+                        //TODO - Some offer button
+                        find<UpdateKYC>().show(this@KYCViewer.root.scene.window)
+
+                    }
+                }
+            }
             HBox.setHgrow(searchField.root, Priority.ALWAYS)
             add(searchField.root)
         }

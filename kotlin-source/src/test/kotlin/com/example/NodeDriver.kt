@@ -353,13 +353,12 @@ class Simulation(options: String) {
         sendTDOffers(banks[1].second, parties[0].second, LocalDateTime.MAX, 2.95f,18)
 
         //Accept some td offers
-        RequestTD(parties[0].second, banks[0].second, LocalDateTime.MIN, 2.65f, Amount(30000,USD), "Bob", "Smith",
-                "1234",12)
+        RequestTD(parties[0].second, banks[0].second, LocalDateTime.MIN, 2.65f, Amount(30000,USD), "Bob", "Smith", "1234",12)
         Activate(banks[0].second, parties[0].second, LocalDateTime.MIN, LocalDateTime.MAX, 2.65f, Amount(30000,USD), 12,
                 "Bob", "Smith", "1234")
 
         //Update some KYC data
-        updateKYC(parties[0].second, "NEWACCOUNT", client4)
+        updateKYC(parties[0].second, "NEWACCOUNT", client1)
     }
 
     fun sendTDOffers(me : CordaRPCOps, receiver: CordaRPCOps, endDate: LocalDateTime,
