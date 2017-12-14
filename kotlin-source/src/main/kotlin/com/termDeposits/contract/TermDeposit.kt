@@ -42,8 +42,12 @@ open class TermDeposit : Contract {
                 val outputTD = tx.outputStates.filterIsInstance<TermDeposit.State>().first()
                 requireThat {
                     //TD Issue verification
-                    "more than two outputs are required" using (tx.outputStates.size > 2) //output should be a replica TDOffer state and the newly created TD State, plus various cash states
-                    "More than one input allowed" using (tx.inputStates.size > 1) //input should be a single TDOffer state plus cash
+//                    "more than two outputs are required" using (tx.outputStates.size > 2) //output should be a replica TDOffer state and the newly created TD State, plus various cash states
+//                    "More than one input allowed" using (tx.inputStates.size > 1) //input should be a single TDOffer state plus cash
+//                    "input state must be a term deposit offer" using ((tx.inputStates.filterIsInstance<TermDepositOffer.State>().size == 1))
+//                    "Owner must have signed the command" using (outputTD.owner.owningKey in command.signers)
+                    "three outputs are required" using (tx.outputStates.size == 3) //output should be a replica TDOffer state and the newly created TD State, plus KYC data
+                    "two inputs are required" using (tx.inputStates.size == 2) //input should be a single TDOffer state and KYC data
                     "input state must be a term deposit offer" using ((tx.inputStates.filterIsInstance<TermDepositOffer.State>().size == 1))
                     "Owner must have signed the command" using (outputTD.owner.owningKey in command.signers)
                 }
@@ -52,8 +56,8 @@ open class TermDeposit : Contract {
             is Commands.Activate -> {
                 requireThat {
                     //Pending to active verification
-                    "Only one input allowed" using (tx.inputStates.size == 1)
-                    "Only one output allowed" using (tx.outputStates.size == 1)
+//                    "Only one input allowed" using (tx.inputStates.size == 1)
+//                    "Only one output allowed" using (tx.outputStates.size == 1)
                     "Input must be a term deposit" using (tx.inputStates.first() is TermDeposit.State)
                     "Output must be a term deposit" using (tx.outputStates.first() is TermDeposit.State)
                     val input = tx.inputStates.filterIsInstance<TermDeposit.State>().first()

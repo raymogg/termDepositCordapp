@@ -3,7 +3,9 @@ package com.termDeposits.flow.TermDeposit
 import co.paralleluniverse.fibers.Suspendable
 import com.termDeposits.contract.KYC
 import com.termDeposits.contract.TermDeposit
+import net.corda.confidential.IdentitySyncFlow
 import net.corda.core.contracts.Amount
+import net.corda.core.contracts.requireThat
 import net.corda.core.flows.*
 import net.corda.core.identity.Party
 import net.corda.core.internal.ResolveTransactionsFlow
@@ -11,6 +13,7 @@ import net.corda.core.serialization.CordaSerializable
 import net.corda.core.transactions.SignedTransaction
 import net.corda.core.transactions.TransactionBuilder
 import net.corda.core.utilities.unwrap
+import net.corda.finance.contracts.asset.Cash
 import java.util.*
 
 /**
@@ -33,15 +36,21 @@ object ActivateTD {
         val flow = initiateFlow(client)
         flow.send(listOf(dateData, interestPercent, issuingInstitue, client, depositAmount, kycData))
 
-        //STEP 6: Recieve back the signed txn and commit it to the ledger
-        val ptx = flow.receive<SignedTransaction>().unwrap { it }
+        //STEP 6: Sync Identities
+        subFlow(IdentitySyncFlow.Receive(flow))
 
-        //STEP 7: Sign the txn and commit to the ledger
-        val stx = serviceHub.addSignature(ptx, serviceHub.myInfo.legalIdentities.first().owningKey)
-        subFlow(ResolveTransactionsFlow(stx, flow))
-        println("Term Deposit: from $issuingInstitue to $client now activated")
-        println("Signers ${stx.sigs.map { it.by }}")
-        return subFlow(FinalityFlow(stx, setOf(client)))
+        //STEP 7: Sign the txn and send back to the other party
+        //Sign the txn
+        val signTransactionFlow = object : SignTransactionFlow(flow, SignTransactionFlow.tracker()) {
+            override fun checkTransaction(stx: SignedTransaction)  {
+                requireThat {
+                    //TODO Validate if we want to sign this activation
+                }
+            }
+        }
+        //Return to the other party and wait for this state to hit the ledger
+        val stx = subFlow(signTransactionFlow)
+        return waitForLedgerCommit(stx.id)
         }
     }
 
@@ -70,12 +79,20 @@ object ActivateTD {
             //STEP 4: Generate the Activate Txn
             val tx = TransactionBuilder(notary = notary)
             val generatedTx = TermDeposit().generateActivate(tx, TD.first(), notary)
+            //Add cash as output
+            val (tx2, cashKeys) = Cash.generateSpend(serviceHub, generatedTx, TD.first().state.data.depositAmount, TD.first().state.data.institue)
 
+            //STEP 5: Sync Identities
+            // Sync up confidential identities in the transaction with our counterparty
+            subFlow(IdentitySyncFlow.Send(flow, tx2.toWireTransaction(serviceHub)))
 
-            //STEP 5: Sign and send back the txn (only updating internal state so no validation required really)
-            val ptx = serviceHub.signInitialTransaction(generatedTx, serviceHub.myInfo.legalIdentities.first().owningKey)
-            flow.send(ptx)
-            return waitForLedgerCommit(ptx.id)
+            //STEP 6: Sign and retrieve the other parties sig
+            val ptx = serviceHub.signInitialTransaction(tx2, cashKeys+serviceHub.myInfo.legalIdentities.first().owningKey)
+            val otherPartySig = subFlow(CollectSignaturesFlow(ptx, setOf(flow), CollectSignaturesFlow.tracker()))
+            val twiceSignedTx = ptx.plus(otherPartySig.sigs)
+
+            //STEP 8: Commit to the ledger
+            return subFlow(FinalityFlow(twiceSignedTx, setOf(flow.counterparty)))
         }
     }
 

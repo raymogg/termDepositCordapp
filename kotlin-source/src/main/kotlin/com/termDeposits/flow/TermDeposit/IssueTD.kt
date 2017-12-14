@@ -52,16 +52,16 @@ object IssueTD {
             builder.addOutputState(KYCData.first().state.copy(data = KYCData.first().state.data.copy(
                     banksInvolved = KYCData.first().state.data.banksInvolved.plus(issuingInstitue)))) //Same state but with a new bank involved - i.e able to view this KYC data
 
-            //Add cash as output
-            val (tx, cashKeys) = Cash.generateSpend(serviceHub, builder, depositAmount, issuingInstitue)
+//            //Add cash as output
+//            val (tx, cashKeys) = Cash.generateSpend(serviceHub, builder, depositAmount, issuingInstitue)
 
             //Add required commands
-            tx.addCommand(Command(TermDepositOffer.Commands.CreateTD(), TDOffer.state.data.institue.owningKey))
-            tx.addCommand(Command(KYC.Commands.IssueTD(), KYCData.first().state.data.owner.owningKey))
-            val ptx = TermDeposit().generateIssue(tx,TDOffer, notary, depositAmount, serviceHub.myInfo.legalIdentities.first(), dateData.startDate,
+            builder.addCommand(Command(TermDepositOffer.Commands.CreateTD(), TDOffer.state.data.institue.owningKey))
+            builder.addCommand(Command(KYC.Commands.IssueTD(), KYCData.first().state.data.owner.owningKey))
+            val ptx = TermDeposit().generateIssue(builder,TDOffer, notary, depositAmount, serviceHub.myInfo.legalIdentities.first(), dateData.startDate,
                     dateData.startDate.plusMonths(dateData.duration.toLong()), KYCData.first()) //not doing this for testing purposes atm
             //Sign txn
-            val stx = serviceHub.signInitialTransaction(ptx, cashKeys+serviceHub.myInfo.legalIdentities.first().owningKey)
+            val stx = serviceHub.signInitialTransaction(ptx, serviceHub.myInfo.legalIdentities.first().owningKey)//+cashKeys)
 
             // Sync up confidential identities in the transaction with our counterparty
             subFlow(IdentitySyncFlow.Send(flow, ptx.toWireTransaction(serviceHub)))
@@ -72,7 +72,7 @@ object IssueTD {
             //STEP 5: Receieve back txn, sign and commit to ledger
             val twiceSignedTx = stx.plus(otherPartySig.sigs)
             println("TD Issued to ${stx.tx.outputStates.filterIsInstance<TermDeposit.State>().first().owner} by ${issuingInstitue.name} at $interestPercent%")
-            return subFlow(FinalityFlow(twiceSignedTx, setOf(issuingInstitue) + groupPublicKeysByWellKnownParty(serviceHub,cashKeys).keys ))
+            return subFlow(FinalityFlow(twiceSignedTx, setOf(issuingInstitue) ))//+ groupPublicKeysByWellKnownParty(serviceHub,cashKeys).keys ))
 
         }
     }
