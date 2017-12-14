@@ -352,12 +352,14 @@ class Simulation(options: String) {
         RequestTD(parties[0].second, banks[0].second, LocalDateTime.MIN, 2.65f, Amount(30000,USD), "Bob", "Smith", "1234",12)
         Activate(banks[0].second, parties[0].second, LocalDateTime.MIN, LocalDateTime.MAX, 2.65f, Amount(30000,USD), 12,
                 "Bob", "Smith", "1234")
+        Redeem(parties[0].second, banks[0].second, LocalDateTime.MIN, LocalDateTime.MIN.plusMonths(12), 2.65f, Amount(30000,USD), 12,
+                "Bob", "Smith", "1234" )
 
-        //Update some KYC data
-        updateKYC(parties[0].second, "NEWACCOUNT", client1)
-
-        Rollover(parties[0].second, banks[0].second, LocalDateTime.MIN, 2.65f, Amount(30000,USD), true, 12,
-                "Bob", "Smith", "NEWACCOUNT", 3.1f, banks[0].first, 18)
+//        //Update some KYC data
+//        updateKYC(parties[0].second, "NEWACCOUNT", client1)
+//
+//        Rollover(parties[0].second, banks[0].second, LocalDateTime.MIN, 2.65f, Amount(30000,USD), true, 12,
+//                "Bob", "Smith", "NEWACCOUNT", 3.1f, banks[0].first, 18)
     }
 
     fun sendTDOffers(me : CordaRPCOps, receiver: CordaRPCOps, endDate: LocalDateTime,

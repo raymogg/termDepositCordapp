@@ -42,10 +42,6 @@ open class TermDeposit : Contract {
                 val outputTD = tx.outputStates.filterIsInstance<TermDeposit.State>().first()
                 requireThat {
                     //TD Issue verification
-//                    "more than two outputs are required" using (tx.outputStates.size > 2) //output should be a replica TDOffer state and the newly created TD State, plus various cash states
-//                    "More than one input allowed" using (tx.inputStates.size > 1) //input should be a single TDOffer state plus cash
-//                    "input state must be a term deposit offer" using ((tx.inputStates.filterIsInstance<TermDepositOffer.State>().size == 1))
-//                    "Owner must have signed the command" using (outputTD.owner.owningKey in command.signers)
                     "three outputs are required" using (tx.outputStates.size == 3) //output should be a replica TDOffer state and the newly created TD State, plus KYC data
                     "two inputs are required" using (tx.inputStates.size == 2) //input should be a single TDOffer state and KYC data
                     "input state must be a term deposit offer" using ((tx.inputStates.filterIsInstance<TermDepositOffer.State>().size == 1))
@@ -56,10 +52,8 @@ open class TermDeposit : Contract {
             is Commands.Activate -> {
                 requireThat {
                     //Pending to active verification
-//                    "Only one input allowed" using (tx.inputStates.size == 1)
-//                    "Only one output allowed" using (tx.outputStates.size == 1)
-                    "Input must be a term deposit" using (tx.inputStates.first() is TermDeposit.State)
-                    "Output must be a term deposit" using (tx.outputStates.first() is TermDeposit.State)
+                    "Atleast two inputs required" using (tx.inputStates.size >= 2) //Inputs are the term deposit and cash
+                    "Atleast two outsputs required" using (tx.outputStates.size >= 2) //Outputs are the now active term deposit and cash
                     val input = tx.inputStates.filterIsInstance<TermDeposit.State>().first()
                     val output = tx.outputStates.filterIsInstance<TermDeposit.State>().first()
                     "Deposit amounts must match" using (input.depositAmount == output.depositAmount)
@@ -72,11 +66,14 @@ open class TermDeposit : Contract {
 
             is Commands.Redeem -> requireThat {
                 //TD Redeem verification
+                println("Start")
                 "Atleast two inputs are present" using (tx.inputStates.size >= 2) //TD State and Cash State
-                "Atleast two one output is present" using (tx.outputStates.isNotEmpty())
+                "Atleast one output is present" using (tx.outputStates.isNotEmpty())
+                println("Middle")
                 val td = tx.inputStates.filterIsInstance<TermDeposit.State>().first()
                 val outputCash = tx.outputStates.sumCashBy(td.owner).quantity
                 "Term Deposit amount must match output cash amount" using (outputCash == (td.depositAmount.quantity * (100+td.interestPercent)/100).toLong() )
+                println("End")
                 //"The term deposit has not yet expired" using (td.endDate.isBefore(LocalDateTime.now()))
                 "Owner must have signed the command" using (td.owner.owningKey in command.signers)
 

@@ -52,9 +52,6 @@ object IssueTD {
             builder.addOutputState(KYCData.first().state.copy(data = KYCData.first().state.data.copy(
                     banksInvolved = KYCData.first().state.data.banksInvolved.plus(issuingInstitue)))) //Same state but with a new bank involved - i.e able to view this KYC data
 
-//            //Add cash as output
-//            val (tx, cashKeys) = Cash.generateSpend(serviceHub, builder, depositAmount, issuingInstitue)
-
             //Add required commands
             builder.addCommand(Command(TermDepositOffer.Commands.CreateTD(), TDOffer.state.data.institue.owningKey))
             builder.addCommand(Command(KYC.Commands.IssueTD(), KYCData.first().state.data.owner.owningKey))
