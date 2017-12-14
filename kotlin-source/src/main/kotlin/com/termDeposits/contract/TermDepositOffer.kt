@@ -111,8 +111,6 @@ open class TermDepositOffer : Contract {
 
         override val participants: List<AbstractParty> get() = listOf(owner)
 
-        //override fun withNewOwner(newOwner: AbstractParty): CommandAndState = CommandAndState(Commands.Issue(), copy(owner = newOwner))
-
         override fun toString(): String {
             return "Term Deposit Offer: From ${institue} at ${interestPercent}%"
         }

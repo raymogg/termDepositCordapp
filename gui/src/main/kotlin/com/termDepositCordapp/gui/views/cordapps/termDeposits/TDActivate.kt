@@ -36,7 +36,6 @@ class TDActivate : Fragment() {
     // Components
     private val offerChoiceBox by fxid<ChoiceBox<StateAndRef<TermDeposit.State>>>()
     private val offerLabel by fxid<Label>()
-    private val issueRef = SimpleObjectProperty<Byte>()
     // Inject data
     private val parties by observableList(NetworkIdentityModel::parties)
     private val offerStates by observableList(TermDepositsModel::pendingStates)
@@ -44,7 +43,6 @@ class TDActivate : Fragment() {
     private val rpcProxy by observableValue(NodeMonitorModel::proxyObservable)
     private val myIdentity by observableValue(NetworkIdentityModel::myIdentity)
     private val notaries by observableList(NetworkIdentityModel::notaries)
-    private val cash by observableList(ContractStateModel::cash)
     private val executeButton = ButtonType("Execute", ButtonBar.ButtonData.APPLY)
 
     fun show(window: Window): Unit {
@@ -96,7 +94,6 @@ class TDActivate : Fragment() {
         setResultConverter {
             when (it) {
                 executeButton -> {
-                    //TODO Execute accept offer
                     val linearID = offerChoiceBox.value.state.data.clientIdentifier
                     println("Linear ID ${offerChoiceBox.value.state.data.clientIdentifier}")
                     val kycData = rpcProxy.value?.startFlow(::KYCRetrievalFlowID, linearID)!!.returnValue.getOrThrow().first()
@@ -133,7 +130,6 @@ class TDActivate : Fragment() {
 
         // Validate inputs.
         val formValidCondition = arrayOf(
-                //myIdentity.isNotNull(),
                 offerChoiceBox.valueProperty().isNotNull
 
         ).reduce(BooleanBinding::and)

@@ -32,12 +32,8 @@ class UpdateKYC : Fragment() {
     private val newAccountNumLabel by fxid<Label>()
     private val kycLabel by fxid<Label>()
 
-    private val withInterestLabel by fxid<Label>()
-    private val issueRef = SimpleObjectProperty<Byte>()
     // Inject data
-    private val parties by observableList(NetworkIdentityModel::parties)
     private val kycStates by observableList(TermDepositsModel::KYCStates)
-    // private val issuers by observableList(IssuerModel::issuers)
     private val rpcProxy by observableValue(NodeMonitorModel::proxyObservable)
     private val myIdentity by observableValue(NetworkIdentityModel::myIdentity)
     private val notaries by observableList(NetworkIdentityModel::notaries)
@@ -118,11 +114,6 @@ class UpdateKYC : Fragment() {
                         "\n Client ID: ${it.state.data.linearId}"
             }
         }
-
-        // Validate inputs.
-//        val formValidCondition = arrayOf(firstNameTextField.text.isNullOrBlank().not()
-//
-//        ).reduce(BooleanBinding::and)
 
         // Enable execute button when form is valid.
         root.buttonTypes.add(executeButton)

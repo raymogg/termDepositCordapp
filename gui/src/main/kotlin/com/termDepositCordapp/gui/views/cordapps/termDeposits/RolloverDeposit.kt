@@ -33,8 +33,6 @@ import java.time.Period
 class RolloverDeposit : Fragment() {
     override val root by fxml<DialogPane>()
     // Components
-    private val transactionTypeCB by fxid<ChoiceBox<TermDeposit>>()
-
     private val depositChoiceBox by fxid<ChoiceBox<StateAndRef<TermDeposit.State>>>()
     private val depositLabel by fxid<Label>()
 
@@ -43,13 +41,10 @@ class RolloverDeposit : Fragment() {
 
     private val withInterestChoiceBox by fxid<ChoiceBox<Boolean>>()
     private val withInterestLabel by fxid<Label>()
-    private val issueRef = SimpleObjectProperty<Byte>()
     // Inject data
     private val parties by observableList(NetworkIdentityModel::parties)
     private val offerStates by observableList(TermDepositsModel::offerStates)
     private val depositStates by observableList(TermDepositsModel::maturedStates)
-
-    // private val issuers by observableList(IssuerModel::issuers)
     private val rpcProxy by observableValue(NodeMonitorModel::proxyObservable)
     private val myIdentity by observableValue(NetworkIdentityModel::myIdentity)
     private val notaries by observableList(NetworkIdentityModel::notaries)
@@ -107,7 +102,6 @@ class RolloverDeposit : Fragment() {
                 executeButton -> {
                     val tdOffer = offerChoiceBox.value.state.data
                     val newTerms = TermDeposit.RolloverTerms(tdOffer.interestPercent, tdOffer.institue, tdOffer.duration, withInterestChoiceBox.value)
-//                    //TODO Execute accept offer
                     val linearID = depositChoiceBox.value.state.data.clientIdentifier
                     val kycData = rpcProxy.value?.startFlow(::KYCRetrievalFlowID, linearID)!!.returnValue.getOrThrow().first()
                     val kycNameData = KYC.KYCNameData(kycData.state.data.firstName, kycData.state.data.lastName, kycData.state.data.accountNum)

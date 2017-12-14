@@ -36,10 +36,6 @@ import java.time.LocalDateTime
 
 
 class MaturedViewer : CordaView("Matured Term Deposits") {
-    //RPC Proxy
-    private val rpcProxy by observableValue(NodeMonitorModel::proxyObservable)
-    private val networkIdentities by observableList(NetworkIdentityModel::parties)
-    private val allNodes by observableList(NetworkIdentityModel::parties)
     // Inject UI elements.
     override val root: BorderPane by fxml()
     override val icon: FontAwesomeIcon = FontAwesomeIcon.ADDRESS_CARD
@@ -135,20 +131,10 @@ class MaturedViewer : CordaView("Matured Term Deposits") {
                 "Maturity Date" to {state, text -> state.state.data.endDate.toString().contains(text, true)}
         )
         root.top = hbox(5.0) {
-            //            button("Prompt Bank to Activate", FontAwesomeIconView(FontAwesomeIcon.PLUS)) {
-//                setOnMouseClicked {
-//                    if (it.button == MouseButton.PRIMARY) {
-//                        //TODO - Some offer button
-//                        find<PromptActivate>().show(this@PendingViewer.root.scene.window)
-//
-//                    }
-//                }
-//            }
 
             button("Exit Deposit", FontAwesomeIconView(FontAwesomeIcon.PLUS)) {
                 setOnMouseClicked {
                     if (it.button == MouseButton.PRIMARY) {
-                        //TODO - Make this button functional
                         find<ExitDeposit>().show(this@MaturedViewer.root.scene.window)
 
                     }
@@ -158,7 +144,6 @@ class MaturedViewer : CordaView("Matured Term Deposits") {
             button("Rollover Deposit", FontAwesomeIconView(FontAwesomeIcon.PLUS)) {
                 setOnMouseClicked {
                     if (it.button == MouseButton.PRIMARY) {
-                        //TODO - Make this button functional
                         find<RolloverDeposit>().show(this@MaturedViewer.root.scene.window)
 
                     }
@@ -246,9 +231,6 @@ class MaturedViewer : CordaView("Matured Term Deposits") {
     private class MaturedWidget : BorderPane() {
         //private val partiallyResolvedTransactions by observableListReadOnly(TransactionDataModel::partiallyResolvedTransactions)
         private val claimStates by observableList(TermDepositsModel::maturedStates)
-
-        // TODO : Add a scrolling table to show latest transaction.
-        // TODO : Add a chart to show types of transactions.
         init {
             right {
                 label {

@@ -49,12 +49,9 @@ class IssueOffer : Fragment() {
     val toChoiceBox by fxid<ChoiceBox<Party>>()
     // Inject data
     private val parties by observableList(NetworkIdentityModel::parties)
-
-    // private val issuers by observableList(IssuerModel::issuers)
     private val rpcProxy by observableValue(NodeMonitorModel::proxyObservable)
     private val myIdentity by observableValue(NetworkIdentityModel::myIdentity)
     private val notaries by observableList(NetworkIdentityModel::notaries)
-    private val cash by observableList(ContractStateModel::cash)
     private val executeButton = ButtonType("Execute", ButtonBar.ButtonData.APPLY)
 
 
@@ -107,7 +104,6 @@ class IssueOffer : Fragment() {
         setResultConverter {
             when (it) {
                 executeButton -> {
-                    //TODO Execute issue offer
                     val endDate: LocalDateTime = LocalDateTime.parse(endDateTextField.text+"T00:00:00")
                     val interest = interestTextField.text.toFloat()
                     val toParty = toChoiceBox.value
@@ -143,12 +139,6 @@ class IssueOffer : Fragment() {
             }
         }
 
-        // Validate inputs.
-//        val formValidCondition = arrayOf(
-//                //myIdentity.isNotNull(),
-//                //offerChoiceBox.valueProperty().isNotNull
-//
-//        ).reduce(BooleanBinding::and)
 
         // Enable execute button when form is valid.
         root.buttonTypes.add(executeButton)

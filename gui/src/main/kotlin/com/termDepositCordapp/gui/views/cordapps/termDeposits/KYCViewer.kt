@@ -39,10 +39,6 @@ import java.time.LocalDateTime
 
 
 class KYCViewer : CordaView("KYC Data") {
-    //RPC Proxy
-    private val rpcProxy by observableValue(NodeMonitorModel::proxyObservable)
-    private val networkIdentities by observableList(NetworkIdentityModel::parties)
-    private val allNodes by observableList(NetworkIdentityModel::parties)
     // Inject UI elements.
     override val root: BorderPane by fxml()
     override val icon: FontAwesomeIcon = FontAwesomeIcon.ADDRESS_CARD
@@ -53,7 +49,6 @@ class KYCViewer : CordaView("KYC Data") {
     private val totalMatchingLabel: Label by fxid()
     private val claimViewerTable: TreeTableView<ViewerNode> by fxid()
     private val claimViewerTableExchangeHolding: TreeTableColumn<ViewerNode, String> by fxid()
-    private val claimViewerTableQuantity: TreeTableColumn<ViewerNode, Int> by fxid()
     // Right pane
     private val rightPane: VBox by fxid()
     private val totalPositionsLabel: Label by fxid()
@@ -127,7 +122,6 @@ class KYCViewer : CordaView("KYC Data") {
             button("Create Client KYC", FontAwesomeIconView(FontAwesomeIcon.PLUS)) {
                 setOnMouseClicked {
                     if (it.button == MouseButton.PRIMARY) {
-                        //TODO - Some offer button
                         find<CreateKYC>().show(this@KYCViewer.root.scene.window)
 
                     }
@@ -136,7 +130,6 @@ class KYCViewer : CordaView("KYC Data") {
             button("Update Client KYC", FontAwesomeIconView(FontAwesomeIcon.PLUS)) {
                 setOnMouseClicked {
                     if (it.button == MouseButton.PRIMARY) {
-                        //TODO - Some offer button
                         find<UpdateKYC>().show(this@KYCViewer.root.scene.window)
 
                     }
@@ -194,7 +187,6 @@ class KYCViewer : CordaView("KYC Data") {
         claimViewerTableExchangeHolding.setCellValueFactory {
             val node = it.value.value
             when (node) {
-            // TODO: Anonymous should probably be italicised or similar
                 is ViewerNode.ExchangeNode -> SimpleStringProperty(node.uniqueID.toString())
             }
         }
@@ -228,8 +220,6 @@ class KYCViewer : CordaView("KYC Data") {
         //private val partiallyResolvedTransactions by observableListReadOnly(TransactionDataModel::partiallyResolvedTransactions)
         private val claimStates by observableList(TermDepositsModel::KYCStates)
 
-        // TODO : Add a scrolling table to show latest transaction.
-        // TODO : Add a chart to show types of transactions.
         init {
             right {
                 label {

@@ -22,7 +22,7 @@ import java.util.*
  * Class for Term Deposits. Contains all the verification logic needed for different transactions, as well as a class
  * that defines the term deposit state.
  *
- * See IssueTD, ActivateTD, RedeemdTD and RolloverTD to see the flows which use this state and transaction types.
+ * See IssueTD, ActivateTD, RedeemTD and RolloverTD to see the flows which use this state and transaction types.
  */
 
 @CordaSerializable
@@ -66,14 +66,11 @@ open class TermDeposit : Contract {
 
             is Commands.Redeem -> requireThat {
                 //TD Redeem verification
-                println("Start")
                 "Atleast two inputs are present" using (tx.inputStates.size >= 2) //TD State and Cash State
                 "Atleast one output is present" using (tx.outputStates.isNotEmpty())
-                println("Middle")
                 val td = tx.inputStates.filterIsInstance<TermDeposit.State>().first()
                 val outputCash = tx.outputStates.sumCashBy(td.owner).quantity
                 "Term Deposit amount must match output cash amount" using (outputCash == (td.depositAmount.quantity * (100+td.interestPercent)/100).toLong() )
-                println("End")
                 //"The term deposit has not yet expired" using (td.endDate.isBefore(LocalDateTime.now()))
                 "Owner must have signed the command" using (td.owner.owningKey in command.signers)
 
@@ -110,8 +107,8 @@ open class TermDeposit : Contract {
                       endDate: LocalDateTime, kyc: StateAndRef<KYC.State>): TransactionBuilder {
         val offerState = TDOffer.state.data
         val TDState = TransactionState(data = TermDeposit.State(startDate, endDate, offerState.interestPercent, offerState.institue,
-                depositAmount, internalState.pending, to, clientIdentifier = kyc.state.data.linearId), notary = notary, contract = TERMDEPOSIT_CONTRACT_ID)
-        //Add tje TermDeposit as the output
+                depositAmount, internalState.pending, to, clientIdentifier = kyc.state.data.linearId, onMature = null), notary = notary, contract = TERMDEPOSIT_CONTRACT_ID)
+        //Add the TermDeposit as the output
         builder.addOutputState(TDState)
         //Add the issue command
         builder.addCommand(TermDeposit.Commands.Issue(), offerState.institue.owningKey, to.owningKey)
@@ -175,7 +172,7 @@ open class TermDeposit : Contract {
     @CordaSerializable
     data class State(val startDate: LocalDateTime, val endDate: LocalDateTime, val interestPercent: Float,
                      val institue: Party, val depositAmount: Amount<Currency>, val internalState: String, val owner: AbstractParty,
-                     override val linearId: UniqueIdentifier = UniqueIdentifier(), val clientIdentifier: UniqueIdentifier) : QueryableState, ContractState, LinearState {
+                     override val linearId: UniqueIdentifier = UniqueIdentifier(), val clientIdentifier: UniqueIdentifier, val onMature: onMature?) : QueryableState, ContractState, LinearState {
 
         //Participants store this state in their vault - therefor this should be both the owner (whoever has taken out the loan) and the issueing institute
         override val participants: List<AbstractParty> get() = listOf(owner, institue)
@@ -212,4 +209,13 @@ open class TermDeposit : Contract {
     /** Data Class to hold required date data. Needed for same reason as rolloverTerms data class above */
     @CordaSerializable
     data class DateData(val startDate: LocalDateTime, val endDate: LocalDateTime, val duration: Int)
+
+    object matureInstructions {
+        val rollover = "Rollover"
+        val redeem = "Redeem"
+    }
+
+    /** Data class to hold the instructions for what action to execute when a term deposit becomes matured */
+    @CordaSerializable
+    data class onMature(val type: matureInstructions, val rolloverTerms: RolloverTerms? , val tdOffer: StateAndRef<TermDepositOffer.State>? )
 }

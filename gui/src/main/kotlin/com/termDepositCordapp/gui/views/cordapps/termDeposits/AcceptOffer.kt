@@ -36,13 +36,7 @@ class AcceptOffer : Fragment() {
     private val offerLabel by fxid<Label>()
     private val depositLabel by fxid<Label>()
     private val depositTextField by fxid<TextField>()
-//    private val firstNameTextField by fxid<TextField>()
-//    private val lastNameTextField by fxid<TextField>()
-//    private val accountNumTextField by fxid<TextField>()
     private val kycLabel by fxid<Label>()
-//    private val firstNameLabel by fxid<Label>()
-//    private val lastNameLabel by fxid<Label>()
-//    private val accountNumLabel by fxid<Label>()
     // Inject data
     private val parties by observableList(NetworkIdentityModel::parties)
     private val offerStates by observableList(TermDepositsModel::offerStates)
@@ -106,9 +100,7 @@ class AcceptOffer : Fragment() {
                 executeButton -> {
                     //TODO Execute accept offer
                     val dateData = TermDeposit.DateData(LocalDateTime.MIN, LocalDateTime.MAX, offerChoiceBox.value.state.data.duration)
-                    //val kycData = KYC.KYCNameData("Bob", "Smith", "1234")
                     val kycCB = kycChoiceBox.value.state.data
-                    //val kycData = KYC.KYCNameData(firstNameTextField.text, lastNameTextField.text, accountNumTextField.text)
                     val kycData = KYC.KYCNameData(kycCB.firstName, kycCB.lastName, kycCB.accountNum)
                     rpcProxy.value?.startFlow(IssueTD::Initiator, dateData, offerChoiceBox.value.state.data.interestPercent,
                             offerChoiceBox.value.state.data.institue,  Amount(depositTextField.text.toLong()*100, USD), kycData)
@@ -132,9 +124,6 @@ class AcceptOffer : Fragment() {
         offerLabel.text = "Offers"
         kycLabel.text = "Customer"
         depositLabel.text = "Deposit Amount"
-//        firstNameLabel.text = "First Name"
-//        lastNameLabel.text = "Last Name"
-//        accountNumLabel.text = "Account Number"
         // Loan Selection
         offerChoiceBox.apply {
             items = offerStates

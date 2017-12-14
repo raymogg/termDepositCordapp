@@ -36,10 +36,6 @@ import java.time.LocalDateTime
 
 
 class PendingViewer : CordaView("Pending Term Deposits") {
-    //RPC Proxy
-    private val rpcProxy by observableValue(NodeMonitorModel::proxyObservable)
-    private val networkIdentities by observableList(NetworkIdentityModel::parties)
-    private val allNodes by observableList(NetworkIdentityModel::parties)
     // Inject UI elements.
     override val root: BorderPane by fxml()
     override val icon: FontAwesomeIcon = FontAwesomeIcon.ADDRESS_CARD
@@ -135,15 +131,6 @@ class PendingViewer : CordaView("Pending Term Deposits") {
                 "Maturity Date" to {state, text -> state.state.data.endDate.toString().contains(text, true)}
         )
         root.top = hbox(5.0) {
-//            button("Prompt Bank to Activate", FontAwesomeIconView(FontAwesomeIcon.PLUS)) {
-//                setOnMouseClicked {
-//                    if (it.button == MouseButton.PRIMARY) {
-//                        //TODO - Some offer button
-//                        find<PromptActivate>().show(this@PendingViewer.root.scene.window)
-//
-//                    }
-//                }
-//            }
 
             button("Activate", FontAwesomeIconView(FontAwesomeIcon.PLUS)) {
                 setOnMouseClicked {

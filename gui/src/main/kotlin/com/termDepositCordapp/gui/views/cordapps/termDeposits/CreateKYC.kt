@@ -38,16 +38,10 @@ class CreateKYC : Fragment() {
     private val firstNameLabel by fxid<Label>()
     private val lastNameLabel by fxid<Label>()
     private val accountNumLabel by fxid<Label>()
-    private val withInterestLabel by fxid<Label>()
-    private val issueRef = SimpleObjectProperty<Byte>()
     // Inject data
-    private val parties by observableList(NetworkIdentityModel::parties)
-    private val offerStates by observableList(TermDepositsModel::depositStates)
-    // private val issuers by observableList(IssuerModel::issuers)
     private val rpcProxy by observableValue(NodeMonitorModel::proxyObservable)
     private val myIdentity by observableValue(NetworkIdentityModel::myIdentity)
     private val notaries by observableList(NetworkIdentityModel::notaries)
-    private val cash by observableList(ContractStateModel::cash)
     private val executeButton = ButtonType("Execute", ButtonBar.ButtonData.APPLY)
 
     fun show(window: Window): Unit {
@@ -118,11 +112,6 @@ class CreateKYC : Fragment() {
         lastNameLabel.text = "Last Name: "
         accountNumLabel.text = "Account Number: "
 
-
-        // Validate inputs.
-//        val formValidCondition = arrayOf(firstNameTextField.text.isNullOrBlank().not()
-//
-//        ).reduce(BooleanBinding::and)
 
         // Enable execute button when form is valid.
         root.buttonTypes.add(executeButton)

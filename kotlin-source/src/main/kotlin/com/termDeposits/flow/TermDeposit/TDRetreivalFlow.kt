@@ -43,12 +43,10 @@ object TDRetreivalFlows {
             val criteria = QueryCriteria.VaultQueryCriteria(status = Vault.StateStatus.UNCONSUMED)
             val offerStates = serviceHub.vaultService.queryBy<TermDeposit.State>(criteria)
             val filteredStates: List<StateAndRef<TermDeposit.State>>
-            println("All States ${offerStates.states.map { it.state.data.toString() }}")
             //Filter offer states to get the states we want
             //Active Filter
             if (state == TermDeposit.internalState.active) {
                 filteredStates = offerStates.states.filter {
-                    println("Active Filter")
                     //it.state.data.endDate.isAfter(LocalDateTime.now()) &&
                             it.state.data.startDate == dateData.startDate &&
                             it.state.data.endDate == dateData.endDate && //for now dont do this -> because of duration being added into the tdo state

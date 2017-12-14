@@ -48,11 +48,8 @@ object RolloverTD {
             //STEP 1: Gather KYC Data and TD. Send these to other party with rollover instructions
             val flowSession = initiateFlow(issuingInstitue)
             val clientID = subFlow(KYCRetrievalFlow(kycNameData.firstName, kycNameData.lastName, kycNameData.accountNum)).first().state.data.linearId
-            println("KYC Retrieve")
             val termDeposit = subFlow(TDRetreivalFlows.TDRetreivalFlow(dateData, issuingInstitue, interestPercent, depositAmount, TermDeposit.internalState.active, clientID))
-            println("TD Retrieve")
             val tdOffer = subFlow(OfferRetrievalFlow(rolloverTerms.offeringInstitue, rolloverTerms.interestPercent, rolloverTerms.duration))
-            println("Offer Retrieve")
             flowSession.send(listOf(termDeposit.first(), rolloverTerms.withInterest, tdOffer.first()))
 
             //STEP 5: Sign the transaction and return to the other party

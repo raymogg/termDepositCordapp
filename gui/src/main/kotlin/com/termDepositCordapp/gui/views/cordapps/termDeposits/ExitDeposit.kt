@@ -34,7 +34,6 @@ class ExitDeposit : Fragment() {
     private val offerChoiceBox by fxid<ChoiceBox<StateAndRef<TermDeposit.State>>>()
     private val offerLabel by fxid<Label>()
     // Inject data
-    private val parties by observableList(NetworkIdentityModel::parties)
     private val offerStates by observableList(TermDepositsModel::maturedStates)
     // private val issuers by observableList(IssuerModel::issuers)
     private val rpcProxy by observableValue(NodeMonitorModel::proxyObservable)
@@ -92,7 +91,6 @@ class ExitDeposit : Fragment() {
         setResultConverter {
             when (it) {
                 executeButton -> {
-                    //TODO Execute accept offer
                     val linearID = offerChoiceBox.value.state.data.clientIdentifier
                     val kycData = rpcProxy.value?.startFlow(::KYCRetrievalFlowID, linearID)!!.returnValue.getOrThrow().first()
                     val kycNameData = KYC.KYCNameData(kycData.state.data.firstName, kycData.state.data.lastName, kycData.state.data.accountNum)
