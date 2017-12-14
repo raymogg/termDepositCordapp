@@ -163,8 +163,9 @@ open class TermDeposit : Contract {
         val pending = "Pending" //Term deposit has been created, but waiting for confirmation of payment reception from issuing party
         val active = "Active" //Term Deposit is active (i.e between start date and end date)
         val maturing = "Maturing" //Term deposit is maturing soon
-        val exited = "Exited" //A TD state with this internal state should always be "consumed" and hence unusuable in a txn
+        val matured = "Matured" //Term deposit has matured - client needs to either redeem or rollover
     }
+
 
     // **********************
     // * Term Deposit State *

@@ -74,6 +74,15 @@ class TermDepositsModel {
         list.addAll(statesDiff.added)
     }
 
+    //matured termdeposit states in the vault
+    private val maturedStatesDiff: Observable<Diff<TermDeposit.State>> = contractStatesDiff.map {
+        Diff(it.added.filterMaturedStateAndRef(), it.removed.filterMaturedStateAndRef())
+    }
+    val maturedStates: ObservableList<StateAndRef<TermDeposit.State>> = maturedStatesDiff.fold(FXCollections.observableArrayList()) { list: MutableList<StateAndRef<TermDeposit.State>>, statesDiff ->
+        list.removeIf { it in statesDiff.removed}
+        list.addAll(statesDiff.added)
+    }
+
 
     private fun Collection<StateAndRef<ContractState>>.filterCashStateAndRefs(): List<StateAndRef<Cash.State>> {
         return this.map { stateAndRef ->
@@ -131,6 +140,24 @@ class TermDepositsModel {
             if (stateAndRef.state.data is TermDeposit.State) {
                 // Kotlin doesn't unify here for some reason
                 if ((stateAndRef as StateAndRef<TermDeposit.State>).state.data.internalState == TermDeposit.internalState.pending) {
+                    stateAndRef
+                } else {
+                    null
+                }
+
+            } else {
+                null
+            }
+        }.filterNotNull()
+    }
+
+    private fun Collection<StateAndRef<ContractState>>.filterMaturedStateAndRef(): List<StateAndRef<TermDeposit.State>> {
+        return this.map { stateAndRef ->
+            @Suppress("UNCHECKED_CAST")
+            if (stateAndRef.state.data is TermDeposit.State) {
+                // Kotlin doesn't unify here for some reason
+                if ((stateAndRef as StateAndRef<TermDeposit.State>).state.data.internalState == TermDeposit.internalState.active) //&&
+                    {//stateAndRef.state.data.endDate.isBefore(java.time.LocalDateTime.now())) { //TODO: After testing uncoment here
                     stateAndRef
                 } else {
                     null

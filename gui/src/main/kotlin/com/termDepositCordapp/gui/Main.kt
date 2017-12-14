@@ -19,10 +19,7 @@ import com.termDepositCordapp.gui.views.Dashboard
 import com.termDepositCordapp.gui.views.LoginView
 import com.termDepositCordapp.gui.views.MainView
 import com.termDepositCordapp.gui.views.cordapps.cash.CashViewer
-import com.termDepositCordapp.gui.views.cordapps.termDeposits.ActiveViewer
-import com.termDepositCordapp.gui.views.cordapps.termDeposits.KYCViewer
-import com.termDepositCordapp.gui.views.cordapps.termDeposits.OfferViewer
-import com.termDepositCordapp.gui.views.cordapps.termDeposits.PendingViewer
+import com.termDepositCordapp.gui.views.cordapps.termDeposits.*
 import com.termDepositCordapp.gui.views.runInFxApplicationThread
 import org.apache.commons.lang.SystemUtils
 import org.controlsfx.dialog.ExceptionDialog
@@ -114,6 +111,7 @@ class Main : App(MainView::class) {
             registerView<OfferViewer>()
             registerView<ActiveViewer>()
             registerView<PendingViewer>()
+            registerView<MaturedViewer>()
             registerView<KYCViewer>()
             // Tools.
             registerView<Network>()

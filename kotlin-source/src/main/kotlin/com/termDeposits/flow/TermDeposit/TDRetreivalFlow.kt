@@ -73,11 +73,23 @@ object TDRetreivalFlows {
                             it.state.data.clientIdentifier == clientIdentifier
                 }
             }
-
-            //Deposits that are "expired" (i.e end date done, but not actually consumed)
-            else if (state == TermDeposit.internalState.exited) {
+            else if (state == TermDeposit.internalState.maturing) {
                 filteredStates = offerStates.states.filter {
-                    it.state.data.endDate.isBefore(LocalDateTime.now()) &&
+                    //Get all states expirying within the next 3 days
+                    //it.state.data.endDate.minusDays(3) == LocalDateTime.now() &&
+                    it.state.data.startDate == dateData.startDate &&
+                            it.state.data.endDate == dateData.endDate &&
+                            it.state.data.institue == offeringInstitute &&
+                            it.state.data.interestPercent == interest &&
+                            it.state.data.internalState == TermDeposit.internalState.active &&
+                            it.state.data.depositAmount == depositAmount &&
+                            it.state.data.clientIdentifier == clientIdentifier
+                }
+            }
+            else if (state == TermDeposit.internalState.matured) {
+                filteredStates = offerStates.states.filter {
+                    //Get all states that have expired
+                    //it.state.data.endDate.isBefore(LocalDateTime.now()) &&
                     it.state.data.startDate == dateData.startDate &&
                             it.state.data.endDate == dateData.endDate &&
                             it.state.data.institue == offeringInstitute &&
@@ -125,13 +137,7 @@ object TDRetreivalFlows {
             }
 
             //Deposits that are "expired" (i.e end date done, but not actually consumed)
-            else if (state == TermDeposit.internalState.exited) {
-                //println("Expired Filter")
-                filteredStates = offerStates.states.filter {
-                    //it.state.data.endDate.isBefore(LocalDateTime.now()) &&
-                    it.state.data.linearId == id
-                }
-            } else {
+            else {
                 throw FlowException("Invalid Term Deposit State provided")
             }
 
