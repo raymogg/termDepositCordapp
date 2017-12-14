@@ -131,29 +131,11 @@ class ActiveViewer : CordaView("Active Term Deposits") {
         Bindings.bindContent(splitPane.items, view)
 
         val searchField = SearchField(claimStates,
-                "Interest" to { state, text -> state.state.data.interestPercent.toString().contains(text, true) }
+                "Interest" to { state, text -> state.state.data.interestPercent.toString().contains(text, true) },
+                "Client ID" to {state, text -> state.state.data.clientIdentifier.toString().contains(text, true)},
+                "Maturity Date" to {state, text -> state.state.data.endDate.toString().contains(text, true)}
         )
         root.top = hbox(5.0) {
-            button("Exit Deposit", FontAwesomeIconView(FontAwesomeIcon.PLUS)) {
-                setOnMouseClicked {
-                    if (it.button == MouseButton.PRIMARY) {
-                        //TODO - Make this button functional
-                        find<ExitDeposit>().show(this@ActiveViewer.root.scene.window)
-
-                    }
-                }
-            }
-
-            button("Rollover Deposit", FontAwesomeIconView(FontAwesomeIcon.PLUS)) {
-                setOnMouseClicked {
-                    if (it.button == MouseButton.PRIMARY) {
-                        //TODO - Make this button functional
-                        find<RolloverDeposit>().show(this@ActiveViewer.root.scene.window)
-
-                    }
-                }
-            }
-
             HBox.setHgrow(searchField.root, Priority.ALWAYS)
             add(searchField.root)
         }

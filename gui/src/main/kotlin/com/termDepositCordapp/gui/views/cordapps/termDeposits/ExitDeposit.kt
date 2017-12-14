@@ -35,7 +35,7 @@ class ExitDeposit : Fragment() {
     private val offerLabel by fxid<Label>()
     // Inject data
     private val parties by observableList(NetworkIdentityModel::parties)
-    private val offerStates by observableList(TermDepositsModel::depositStates)
+    private val offerStates by observableList(TermDepositsModel::maturedStates)
     // private val issuers by observableList(IssuerModel::issuers)
     private val rpcProxy by observableValue(NodeMonitorModel::proxyObservable)
     private val myIdentity by observableValue(NetworkIdentityModel::myIdentity)

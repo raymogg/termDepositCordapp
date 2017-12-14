@@ -130,7 +130,9 @@ class MaturedViewer : CordaView("Matured Term Deposits") {
         Bindings.bindContent(splitPane.items, view)
 
         val searchField = SearchField(claimStates,
-                "Interest" to { state, text -> state.state.data.interestPercent.toString().contains(text, true) }
+                "Interest" to { state, text -> state.state.data.interestPercent.toString().contains(text, true) },
+                "Client ID" to {state, text -> state.state.data.clientIdentifier.toString().contains(text, true)},
+                "Maturity Date" to {state, text -> state.state.data.endDate.toString().contains(text, true)}
         )
         root.top = hbox(5.0) {
             //            button("Prompt Bank to Activate", FontAwesomeIconView(FontAwesomeIcon.PLUS)) {

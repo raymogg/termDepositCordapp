@@ -105,6 +105,10 @@ object TDRetreivalFlows {
                 throw FlowException("No Term Deposit states found")
             }
 
+            if (filteredStates.size > 1) {
+                throw FlowException("Too many Term Deposit states found")
+            }
+
             return filteredStates
         }
     }

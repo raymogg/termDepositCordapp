@@ -34,12 +34,13 @@ object ActivateTD {
         flow.send(listOf(dateData, interestPercent, issuingInstitue, client, depositAmount, kycData))
 
         //STEP 6: Recieve back the signed txn and commit it to the ledger
-        val ptx = flow.receive<SignedTransaction>()
+        val ptx = flow.receive<SignedTransaction>().unwrap { it }
 
         //STEP 7: Sign the txn and commit to the ledger
-        val stx = serviceHub.addSignature(ptx.unwrap { it })
+        val stx = serviceHub.addSignature(ptx, serviceHub.myInfo.legalIdentities.first().owningKey)
         subFlow(ResolveTransactionsFlow(stx, flow))
         println("Term Deposit: from $issuingInstitue to $client now activated")
+        println("Signers ${stx.sigs.map { it.by }}")
         return subFlow(FinalityFlow(stx, setOf(client)))
         }
     }
@@ -68,11 +69,11 @@ object ActivateTD {
 
             //STEP 4: Generate the Activate Txn
             val tx = TransactionBuilder(notary = notary)
-            TermDeposit().generateActivate(tx, TD.first(), args[3] as Party, notary)
+            val generatedTx = TermDeposit().generateActivate(tx, TD.first(), notary)
 
 
             //STEP 5: Sign and send back the txn (only updating internal state so no validation required really)
-            val ptx = serviceHub.signInitialTransaction(tx, serviceHub.myInfo.legalIdentities.first().owningKey)
+            val ptx = serviceHub.signInitialTransaction(generatedTx, serviceHub.myInfo.legalIdentities.first().owningKey)
             flow.send(ptx)
             return waitForLedgerCommit(ptx.id)
         }

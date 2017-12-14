@@ -2,6 +2,7 @@ package com.termDepositCordapp.gui.views.cordapps.termDeposits
 
 import com.termDepositCordapp.gui.views.stringConverter
 import com.termDepositCordapp.gui.model.TermDepositsModel
+import com.termDepositCordapp.gui.views.toKnownParty
 import com.termDeposits.contract.KYC
 import com.termDeposits.contract.TermDeposit
 import com.termDeposits.flow.TermDeposit.ActivateTD
@@ -19,6 +20,7 @@ import net.corda.client.jfx.model.*
 import net.corda.client.jfx.utils.isNotNull
 import net.corda.core.contracts.*
 import net.corda.core.flows.FlowException
+import net.corda.core.identity.groupPublicKeysByWellKnownParty
 import net.corda.core.messaging.startFlow
 import net.corda.core.utilities.getOrThrow
 import org.controlsfx.dialog.ExceptionDialog
@@ -103,7 +105,7 @@ class TDActivate : Fragment() {
                     val difference: Int = Period.between(offerChoiceBox.value.state.data.startDate.toLocalDate(),offerChoiceBox.value.state.data.endDate.toLocalDate()).months
                     val dateData = TermDeposit.DateData(offerChoiceBox.value.state.data.startDate,offerChoiceBox.value.state.data.endDate,difference)
                     rpcProxy.value?.startFlow(ActivateTD::Activator, dateData, offerChoiceBox.value.state.data.interestPercent,
-                            offerChoiceBox.value.state.data.institue, rpcProxy.value?.nodeInfo()!!.legalIdentities.first(),  offerChoiceBox.value.state.data.depositAmount,
+                            offerChoiceBox.value.state.data.institue, offerChoiceBox.value.state.data.owner.owningKey.toKnownParty().value!! ,offerChoiceBox.value.state.data.depositAmount,
                             kycNameData)
                 }
                 else -> null

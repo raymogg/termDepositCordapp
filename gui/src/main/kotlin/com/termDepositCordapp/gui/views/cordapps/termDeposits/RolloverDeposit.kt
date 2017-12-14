@@ -47,7 +47,7 @@ class RolloverDeposit : Fragment() {
     // Inject data
     private val parties by observableList(NetworkIdentityModel::parties)
     private val offerStates by observableList(TermDepositsModel::offerStates)
-    private val depositStates by observableList(TermDepositsModel::depositStates)
+    private val depositStates by observableList(TermDepositsModel::maturedStates)
 
     // private val issuers by observableList(IssuerModel::issuers)
     private val rpcProxy by observableValue(NodeMonitorModel::proxyObservable)

@@ -123,7 +123,7 @@ open class TermDeposit : Contract {
         return builder
     }
 
-    fun generateRolloever(builder: TransactionBuilder, oldState: StateAndRef<TermDeposit.State>, notary: Party,
+    fun generateRollover(builder: TransactionBuilder, oldState: StateAndRef<TermDeposit.State>, notary: Party,
                           tdOffer: StateAndRef<TermDepositOffer.State>, withInterest: Boolean): TransactionBuilder {
         builder.addInputState(oldState)
         val newStartDate = LocalDateTime.MIN //TODO Change this to time.now()
@@ -143,11 +143,11 @@ open class TermDeposit : Contract {
         return builder
     }
 
-    fun generateActivate(builder: TransactionBuilder, TDState: StateAndRef<TermDeposit.State>, TDConsumer: Party,
+    fun generateActivate(builder: TransactionBuilder, TDState: StateAndRef<TermDeposit.State>,
                          notary: Party): TransactionBuilder {
         builder.addInputState(TDState)
         builder.addOutputState(TransactionState(data = TDState.state.data.copy(internalState = internalState.active), notary = TDState.state.notary, contract = TERMDEPOSIT_CONTRACT_ID))
-        builder.addCommand(TermDeposit.Commands.Activate(), TDState.state.data.institue.owningKey, TDConsumer.owningKey)
+        builder.addCommand(TermDeposit.Commands.Activate(), TDState.state.data.institue.owningKey, TDState.state.data.owner.owningKey)
         return builder
     }
 

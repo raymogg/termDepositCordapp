@@ -93,12 +93,12 @@ object RolloverTD {
             val keys: List<PublicKey>
             if (withInterest) {
                 //Setup the txn with interest being reinvested
-                val tx = TermDeposit().generateRolloever(builder, termDeposit, notary, tdOffer, true)
+                val tx = TermDeposit().generateRollover(builder, termDeposit, notary, tdOffer, true)
                 toSignTx = tx
                 keys = listOf(serviceHub.myInfo.legalIdentities.first().owningKey)
             } else {
                 //Setup the txn with interest being returned to sender
-                val tx = TermDeposit().generateRolloever(builder, termDeposit, notary, tdOffer, false)
+                val tx = TermDeposit().generateRollover(builder, termDeposit, notary, tdOffer, false)
                 //Return the interest earned
                 val (ptx, cashKeys) = Cash.generateSpend(serviceHub, tx, Amount((termDeposit.state.data.depositAmount.quantity/100 * termDeposit.state.data.interestPercent).toLong(), USD),
                         termDeposit.state.data.owner)
