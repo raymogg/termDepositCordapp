@@ -33,19 +33,22 @@ object TDRetreivalFlows {
     @StartableByRPC
     @CordaSerializable
     class TDRetreivalFlow(val dateData: TermDeposit.DateData, val offeringInstitute: Party,
-                          val interest: Float, val depositAmount: Amount<Currency>, val state: String = internalState.active,
+                          val interest: Float, val depositAmount: Amount<Currency>, val state: String = TermDeposit.internalState.active,
                           val clientIdentifier: UniqueIdentifier) : FlowLogic<List<StateAndRef<TermDeposit.State>>>() {
         @Suspendable
         override fun call(): List<StateAndRef<TermDeposit.State>> {
             //Query the vault for unconsumed states and then for Security loan states
-            println("Retrieval Start ${dateData.startDate} End ${dateData.endDate}")
+            println("Retrieval Start ${dateData.startDate} End ${dateData.endDate} Amount ${depositAmount} Client Ref ${clientIdentifier} \n" +
+                    "Duration ${dateData.duration} Interest ${interest} Institue ${offeringInstitute}")
             val criteria = QueryCriteria.VaultQueryCriteria(status = Vault.StateStatus.UNCONSUMED)
             val offerStates = serviceHub.vaultService.queryBy<TermDeposit.State>(criteria)
             val filteredStates: List<StateAndRef<TermDeposit.State>>
+            println("All States ${offerStates.states.map { it.state.data.toString() }}")
             //Filter offer states to get the states we want
             //Active Filter
             if (state == TermDeposit.internalState.active) {
                 filteredStates = offerStates.states.filter {
+                    println("Active Filter")
                     //it.state.data.endDate.isAfter(LocalDateTime.now()) &&
                             it.state.data.startDate == dateData.startDate &&
                             it.state.data.endDate == dateData.endDate && //for now dont do this -> because of duration being added into the tdo state

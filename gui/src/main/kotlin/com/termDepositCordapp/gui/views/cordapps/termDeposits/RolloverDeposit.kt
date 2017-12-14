@@ -4,8 +4,8 @@ import com.termDepositCordapp.gui.views.stringConverter
 import com.termDepositCordapp.gui.model.TermDepositsModel
 import com.termDeposits.contract.KYC
 import com.termDeposits.contract.TermDeposit
+import com.termDeposits.contract.TermDepositOffer
 import com.termDeposits.flow.TermDeposit.KYCRetrievalFlowID
-import com.termDeposits.flow.TermDeposit.RedeemTD
 import com.termDeposits.flow.TermDeposit.RolloverTD
 import javafx.beans.binding.Bindings
 import javafx.beans.binding.BooleanBinding
@@ -35,14 +35,20 @@ class RolloverDeposit : Fragment() {
     // Components
     private val transactionTypeCB by fxid<ChoiceBox<TermDeposit>>()
 
-    private val offerChoiceBox by fxid<ChoiceBox<StateAndRef<TermDeposit.State>>>()
+    private val depositChoiceBox by fxid<ChoiceBox<StateAndRef<TermDeposit.State>>>()
+    private val depositLabel by fxid<Label>()
+
+    private val offerChoiceBox by fxid<ChoiceBox<StateAndRef<TermDepositOffer.State>>>()
     private val offerLabel by fxid<Label>()
+
     private val withInterestChoiceBox by fxid<ChoiceBox<Boolean>>()
     private val withInterestLabel by fxid<Label>()
     private val issueRef = SimpleObjectProperty<Byte>()
     // Inject data
     private val parties by observableList(NetworkIdentityModel::parties)
-    private val offerStates by observableList(TermDepositsModel::depositStates)
+    private val offerStates by observableList(TermDepositsModel::offerStates)
+    private val depositStates by observableList(TermDepositsModel::depositStates)
+
     // private val issuers by observableList(IssuerModel::issuers)
     private val rpcProxy by observableValue(NodeMonitorModel::proxyObservable)
     private val myIdentity by observableValue(NetworkIdentityModel::myIdentity)
@@ -99,15 +105,23 @@ class RolloverDeposit : Fragment() {
         setResultConverter {
             when (it) {
                 executeButton -> {
-//                    val newTerms = TermDeposit.RolloverTerms(LocalDateTime.MIN, LocalDateTime.MAX, withInterestChoiceBox.value)
+                    val tdOffer = offerChoiceBox.value.state.data
+                    val newTerms = TermDeposit.RolloverTerms(tdOffer.interestPercent, tdOffer.institue, tdOffer.duration, withInterestChoiceBox.value)
 //                    //TODO Execute accept offer
-//                    val linearID = offerChoiceBox.value.state.data.clientIdentifier
-//                    val kycData = rpcProxy.value?.startFlow(::KYCRetrievalFlowID, linearID)!!.returnValue.getOrThrow().first()
-//                    val kycNameData = KYC.KYCNameData(kycData.state.data.firstName, kycData.state.data.lastName, kycData.state.data.accountNum)
-//                    val difference: Int = Period.between(offerChoiceBox.value.state.data.startDate.toLocalDate(),offerChoiceBox.value.state.data.endDate.toLocalDate()).months
-//                    val dateData = TermDeposit.DateData(offerChoiceBox.value.state.data.startDate,offerChoiceBox.value.state.data.endDate,difference)
-//                    rpcProxy.value?.startFlow(RolloverTD::RolloverInitiator, dateData, offerChoiceBox.value.state.data.interestPercent,
-//                            offerChoiceBox.value.state.data.institue,  offerChoiceBox.value.state.data.depositAmount, newTerms, kycNameData)
+                    val linearID = depositChoiceBox.value.state.data.clientIdentifier
+                    val kycData = rpcProxy.value?.startFlow(::KYCRetrievalFlowID, linearID)!!.returnValue.getOrThrow().first()
+                    val kycNameData = KYC.KYCNameData(kycData.state.data.firstName, kycData.state.data.lastName, kycData.state.data.accountNum)
+                    val monthsDiff = Period.between(depositChoiceBox.value.state.data.startDate.toLocalDate(),depositChoiceBox.value.state.data.endDate.toLocalDate()).months
+                    val yearsToMonthsDiff = Period.between(depositChoiceBox.value.state.data.startDate.toLocalDate(),depositChoiceBox.value.state.data.endDate.toLocalDate()).years * 12
+                    val difference = monthsDiff + yearsToMonthsDiff
+                    println("Start ${depositChoiceBox.value.state.data.startDate.toLocalDate()}")
+                    println("End ${depositChoiceBox.value.state.data.endDate.toLocalDate()}")
+                    val dateData = TermDeposit.DateData(LocalDateTime.MIN, LocalDateTime.MIN.plusMonths(difference.toLong()),
+                            difference)
+                    println("GUI Start ${dateData.startDate} End ${dateData.endDate} Amount ${depositChoiceBox.value.state.data.depositAmount} Client Ref ${linearID} \n" +
+                            "Duration ${dateData.duration} Interest ${depositChoiceBox.value.state.data.interestPercent} Institue ${depositChoiceBox.value.state.data.institue}")
+                    rpcProxy.value?.startFlow(RolloverTD::RolloverInitiator, dateData, depositChoiceBox.value.state.data.interestPercent,
+                            depositChoiceBox.value.state.data.institue,  depositChoiceBox.value.state.data.depositAmount, newTerms, kycNameData)
                 }
                 else -> null
             }
@@ -123,15 +137,25 @@ class RolloverDeposit : Fragment() {
         //Load in the states that can be attempted to rollover
         withInterestLabel.text = "Rollover Interest?"
         withInterestChoiceBox.items = listOf(true, false).observable()
-        offerLabel.text = "Offers"
+        depositLabel.text = "Active Deposits"
         // Loan Selection
+        depositChoiceBox.apply {
+            //            partyBLabel.textProperty().bind(transactionTypeCB.valueProperty().map { it?.partyNameB?.let { "$it : " } })
+            items = depositStates
+            converter = stringConverter { "Issuing Institue: " + it.state.data.institue.toString() +
+                    "\n Interest: "+ it.state.data.interestPercent+"%" +
+                    "\n Deposited Amount " + it.state.data.depositAmount.toString() +
+                    "\n End Date " + it.state.data.endDate.toString()}
+        }
+
+        offerLabel.text = "New Offer"
         offerChoiceBox.apply {
             //            partyBLabel.textProperty().bind(transactionTypeCB.valueProperty().map { it?.partyNameB?.let { "$it : " } })
             items = offerStates
             converter = stringConverter { "Issuing Institue: " + it.state.data.institue.toString() +
                     "\n Interest: "+ it.state.data.interestPercent+"%" +
-                    "\n Deposited Amount " + it.state.data.depositAmount.toString() +
-                    "\n End Date " + it.state.data.endDate.toString()}
+                    "\n Valid till: " + it.state.data.validTill.toString() +
+                    "\n Duration (Months) "+it.state.data.duration.toString()}
         }
 
         // Validate inputs.

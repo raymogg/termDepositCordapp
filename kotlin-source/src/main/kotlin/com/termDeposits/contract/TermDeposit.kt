@@ -131,11 +131,13 @@ open class TermDeposit : Contract {
         if (withInterest) {
             //Change the deposit amount to be the new amount plus interest
             builder.addOutputState(TransactionState(data = oldState.state.data.copy(startDate = newStartDate, endDate = newEndDate,
-                    depositAmount = Amount((oldState.state.data.depositAmount.quantity * (100+oldState.state.data.interestPercent)/100).toLong(), USD)),
+                    depositAmount = Amount((oldState.state.data.depositAmount.quantity * (100+oldState.state.data.interestPercent)/100).toLong(), USD),
+                    interestPercent = tdOffer.state.data.interestPercent),
                     notary = notary, contract = TERMDEPOSIT_CONTRACT_ID))
         } else {
             //Deposit amount stays the same
-            builder.addOutputState(TransactionState(data = oldState.state.data.copy(startDate = newStartDate, endDate = newEndDate), notary = notary, contract = TERMDEPOSIT_CONTRACT_ID))
+            builder.addOutputState(TransactionState(data = oldState.state.data.copy(startDate = newStartDate, endDate = newEndDate, interestPercent = tdOffer.state.data.interestPercent)
+                    , notary = notary, contract = TERMDEPOSIT_CONTRACT_ID))
         }
         builder.addCommand(TermDeposit.Commands.Rollover(), oldState.state.data.institue.owningKey, oldState.state.data.owner.owningKey)
         return builder
@@ -192,7 +194,7 @@ open class TermDeposit : Contract {
 
 
         override fun toString(): String {
-            return "Term Deposit: From $institue at $interestPercent% starting on $startDate and ending on $endDate to $owner (InternalState: $internalState)"
+            return "Term Deposit: From $institue at $interestPercent% starting on $startDate and ending on $endDate to $owner with amount $depositAmount (InternalState: $internalState)"
         }
     }
 

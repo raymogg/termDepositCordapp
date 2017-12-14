@@ -97,7 +97,9 @@ class ExitDeposit : Fragment() {
                     val kycData = rpcProxy.value?.startFlow(::KYCRetrievalFlowID, linearID)!!.returnValue.getOrThrow().first()
                     val kycNameData = KYC.KYCNameData(kycData.state.data.firstName, kycData.state.data.lastName, kycData.state.data.accountNum)
                     println("${kycNameData.firstName} ${kycNameData.lastName}")
-                    val difference: Int = Period.between(offerChoiceBox.value.state.data.startDate.toLocalDate(),offerChoiceBox.value.state.data.endDate.toLocalDate()).months
+                    val monthsDiff = Period.between(offerChoiceBox.value.state.data.startDate.toLocalDate(),offerChoiceBox.value.state.data.endDate.toLocalDate()).months
+                    val yearsToMonthsDiff = Period.between(offerChoiceBox.value.state.data.startDate.toLocalDate(),offerChoiceBox.value.state.data.endDate.toLocalDate()).years * 12
+                    val difference = monthsDiff + yearsToMonthsDiff
                     val dateData = TermDeposit.DateData(offerChoiceBox.value.state.data.startDate,offerChoiceBox.value.state.data.endDate,difference)
                     rpcProxy.value?.startFlow(RedeemTD::RedemptionInitiator, dateData,
                             offerChoiceBox.value.state.data.interestPercent, offerChoiceBox.value.state.data.institue,  offerChoiceBox.value.state.data.depositAmount, kycNameData)

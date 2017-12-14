@@ -14,9 +14,14 @@
                        GridPane.fillWidth="true" GridPane.hgrow="ALWAYS" GridPane.rowIndex="1"/>
 
             <!-- Row 2 -->
-            <Label fx:id="offerLabel" GridPane.halignment="RIGHT" GridPane.rowIndex="2"/>
-            <ChoiceBox fx:id="offerChoiceBox" maxWidth="Infinity" GridPane.columnIndex="1" GridPane.columnSpan="4"
+            <Label fx:id="depositLabel" GridPane.halignment="RIGHT" GridPane.rowIndex="2"/>
+            <ChoiceBox fx:id="depositChoiceBox" maxWidth="Infinity" GridPane.columnIndex="1" GridPane.columnSpan="4"
                        GridPane.fillWidth="true" GridPane.hgrow="ALWAYS" GridPane.rowIndex="2"/>
+
+            <!-- Row 2 -->
+            <Label fx:id="offerLabel" GridPane.halignment="RIGHT" GridPane.rowIndex="3"/>
+            <ChoiceBox fx:id="offerChoiceBox" maxWidth="Infinity" GridPane.columnIndex="1" GridPane.columnSpan="4"
+                       GridPane.fillWidth="true" GridPane.hgrow="ALWAYS" GridPane.rowIndex="3"/>
 
 
             <padding>
