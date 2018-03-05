@@ -5,6 +5,7 @@ import com.termDeposits.contract.TermDeposit
 import com.termDeposits.flow.TermDeposit.*
 import net.corda.core.contracts.Amount
 import net.corda.core.contracts.UniqueIdentifier
+import net.corda.core.crypto.SecureHash
 import net.corda.core.identity.CordaX500Name
 import net.corda.core.identity.Party
 import net.corda.core.messaging.CordaRPCOps
@@ -366,7 +367,7 @@ class Simulation(options: String) {
                      interestPercent: Float, duration: Int) {
         //Get attachment hash for the txn before starting the flow
         //TODO: This hardcoding of a very specific file path probably isnt that great
-        val attachmentInputStream = File("C:\\Users\\raymondm\\Documents\\termDepositsCordapp\\kotlin-source\\src\\main\\resources\\Example_TD_Contract.zip").inputStream()
+        val attachmentInputStream = File("C:\\Users\\raymondm\\Documents\\TermDepositsCordapp\\kotlin-source\\src\\main\\resources\\Example_TD_Contract.zip").inputStream()
         val attachmentHash = me.uploadAttachment(attachmentInputStream)
         val returnVal = me.startFlow(IssueOffer::Initiator, endDate, interestPercent, me.nodeInfo().legalIdentities.first(), receiver.nodeInfo().legalIdentities.first(),
                 attachmentHash, duration).returnValue.getOrThrow()
