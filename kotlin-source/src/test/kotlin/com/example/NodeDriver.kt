@@ -98,12 +98,13 @@ class Simulation(options: String) {
             bankA = aBank
             bankB = bBank
             centralBank = cBank
-            startWebserver(aNode)
-            startWebserver(bNode)
-            startWebserver(cNode)
-            startWebserver(bankA)
-            startWebserver(bankB)
-
+            val serverA = startWebserver(aNode)
+            val serverB = startWebserver(bNode)
+            val serverC = startWebserver(cNode)
+            val serverBA = startWebserver(bankA)
+            val serverBB = startWebserver(bankB)
+            println("Webservers Started: ${serverA.get().listenAddress} ${serverB.get().listenAddress} ${serverC.get().listenAddress} " +
+                    "${serverBA.get().listenAddress} ${serverBB.get().listenAddress}")
 
             setup_nodes()
             runSimulation()
@@ -385,7 +386,7 @@ class Simulation(options: String) {
                   interestPercent: Float, depositAmount: Amount<Currency>, firstName: String, lastName: String, accountNumber: String, duration: Int) {
         //Request a TD at $300 USD
         val kycData = KYC.KYCNameData(firstName, lastName, accountNumber)
-        val dateData = TermDeposit.DateData(startDate, startDate.plusMonths(duration.toLong()), duration)
+        val dateData = TermDeposit.DateData(startDate, duration)
         val returnVal = me.startFlow(IssueTD::Initiator, dateData, interestPercent, issuer.nodeInfo().legalIdentities.first(), depositAmount,
                 kycData).returnValue.getOrThrow()
         //println("TD Requested")
@@ -395,7 +396,7 @@ class Simulation(options: String) {
                  firstName: String, lastName: String, accountNumber: String) {
         println("Start activate")
         val kycNameData = KYC.KYCNameData(firstName, lastName,accountNumber)
-        val dateData = TermDeposit.DateData(startDate, startDate.plusMonths(duration.toLong()), duration)
+        val dateData = TermDeposit.DateData(startDate, duration)
         val returnVal = me.startFlow(ActivateTD::Activator, dateData, interestPercent, me.nodeInfo().legalIdentities.first(), client.nodeInfo().legalIdentities.first(), depositAmount, kycNameData).returnValue.getOrThrow()
         println("TD Activated")
     }
@@ -415,7 +416,7 @@ class Simulation(options: String) {
                interestPercent: Float, depositAmount: Amount<Currency>, duration: Int,
                firstName: String, lastName: String, accountNumber: String) {
         val kycNameData = KYC.KYCNameData(firstName, lastName, accountNumber)
-        val dateData = TermDeposit.DateData(startDate, startDate.plusMonths(duration.toLong()), duration)
+        val dateData = TermDeposit.DateData(startDate, duration)
         val returnVal = me.startFlow(RedeemTD::RedemptionInitiator, dateData, interestPercent, issuer.nodeInfo().legalIdentities.first(), depositAmount, kycNameData).returnValue.getOrThrow()
     }
 
@@ -423,7 +424,7 @@ class Simulation(options: String) {
                  firstName: String, lastName: String, accountNumber: String, newInterest: Float, newOfferingInstitue:Party, newDuration: Int) {
         val kycNameData = KYC.KYCNameData(firstName, lastName, accountNumber)
         val rolloverTerms = TermDeposit.RolloverTerms(newInterest, newOfferingInstitue, newDuration, withInterest)
-        val dateData = TermDeposit.DateData(startDate, startDate.plusMonths(duration.toLong()), duration)
+        val dateData = TermDeposit.DateData(startDate, duration)
         val returnVal = me.startFlow(RolloverTD::RolloverInitiator, dateData, interestPercent, issuer.nodeInfo().legalIdentities.first(),
                 depositAmount, rolloverTerms, kycNameData).returnValue.getOrThrow()
     }

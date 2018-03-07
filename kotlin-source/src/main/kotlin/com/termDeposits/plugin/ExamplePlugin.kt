@@ -2,8 +2,7 @@ package com.termDeposits.plugin
 
 import com.termDeposits.contract.*
 import com.termDeposits.flow.TermDeposit.*
-import com.termDeposits.api.ExampleApi
-import com.termDeposits.api.TestAPI
+import com.termDeposits.api.*
 import net.corda.core.contracts.UniqueIdentifier
 import net.corda.core.messaging.CordaRPCOps
 import net.corda.core.serialization.SerializationWhitelist
@@ -16,8 +15,8 @@ class ExamplePlugin : WebServerPluginRegistry {
     /**
      * A list of classes that expose web APIs.
      */
-    override val webApis: List<Function<CordaRPCOps, out Any>> = listOf(Function(::ExampleApi), Function(::TestAPI))
-    //override val webApis: List<Function<CordaRPCOps, out Any>> = listOf()
+    override val webApis: List<Function<CordaRPCOps, out Any>> = listOf(Function(::ExampleApi), Function(::DepositsAPI),
+            Function(::KYCAPI))
 
     /**
      * A list of directories in the resources directory that will be served by Jetty under /web.

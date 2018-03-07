@@ -38,7 +38,7 @@ object TDRetreivalFlows {
         @Suspendable
         override fun call(): List<StateAndRef<TermDeposit.State>> {
             //Query the vault for unconsumed states and then for Security loan states
-            println("Retrieval Start ${dateData.startDate} End ${dateData.endDate} Amount ${depositAmount} Client Ref ${clientIdentifier} \n" +
+            println("Retrieval Start ${dateData.startDate}  Amount ${depositAmount} Client Ref ${clientIdentifier} \n" +
                     "Duration ${dateData.duration} Interest ${interest} Institue ${offeringInstitute}")
             val criteria = QueryCriteria.VaultQueryCriteria(status = Vault.StateStatus.UNCONSUMED)
             val offerStates = serviceHub.vaultService.queryBy<TermDeposit.State>(criteria)
@@ -49,7 +49,7 @@ object TDRetreivalFlows {
                 filteredStates = offerStates.states.filter {
                     //it.state.data.endDate.isAfter(LocalDateTime.now()) &&
                             it.state.data.startDate == dateData.startDate &&
-                            it.state.data.endDate == dateData.endDate && //for now dont do this -> because of duration being added into the tdo state
+                            //it.state.data.endDate == dateData.endDate && //for now dont do this -> because of duration being added into the tdo state
                             it.state.data.institue == offeringInstitute &&
                             it.state.data.interestPercent == interest &&
                             it.state.data.internalState == TermDeposit.internalState.active &&
@@ -63,7 +63,7 @@ object TDRetreivalFlows {
                 filteredStates = offerStates.states.filter {
                     //it.state.data.endDate.isAfter(LocalDateTime.now()) &&
                             it.state.data.startDate == dateData.startDate &&
-                            it.state.data.endDate == dateData.endDate &&
+                            it.state.data.endDate == dateData.startDate.plusMonths(dateData.duration.toLong()) &&
                             it.state.data.institue == offeringInstitute &&
                             it.state.data.interestPercent == interest &&
                             it.state.data.internalState == TermDeposit.internalState.pending &&
@@ -76,7 +76,7 @@ object TDRetreivalFlows {
                     //Get all states expirying within the next 3 days
                     //it.state.data.endDate.minusDays(3) == LocalDateTime.now() &&
                     it.state.data.startDate == dateData.startDate &&
-                            it.state.data.endDate == dateData.endDate &&
+                            it.state.data.endDate == dateData.startDate.plusMonths(dateData.duration.toLong()) &&
                             it.state.data.institue == offeringInstitute &&
                             it.state.data.interestPercent == interest &&
                             it.state.data.internalState == TermDeposit.internalState.active &&
@@ -89,7 +89,7 @@ object TDRetreivalFlows {
                     //Get all states that have expired
                     //it.state.data.endDate.isBefore(LocalDateTime.now()) &&
                     it.state.data.startDate == dateData.startDate &&
-                            it.state.data.endDate == dateData.endDate &&
+                            it.state.data.endDate == dateData.startDate.plusMonths(dateData.duration.toLong()) &&
                             it.state.data.institue == offeringInstitute &&
                             it.state.data.interestPercent == interest &&
                             it.state.data.depositAmount == depositAmount &&

@@ -208,7 +208,7 @@ open class TermDeposit : Contract {
 
     /** Data Class to hold required date data. Needed for same reason as rolloverTerms data class above */
     @CordaSerializable
-    data class DateData(val startDate: LocalDateTime, val endDate: LocalDateTime, val duration: Int)
+    data class DateData(val startDate: LocalDateTime, val duration: Int)
 
     object matureInstructions {
         val rollover = "Rollover"

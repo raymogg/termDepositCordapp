@@ -1,13 +1,19 @@
 package com.termDeposits.api
 
+import com.termDeposits.contract.KYC
 import com.termDeposits.contract.TermDeposit
+import com.termDeposits.contract.TermDepositOffer
 import com.termDeposits.flow.TermDeposit.*
 import net.corda.core.identity.CordaX500Name
 import net.corda.core.messaging.CordaRPCOps
 import net.corda.core.messaging.startFlow
 import net.corda.core.messaging.startTrackedFlow
 import net.corda.core.messaging.vaultQueryBy
+import net.corda.core.utilities.getOrThrow
 import net.corda.core.utilities.loggerFor
+import net.corda.finance.AMOUNT
+import net.corda.finance.USD
+import net.corda.finance.contracts.JavaCommercialPaper
 import org.slf4j.Logger
 import java.time.LocalDateTime
 import javax.ws.rs.*
@@ -49,90 +55,76 @@ class ExampleApi(private val rpcOps: CordaRPCOps) {
                 //filter out myself, notary and eventual network map started by driver
                 .filter { it.organisation !in (SERVICE_NAMES + myLegalName.organisation) })
     }
-
-//    /**
-//     * Displays all IOU states that exist in the node's vault.
-//     */
-//    @GET
-//    @Path("ious")
-//    @Produces(MediaType.APPLICATION_JSON)
-//    fun getIOUs() = rpcOps.vaultQueryBy<IOUState>().states
-//
-//    /**
-//     * Initiates a flow to agree an IOU between two parties.
-//     *
-//     * Once the flow finishes it will have written the IOU to ledger. Both the lender and the borrower will be able to
-//     * see it when calling /api/example/ious on their respective nodes.
-//     *
-//     * This end-point takes a Party name parameter as part of the path. If the serving node can't find the other party
-//     * in its network map cache, it will return an HTTP bad request.
-//     *
-//     * The flow is invoked asynchronously. It returns a future when the flow's call() method returns.
-//     */
-//    @PUT
-//    @Path("create-iou")
-//    fun createIOU(@QueryParam("iouValue") iouValue: Int, @QueryParam("partyName") partyName: CordaX500Name?): Response {
-//        if (iouValue <= 0 ) {
-//            return Response.status(BAD_REQUEST).entity("Query parameter 'iouValue' must be non-negative.\n").build()
-//        }
-//        if (partyName == null) {
-//            return Response.status(BAD_REQUEST).entity("Query parameter 'partyName' missing or has wrong format.\n").build()
-//        }
-//        val otherParty = rpcOps.wellKnownPartyFromX500Name(partyName) ?:
-//                return Response.status(BAD_REQUEST).entity("Party named $partyName cannot be found.\n").build()
-//
-//        return try {
-//            val flowHandle = rpcOps.startTrackedFlow(::Initiator, iouValue, otherParty)
-//            flowHandle.progress.subscribe { println(">> $it") }
-//
-//            // The line below blocks and waits for the future to resolve.
-//            val result = flowHandle.returnValue.getOrThrow()
-//
-//            Response.status(CREATED).entity("Transaction id ${result.id} committed to ledger.\n").build()
-//
-//        } catch (ex: Throwable) {
-//            logger.error(ex.message, ex)
-//            Response.status(BAD_REQUEST).entity(ex.message!!).build()
-//        }
-//    }
 }
 
-/** The following is a simple test API for the TermDeposits cordapp to demo how nodes can be interacted with via
- ** regular API calls
- */
-//This API is accessible from /api/example. All paths specified below are relative to it.
-@Path("test")
-class TestAPI(private val rpcOps: CordaRPCOps) {
+/** API for interacting with all aspects of the Term Deposits cordapp */
 
-    //Example Data - to simulate transactions TODO remove this and allow user input for issuing all things
-    val dateData = TermDeposit.DateData(LocalDateTime.MIN, LocalDateTime.MAX, 12)
-    val interestPercent = 3.2f
+//API for deposits
+@Path("term_deposits")
+class DepositsAPI(private val rpcOps: CordaRPCOps) {
 
-
-
+    //Gets all active term deposit states for the current node
     @GET
     @Path("deposits")
     @Produces(MediaType.APPLICATION_JSON)
-    fun getIOUs() = rpcOps.vaultQueryBy<TermDeposit.State>().states
+    fun getDeposits() = rpcOps.vaultQueryBy<TermDeposit.State>().states
 
-//    @PUT
-//    @Path("issue_td")
-//    fun issueTD(@QueryParam("tdValue") tdValue: Int): Response {
-//        if (tdValue <= 0 ) {
-//            return Response.status(BAD_REQUEST).entity("Query parameter 'iouValue' must be non-negative.\n").build()
-//        }
-//
-//        return try {
-//            //val flowHandle = rpcOps.startFlow(IssueTD::Initiator,  )
-//
-//            // The line below blocks and waits for the future to resolve.
-//            //val result = flowHandle.returnValue.getOrThrow()
-//
-//            Response.status(CREATED).entity("Transaction id ${result.id} committed to ledger.\n").build()
-//
-//        } catch (ex: Throwable) {
-//            Response.status(BAD_REQUEST).entity(ex.message!!).build()
-//        }
-//
-//    }
+    //Get all term deposit offers that have been issued to the current node (or by the current node if they are a bank node)
+    @GET
+    @Path("offers")
+    @Produces(MediaType.APPLICATION_JSON)
+    fun getOffers() = rpcOps.vaultQueryBy<TermDepositOffer.State>().states
+
+    //Issue a TD - Requires selecting an active TD offer
+    //Required fields - dateData, interestPercent, issuingInstitue, KYCData.KYCNameData
+    @POST
+    @Path("issue_td")
+    fun issueTD(@QueryParam("td_value") tdValue: Int) : Response {
+        //todo change this hardcoding, for now just seeing if this works to issue a new TD
+        //All these values are known from the NodeDriver test and are issued as current states on the ledger.
+        val startDate = LocalDateTime.now()
+        val issuingInstitue = rpcOps.networkMapSnapshot().filter { it.legalIdentities.first().name == CordaX500Name.parse("C=SG,L=Singapore,O=BankB") }
+        val interestPercent = 2.7f
+        val duration = 6
+        val kyc = KYC.KYCNameData("Jane", "Doe", "9384")
+        val dateData = TermDeposit.DateData(startDate, duration)
+        val depositAmount = AMOUNT(tdValue, USD)
+
+        return try {
+            val flowHandle = rpcOps.startTrackedFlow(IssueTD::Initiator, dateData, interestPercent, issuingInstitue.first().legalIdentities.first(), depositAmount, kyc)
+            // The line below blocks and waits for the future to resolve.
+            val result = flowHandle.returnValue.getOrThrow()
+            Response.status(CREATED).entity("Transaction id ${result.id} committed to ledger.\n").build()
+
+        } catch (ex: Throwable) {
+            Response.status(BAD_REQUEST).entity(ex.message!!).build()
+        }
+
+    }
 }
+
+//API for interacting with KYC data.
+@Path("term_deposits")
+class KYCAPI(private val rpcOps: CordaRPCOps) {
+
+    //Get all KYC data known by this node
+    @GET
+    @Path("kyc")
+    @Produces(MediaType.APPLICATION_JSON)
+    fun getDeposits() = rpcOps.vaultQueryBy<KYC.State>().states
+
+    @POST
+    @Path("create_kyc")
+    fun createKYC(@QueryParam("first_name") firstName: String, @QueryParam("last_name") lastName:String,
+                  @QueryParam("account_num") accountNum:String) : Response{
+        return try {
+            val flowHandle = rpcOps.startFlow(CreateKYC::Creator, firstName, lastName, accountNum)
+            val result = flowHandle.returnValue.getOrThrow()
+            Response.status(CREATED).entity("Transaction id ${result.id} committed to ledger.\n").build()
+        } catch (ex: Throwable) {
+            Response.status(BAD_REQUEST).entity(ex.message!!).build()
+        }
+    }
+
+}
+
