@@ -90,10 +90,12 @@ open class KYC : Contract {
         return builder
     }
 
-    fun generateUpdate(builder: TransactionBuilder, newAccountNum: String, originalKYC: StateAndRef<KYC.State>,
+    fun generateUpdate(builder: TransactionBuilder, newAccountNum: String?, newFirstName: String?, newLastName: String?, originalKYC: StateAndRef<KYC.State>,
                        notary: Party, selfReference: Party): TransactionBuilder {
         println("Start gen update")
-        val outputState = TransactionState(data = originalKYC.state.data.copy(accountNum = newAccountNum), notary = notary, contract = KYC_CONTRACT_ID)
+        val originalKYCState = originalKYC.state.data
+        val outputState = TransactionState(data = originalKYCState.copy(accountNum = newAccountNum ?: originalKYCState.accountNum, firstName = newFirstName ?: originalKYCState.firstName,
+                lastName = newLastName ?: originalKYCState.lastName), notary = notary, contract = KYC_CONTRACT_ID)
         builder.addInputState(originalKYC)
         builder.addOutputState(outputState)
         builder.addCommand(KYC.Commands.Update(), selfReference.owningKey)

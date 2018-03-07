@@ -441,7 +441,7 @@ class Simulation(options: String) {
     }
 
     fun updateKYC(me: CordaRPCOps, newAccountNum: String, clientID: UniqueIdentifier) {
-        val returnVal = me.startFlow(UpdateKYC::Updator, clientID, newAccountNum).returnValue.getOrThrow()
+        val returnVal = me.startFlow(UpdateKYC::Updator, clientID, null, null,newAccountNum).returnValue.getOrThrow()
         println("KYC Updated")
     }
 

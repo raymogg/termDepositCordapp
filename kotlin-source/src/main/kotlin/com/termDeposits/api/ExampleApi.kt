@@ -4,6 +4,7 @@ import com.termDeposits.contract.KYC
 import com.termDeposits.contract.TermDeposit
 import com.termDeposits.contract.TermDepositOffer
 import com.termDeposits.flow.TermDeposit.*
+import net.corda.core.contracts.UniqueIdentifier
 import net.corda.core.identity.CordaX500Name
 import net.corda.core.messaging.CordaRPCOps
 import net.corda.core.messaging.startFlow
@@ -13,7 +14,6 @@ import net.corda.core.utilities.getOrThrow
 import net.corda.core.utilities.loggerFor
 import net.corda.finance.AMOUNT
 import net.corda.finance.USD
-import net.corda.finance.contracts.JavaCommercialPaper
 import org.slf4j.Logger
 import java.time.LocalDateTime
 import javax.ws.rs.*
@@ -57,7 +57,12 @@ class ExampleApi(private val rpcOps: CordaRPCOps) {
     }
 }
 
-/** API for interacting with all aspects of the Term Deposits cordapp */
+/** API for interacting with all aspects of the Term Deposits cordapp
+ * Note that most API calls require many fields. Most of this data can be receieved from states currently on the
+ * ledger (eg customer name and account number, start date of a term deposit, etc). It is expected a front end
+ * would be provided that allows the user to simply select a client from a drop down list, and all their paramaters
+ * will be passed to the API call - rather than requiring all fields be entered manually.
+ * */
 
 //API for deposits
 @Path("term_deposits")
@@ -79,19 +84,19 @@ class DepositsAPI(private val rpcOps: CordaRPCOps) {
     //Required fields - dateData, interestPercent, issuingInstitue, KYCData.KYCNameData
     @POST
     @Path("issue_td")
-    fun issueTD(@QueryParam("td_value") tdValue: Int) : Response {
-        //todo change this hardcoding, for now just seeing if this works to issue a new TD
-        //All these values are known from the NodeDriver test and are issued as current states on the ledger.
+    fun issueTD(@QueryParam("td_value") tdValue: Int, @QueryParam("offering_institute") offeringInstitue:String,
+                @QueryParam("interest_percent") interestPercent: Float, @QueryParam("duration") duration: Int,
+                @QueryParam("customer_fname") firstName: String, @QueryParam("customer_lname") lastName: String,
+                @QueryParam("customer_anum") accountNum: String) : Response {
         val startDate = LocalDateTime.now()
-        val issuingInstitue = rpcOps.networkMapSnapshot().filter { it.legalIdentities.first().name == CordaX500Name.parse("C=SG,L=Singapore,O=BankB") }
-        val interestPercent = 2.7f
-        val duration = 6
-        val kyc = KYC.KYCNameData("Jane", "Doe", "9384")
-        val dateData = TermDeposit.DateData(startDate, duration)
+        val issuingInstitute = rpcOps.networkMapSnapshot().filter { it.legalIdentities.first().name.organisation == offeringInstitue }.first().legalIdentities.first()
+        val kyc = KYC.KYCNameData(firstName, lastName, accountNum)
+        //TODO use actual dates, for testing we use LocalDateTime.MIN for now
+        val dateData = TermDeposit.DateData(LocalDateTime.MIN, duration)
         val depositAmount = AMOUNT(tdValue, USD)
 
         return try {
-            val flowHandle = rpcOps.startTrackedFlow(IssueTD::Initiator, dateData, interestPercent, issuingInstitue.first().legalIdentities.first(), depositAmount, kyc)
+            val flowHandle = rpcOps.startTrackedFlow(IssueTD::Initiator, dateData, interestPercent, issuingInstitute, depositAmount, kyc)
             // The line below blocks and waits for the future to resolve.
             val result = flowHandle.returnValue.getOrThrow()
             Response.status(CREATED).entity("Transaction id ${result.id} committed to ledger.\n").build()
@@ -99,8 +104,65 @@ class DepositsAPI(private val rpcOps: CordaRPCOps) {
         } catch (ex: Throwable) {
             Response.status(BAD_REQUEST).entity(ex.message!!).build()
         }
-
     }
+
+    //Activate a TD - Requires selecting an active TD offer
+    //Required fields - dateData, interestPercent, issuingInstitue, client, depositAmount, KYCData.KYCNameData
+    @POST
+    @Path("activate_td")
+    fun activateTD(@QueryParam("td_value") tdValue: Int, @QueryParam("offering_institute") offeringInstitue:String,
+                @QueryParam("interest_percent") interestPercent: Float, @QueryParam("duration") duration: Int,
+                @QueryParam("customer_fname") firstName: String, @QueryParam("customer_lname") lastName: String,
+                @QueryParam("customer_anum") accountNum: String, @QueryParam("start_date") startDate: String,
+                   @QueryParam("client") client:String) : Response {
+
+        val issuingInstitute = rpcOps.networkMapSnapshot().filter { it.legalIdentities.first().name.organisation == offeringInstitue }.first().legalIdentities.first()
+        val clientParty = rpcOps.networkMapSnapshot().filter { it.legalIdentities.first().name.organisation == client }.first().legalIdentities.first()
+        val kyc = KYC.KYCNameData(firstName, lastName, accountNum)
+        val startDateActual = LocalDateTime.parse(startDate)
+        //TODO Actually parse a correct string, for now we use LocalDateTime.min for all
+        val dateData = TermDeposit.DateData(LocalDateTime.MIN, duration)
+        val depositAmount = AMOUNT(tdValue, USD)
+
+        return try {
+            val flowHandle = rpcOps.startFlow(ActivateTD::Activator, dateData, interestPercent, issuingInstitute,
+                    clientParty, depositAmount, kyc)
+            // The line below blocks and waits for the future to resolve.
+            val result = flowHandle.returnValue.getOrThrow()
+            Response.status(CREATED).entity("Transaction id ${result.id} committed to ledger.\n").build()
+
+        } catch (ex: Throwable) {
+            Response.status(BAD_REQUEST).entity(ex.message!!).build()
+        }
+    }
+
+    //Redeem a TD - Requires selecting an active TD offer
+    @POST
+    @Path("redeem_td")
+    fun redeemTD(@QueryParam("td_value") tdValue: Int, @QueryParam("offering_institute") offeringInstitue:String,
+                   @QueryParam("interest_percent") interestPercent: Float, @QueryParam("duration") duration: Int,
+                   @QueryParam("customer_fname") firstName: String, @QueryParam("customer_lname") lastName: String,
+                   @QueryParam("customer_anum") accountNum: String, @QueryParam("start_date") startDate: String) : Response {
+
+        val issuingInstitute = rpcOps.networkMapSnapshot().filter { it.legalIdentities.first().name.organisation == offeringInstitue }.first().legalIdentities.first()
+        val kyc = KYC.KYCNameData(firstName, lastName, accountNum)
+        val startDateActual = LocalDateTime.parse(startDate)
+        //TODO Actually parse a correct string, for now we use LocalDateTime.min for all
+        val dateData = TermDeposit.DateData(LocalDateTime.MIN, duration)
+        val depositAmount = AMOUNT(tdValue, USD)
+
+        return try {
+            val flowHandle = rpcOps.startFlow(RedeemTD::RedemptionInitiator, dateData, interestPercent, issuingInstitute, depositAmount, kyc)
+            // The line below blocks and waits for the future to resolve.
+            val result = flowHandle.returnValue.getOrThrow()
+            Response.status(CREATED).entity("Transaction id ${result.id} committed to ledger.\n").build()
+
+        } catch (ex: Throwable) {
+            Response.status(BAD_REQUEST).entity(ex.message!!).build()
+        }
+    }
+
+    //TODO API - RolloverTD's, and remove hardcoding of above
 }
 
 //API for interacting with KYC data.
@@ -113,12 +175,28 @@ class KYCAPI(private val rpcOps: CordaRPCOps) {
     @Produces(MediaType.APPLICATION_JSON)
     fun getDeposits() = rpcOps.vaultQueryBy<KYC.State>().states
 
+    //Create new KYC data - first name, last name and account number must all be supplied.
     @POST
     @Path("create_kyc")
     fun createKYC(@QueryParam("first_name") firstName: String, @QueryParam("last_name") lastName:String,
                   @QueryParam("account_num") accountNum:String) : Response{
         return try {
             val flowHandle = rpcOps.startFlow(CreateKYC::Creator, firstName, lastName, accountNum)
+            val result = flowHandle.returnValue.getOrThrow()
+            Response.status(CREATED).entity("Transaction id ${result.id} committed to ledger.\n").build()
+        } catch (ex: Throwable) {
+            Response.status(BAD_REQUEST).entity(ex.message!!).build()
+        }
+    }
+
+    //Update KYC data - the client ID (states unique identifier) must be supplied
+    @POST
+    @Path("update_kyc")
+    fun updateKYC(@QueryParam("client_id") clientID: String, @QueryParam("new_fname") newFirstName:String?,
+                  @QueryParam("new_lname") newLastName:String?, @QueryParam("new_anum") newAccountNum:String?) : Response{
+        return try {
+            val uniqueClientID = UniqueIdentifier.fromString(clientID)
+            val flowHandle = rpcOps.startFlow(UpdateKYC::Updator, uniqueClientID, newAccountNum, newFirstName, newLastName)
             val result = flowHandle.returnValue.getOrThrow()
             Response.status(CREATED).entity("Transaction id ${result.id} committed to ledger.\n").build()
         } catch (ex: Throwable) {

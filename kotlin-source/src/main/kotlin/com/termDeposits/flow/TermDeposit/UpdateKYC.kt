@@ -15,8 +15,7 @@ import net.corda.core.transactions.TransactionBuilder
 @CordaSerializable
 object UpdateKYC {
 
-    /** Flow for updating client KYC data. Currently only supports updating accountNumber but other fields can be
-     * easily added.
+    /** Flow for updating client KYC data - all fields can be updated
      *
      * These changes are propegated through to all nodes that are party of the states participants list (i.e the owner of
      * the state plus any banks who are already storing this KYC data in their vaults).
@@ -24,7 +23,8 @@ object UpdateKYC {
     @CordaSerializable
     @InitiatingFlow
     @StartableByRPC
-    class Updator(val clientID: UniqueIdentifier, val newAccountNum: String) : FlowLogic<SignedTransaction>() {
+    class Updator(val clientID: UniqueIdentifier, var newAccountNum: String?, var newFirstName : String?,
+                  var newLastName : String?) : FlowLogic<SignedTransaction>() {
 
         @Suspendable
         override fun call(): SignedTransaction {
@@ -35,7 +35,13 @@ object UpdateKYC {
 
             //STEP 2: Generate the update (for now there isnt really fields that can be changed?)
             val builder = TransactionBuilder(notary)
-            val tx = com.termDeposits.contract.KYC().generateUpdate(builder, newAccountNum, KYC.first(), notary, serviceHub.myInfo.legalIdentities.first())
+
+            //If any supplied string is the empty string, set this to null (helpful for calls using the API)
+            if (newAccountNum == "") {newAccountNum = null}
+            if (newFirstName == "") {newFirstName = null}
+            if (newLastName == "") {newLastName = null}
+
+            val tx = com.termDeposits.contract.KYC().generateUpdate(builder, newAccountNum, newFirstName, newLastName, KYC.first(), notary, serviceHub.myInfo.legalIdentities.first())
 
             //STEP 3: Sign txn and commit to the ledger
             val stx = serviceHub.signInitialTransaction(tx)

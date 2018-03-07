@@ -23,7 +23,8 @@ class ExamplePlugin : WebServerPluginRegistry {
      */
     override val staticServeDirs: Map<String, String> = mapOf(
             // This will serve the exampleWeb directory in resources to /web/example
-            "example" to javaClass.classLoader.getResource("exampleWeb").toExternalForm()
+            "TermDepositWeb" to javaClass.classLoader.getResource("testWeb").toExternalForm(),
+            "exampleWeb" to javaClass.classLoader.getResource("exampleWeb").toExternalForm()
     )
 }
 
