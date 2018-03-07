@@ -1,11 +1,15 @@
 package com.termDeposits.api
 
+import com.termDeposits.contract.TermDeposit
+import com.termDeposits.flow.TermDeposit.*
 import net.corda.core.identity.CordaX500Name
 import net.corda.core.messaging.CordaRPCOps
+import net.corda.core.messaging.startFlow
 import net.corda.core.messaging.startTrackedFlow
 import net.corda.core.messaging.vaultQueryBy
 import net.corda.core.utilities.loggerFor
 import org.slf4j.Logger
+import java.time.LocalDateTime
 import javax.ws.rs.*
 import javax.ws.rs.core.MediaType
 import javax.ws.rs.core.Response
@@ -14,37 +18,37 @@ import javax.ws.rs.core.Response.Status.CREATED
 
 val SERVICE_NAMES = listOf("Controller", "Network Map Service")
 
-// This API is accessible from /api/example. All paths specified below are relative to it.
-//@Path("example")
-//class ExampleApi(private val rpcOps: CordaRPCOps) {
-//    private val myLegalName: CordaX500Name = rpcOps.nodeInfo().legalIdentities.first().name
-//
-//    companion object {
-//        private val logger: Logger = loggerFor<ExampleApi>()
-//    }
-//
-//    /**
-//     * Returns the node's name.
-//     */
-//    @GET
-//    @Path("me")
-//    @Produces(MediaType.APPLICATION_JSON)
-//    fun whoami() = mapOf("me" to myLegalName)
-//
-//    /**
-//     * Returns all parties registered with the [NetworkMapService]. These names can be used to look up identities
-//     * using the [IdentityService].
-//     */
-//    @GET
-//    @Path("peers")
-//    @Produces(MediaType.APPLICATION_JSON)
-//    fun getPeers(): Map<String, List<CordaX500Name>> {
-//        val nodeInfo = rpcOps.networkMapSnapshot()
-//        return mapOf("peers" to nodeInfo
-//                .map { it.legalIdentities.first().name }
-//                //filter out myself, notary and eventual network map started by driver
-//                .filter { it.organisation !in (SERVICE_NAMES + myLegalName.organisation) })
-//    }
+//This API is accessible from /api/example. All paths specified below are relative to it.
+@Path("example")
+class ExampleApi(private val rpcOps: CordaRPCOps) {
+    private val myLegalName: CordaX500Name = rpcOps.nodeInfo().legalIdentities.first().name
+
+    companion object {
+        private val logger: Logger = loggerFor<ExampleApi>()
+    }
+
+    /**
+     * Returns the node's name.
+     */
+    @GET
+    @Path("me")
+    @Produces(MediaType.APPLICATION_JSON)
+    fun whoami() = mapOf("me" to myLegalName)
+
+    /**
+     * Returns all parties registered with the [NetworkMapService]. These names can be used to look up identities
+     * using the [IdentityService].
+     */
+    @GET
+    @Path("peers")
+    @Produces(MediaType.APPLICATION_JSON)
+    fun getPeers(): Map<String, List<CordaX500Name>> {
+        val nodeInfo = rpcOps.networkMapSnapshot()
+        return mapOf("peers" to nodeInfo
+                .map { it.legalIdentities.first().name }
+                //filter out myself, notary and eventual network map started by driver
+                .filter { it.organisation !in (SERVICE_NAMES + myLegalName.organisation) })
+    }
 
 //    /**
 //     * Displays all IOU states that exist in the node's vault.
@@ -91,4 +95,44 @@ val SERVICE_NAMES = listOf("Controller", "Network Map Service")
 //            Response.status(BAD_REQUEST).entity(ex.message!!).build()
 //        }
 //    }
-//}
+}
+
+/** The following is a simple test API for the TermDeposits cordapp to demo how nodes can be interacted with via
+ ** regular API calls
+ */
+//This API is accessible from /api/example. All paths specified below are relative to it.
+@Path("test")
+class TestAPI(private val rpcOps: CordaRPCOps) {
+
+    //Example Data - to simulate transactions TODO remove this and allow user input for issuing all things
+    val dateData = TermDeposit.DateData(LocalDateTime.MIN, LocalDateTime.MAX, 12)
+    val interestPercent = 3.2f
+
+
+
+    @GET
+    @Path("deposits")
+    @Produces(MediaType.APPLICATION_JSON)
+    fun getIOUs() = rpcOps.vaultQueryBy<TermDeposit.State>().states
+
+//    @PUT
+//    @Path("issue_td")
+//    fun issueTD(@QueryParam("tdValue") tdValue: Int): Response {
+//        if (tdValue <= 0 ) {
+//            return Response.status(BAD_REQUEST).entity("Query parameter 'iouValue' must be non-negative.\n").build()
+//        }
+//
+//        return try {
+//            //val flowHandle = rpcOps.startFlow(IssueTD::Initiator,  )
+//
+//            // The line below blocks and waits for the future to resolve.
+//            //val result = flowHandle.returnValue.getOrThrow()
+//
+//            Response.status(CREATED).entity("Transaction id ${result.id} committed to ledger.\n").build()
+//
+//        } catch (ex: Throwable) {
+//            Response.status(BAD_REQUEST).entity(ex.message!!).build()
+//        }
+//
+//    }
+}

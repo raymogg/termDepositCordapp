@@ -2,6 +2,8 @@ package com.termDeposits.plugin
 
 import com.termDeposits.contract.*
 import com.termDeposits.flow.TermDeposit.*
+import com.termDeposits.api.ExampleApi
+import com.termDeposits.api.TestAPI
 import net.corda.core.contracts.UniqueIdentifier
 import net.corda.core.messaging.CordaRPCOps
 import net.corda.core.serialization.SerializationWhitelist
@@ -9,12 +11,13 @@ import net.corda.core.transactions.TransactionBuilder
 import net.corda.webserver.services.WebServerPluginRegistry
 import java.util.function.Function
 
+
 class ExamplePlugin : WebServerPluginRegistry {
     /**
      * A list of classes that expose web APIs.
      */
-    //override val webApis: List<Function<CordaRPCOps, out Any>> = listOf(Function(::ExampleApi))
-    override val webApis: List<Function<CordaRPCOps, out Any>> = listOf()
+    override val webApis: List<Function<CordaRPCOps, out Any>> = listOf(Function(::ExampleApi), Function(::TestAPI))
+    //override val webApis: List<Function<CordaRPCOps, out Any>> = listOf()
 
     /**
      * A list of directories in the resources directory that will be served by Jetty under /web.

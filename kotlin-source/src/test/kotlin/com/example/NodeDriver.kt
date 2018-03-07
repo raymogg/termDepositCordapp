@@ -45,6 +45,11 @@ import kotlin.test.assertTrue
  * 5. Run the "Debug CorDapp" remote debug run configuration.
  */
 
+/** Testing Note: In order to build the project via command line, the simulation class needs to be commented out.
+ * You can then build using ./gradlew clean build deployNodes, then go to build/nodes and execute ./runnodes to
+ * start up the nodes.
+ */
+
 fun main(args: Array<String>) {
     println("Start")
     Simulation("Place Options here")
@@ -82,8 +87,8 @@ class Simulation(options: String) {
             val cBank = startNode(providedName = CordaX500Name("CentralBank", "Brisbane", "AU"), rpcUsers = listOf(cashIssuer)).getOrThrow()
             val (nodeA, nodeB, nodeC, aBank, bBank) = listOf(
                     startNode(providedName = CordaX500Name("AMM", "London", "GB"), rpcUsers = listOf(stdUser)),
-                    startNode(providedName = CordaX500Name("ClientB", "New York", "US"), rpcUsers = listOf(stdUser)),
-                    startNode(providedName = CordaX500Name("ClientC", "Paris", "FR"), rpcUsers = listOf(stdUser)),
+                    startNode(providedName = CordaX500Name("ClientA", "New York", "US"), rpcUsers = listOf(stdUser)),
+                    startNode(providedName = CordaX500Name("ClientB", "Paris", "FR"), rpcUsers = listOf(stdUser)),
                     startNode(providedName = CordaX500Name("BankA", "Munich", "DE"), rpcUsers = listOf(bank)),
                     startNode(providedName = CordaX500Name("BankB", "Singapore", "SG"), rpcUsers = listOf(bank))).map { it.getOrThrow() }
 
@@ -93,9 +98,11 @@ class Simulation(options: String) {
             bankA = aBank
             bankB = bBank
             centralBank = cBank
-            /*startWebserver(aNode)
+            startWebserver(aNode)
             startWebserver(bNode)
-            startWebserver(cNode)*/
+            startWebserver(cNode)
+            startWebserver(bankA)
+            startWebserver(bankB)
 
 
             setup_nodes()
@@ -353,8 +360,8 @@ class Simulation(options: String) {
         RequestTD(parties[0].second, banks[0].second, LocalDateTime.MIN, 2.65f, Amount(30000,USD), "Bob", "Smith", "1234",12)
         Activate(banks[0].second, parties[0].second, LocalDateTime.MIN, LocalDateTime.MAX, 2.65f, Amount(30000,USD), 12,
                 "Bob", "Smith", "1234")
-        Redeem(parties[0].second, banks[0].second, LocalDateTime.MIN, LocalDateTime.MIN.plusMonths(12), 2.65f, Amount(30000,USD), 12,
-                "Bob", "Smith", "1234" )
+//        Redeem(parties[0].second, banks[0].second, LocalDateTime.MIN, LocalDateTime.MIN.plusMonths(12), 2.65f, Amount(30000,USD), 12,
+//                "Bob", "Smith", "1234" )
 
 //        //Update some KYC data
 //        updateKYC(parties[0].second, "NEWACCOUNT", client1)
