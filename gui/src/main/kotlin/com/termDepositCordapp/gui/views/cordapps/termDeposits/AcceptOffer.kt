@@ -99,7 +99,7 @@ class AcceptOffer : Fragment() {
             when (it) {
                 executeButton -> {
                     //TODO Execute accept offer
-                    val dateData = TermDeposit.DateData(LocalDateTime.MIN, LocalDateTime.MAX, offerChoiceBox.value.state.data.duration)
+                    val dateData = TermDeposit.DateData(LocalDateTime.MIN, offerChoiceBox.value.state.data.duration)
                     val kycCB = kycChoiceBox.value.state.data
                     val kycData = KYC.KYCNameData(kycCB.firstName, kycCB.lastName, kycCB.accountNum)
                     rpcProxy.value?.startFlow(IssueTD::Initiator, dateData, offerChoiceBox.value.state.data.interestPercent,

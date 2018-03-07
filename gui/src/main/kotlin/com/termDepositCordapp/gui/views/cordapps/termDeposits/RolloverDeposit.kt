@@ -110,9 +110,9 @@ class RolloverDeposit : Fragment() {
                     val difference = monthsDiff + yearsToMonthsDiff
                     println("Start ${depositChoiceBox.value.state.data.startDate.toLocalDate()}")
                     println("End ${depositChoiceBox.value.state.data.endDate.toLocalDate()}")
-                    val dateData = TermDeposit.DateData(LocalDateTime.MIN, LocalDateTime.MIN.plusMonths(difference.toLong()),
+                    val dateData = TermDeposit.DateData(LocalDateTime.MIN,
                             difference)
-                    println("GUI Start ${dateData.startDate} End ${dateData.endDate} Amount ${depositChoiceBox.value.state.data.depositAmount} Client Ref ${linearID} \n" +
+                    println("GUI Start ${dateData.startDate}  Amount ${depositChoiceBox.value.state.data.depositAmount} Client Ref ${linearID} \n" +
                             "Duration ${dateData.duration} Interest ${depositChoiceBox.value.state.data.interestPercent} Institue ${depositChoiceBox.value.state.data.institue}")
                     rpcProxy.value?.startFlow(RolloverTD::RolloverInitiator, dateData, depositChoiceBox.value.state.data.interestPercent,
                             depositChoiceBox.value.state.data.institue,  depositChoiceBox.value.state.data.depositAmount, newTerms, kycNameData)

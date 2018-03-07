@@ -80,8 +80,7 @@ class DepositsAPI(private val rpcOps: CordaRPCOps) {
     @Produces(MediaType.APPLICATION_JSON)
     fun getOffers() = rpcOps.vaultQueryBy<TermDepositOffer.State>().states
 
-    //Issue a TD - Requires selecting an active TD offer
-    //Required fields - dateData, interestPercent, issuingInstitue, KYCData.KYCNameData
+    //Issue a TD - Requires selecting an active TD offer from the fields provided in the POST call
     @POST
     @Path("issue_td")
     fun issueTD(@QueryParam("td_value") tdValue: Int, @QueryParam("offering_institute") offeringInstitue:String,
@@ -106,8 +105,7 @@ class DepositsAPI(private val rpcOps: CordaRPCOps) {
         }
     }
 
-    //Activate a TD - Requires selecting an active TD offer
-    //Required fields - dateData, interestPercent, issuingInstitue, client, depositAmount, KYCData.KYCNameData
+    //Activate a TD - Requires selecting an pending TD based off the fields provided in the POST request
     @POST
     @Path("activate_td")
     fun activateTD(@QueryParam("td_value") tdValue: Int, @QueryParam("offering_institute") offeringInstitue:String,
@@ -136,7 +134,7 @@ class DepositsAPI(private val rpcOps: CordaRPCOps) {
         }
     }
 
-    //Redeem a TD - Requires selecting an active TD offer
+    //Redeem a TD
     @POST
     @Path("redeem_td")
     fun redeemTD(@QueryParam("td_value") tdValue: Int, @QueryParam("offering_institute") offeringInstitue:String,
@@ -162,7 +160,7 @@ class DepositsAPI(private val rpcOps: CordaRPCOps) {
         }
     }
 
-    //TODO API - RolloverTD's, and remove hardcoding of above
+    //TODO API - RolloverTD's
 }
 
 //API for interacting with KYC data.

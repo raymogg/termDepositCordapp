@@ -100,7 +100,7 @@ class TDActivate : Fragment() {
                     val kycNameData = KYC.KYCNameData(kycData.state.data.firstName, kycData.state.data.lastName, kycData.state.data.accountNum)
                     println("${kycData.state.data.firstName} ${kycData.state.data.lastName}")
                     val difference: Int = Period.between(offerChoiceBox.value.state.data.startDate.toLocalDate(),offerChoiceBox.value.state.data.endDate.toLocalDate()).months
-                    val dateData = TermDeposit.DateData(offerChoiceBox.value.state.data.startDate,offerChoiceBox.value.state.data.endDate,difference)
+                    val dateData = TermDeposit.DateData(offerChoiceBox.value.state.data.startDate,difference)
                     rpcProxy.value?.startFlow(ActivateTD::Activator, dateData, offerChoiceBox.value.state.data.interestPercent,
                             offerChoiceBox.value.state.data.institue, offerChoiceBox.value.state.data.owner.owningKey.toKnownParty().value!! ,offerChoiceBox.value.state.data.depositAmount,
                             kycNameData)

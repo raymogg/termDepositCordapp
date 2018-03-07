@@ -98,7 +98,7 @@ class PromptActivate : Fragment() {
                     val kycNameData = KYC.KYCNameData(kycData.state.data.firstName, kycData.state.data.lastName, kycData.state.data.accountNum)
                     println("${kycData.state.data.firstName} ${kycData.state.data.lastName}")
                     val difference: Int = Period.between(offerChoiceBox.value.state.data.startDate.toLocalDate(),offerChoiceBox.value.state.data.endDate.toLocalDate()).months
-                    val dateData = TermDeposit.DateData(offerChoiceBox.value.state.data.startDate,offerChoiceBox.value.state.data.endDate,difference)
+                    val dateData = TermDeposit.DateData(offerChoiceBox.value.state.data.startDate,difference)
                     rpcProxy.value?.startFlow(PromptActivate::Prompter, dateData, offerChoiceBox.value.state.data.interestPercent,
                             offerChoiceBox.value.state.data.institue, rpcProxy.value?.nodeInfo()!!.legalIdentities.first(),  offerChoiceBox.value.state.data.depositAmount,
                             kycNameData)

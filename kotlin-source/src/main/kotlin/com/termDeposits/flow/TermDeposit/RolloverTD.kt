@@ -78,8 +78,6 @@ object RolloverTD {
             val params = flowSession.receive<List<*>>().unwrap { it }
             val termDeposit = params[0] as StateAndRef<TermDeposit.State>
             val withInterest = params[1] as Boolean
-//            val newStartDate = params[2] as LocalDateTime
-//            val newEndDate = params[3] as LocalDateTime
             val tdOffer = params[2] as StateAndRef<TermDepositOffer.State>
 
 

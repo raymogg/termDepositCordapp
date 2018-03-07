@@ -90,7 +90,7 @@ class UpdateKYC : Fragment() {
             when (it) {
                 executeButton -> {
                     //Update KYC
-                    rpcProxy.value?.startFlow(UpdateKYC::Updator, kycChoiceBox.value.state.data.linearId, newAccountNumTextField.text)
+                    rpcProxy.value?.startFlow(UpdateKYC::Updator, kycChoiceBox.value.state.data.linearId, newAccountNumTextField.text, null, null)
                 }
                 else -> null
             }
