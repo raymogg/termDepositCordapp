@@ -160,7 +160,35 @@ class DepositsAPI(private val rpcOps: CordaRPCOps) {
         }
     }
 
-    //TODO API - RolloverTD's
+    //Rollover a TD - requires date data, interest, issuing institue, deposit amount, rollover terms and kyc name data
+    //Rollover terms requires a new interest percent, institute, duration, and with interest boolean
+    @POST
+    @Path("rollover_td")
+    fun rolloverTD(@QueryParam("td_value") tdValue: Int, @QueryParam("offering_institute") offeringInstitue:String,
+                 @QueryParam("interest_percent") interestPercent: Float, @QueryParam("duration") duration: Int,
+                 @QueryParam("customer_fname") firstName: String, @QueryParam("customer_lname") lastName: String,
+                 @QueryParam("customer_anum") accountNum: String, @QueryParam("start_date") startDate: String,
+                   @QueryParam("new_interest") newInterest: Float, @QueryParam("new_institute") newInstitute: String,
+                   @QueryParam("new_duration") newDuration: Int, @QueryParam("with_interest") withInterest: Boolean) : Response {
+
+        val issuingInstitute = rpcOps.networkMapSnapshot().filter { it.legalIdentities.first().name.organisation == offeringInstitue }.first().legalIdentities.first()
+        val newInstituteParty = rpcOps.networkMapSnapshot().filter { it.legalIdentities.first().name.organisation == newInstitute }.first().legalIdentities.first()
+        val rolloverTerms = TermDeposit.RolloverTerms(newInterest, newInstituteParty, newDuration, withInterest)
+        val kyc = KYC.KYCNameData(firstName, lastName, accountNum)
+        val startDateActual = LocalDateTime.parse(startDate)
+        val dateData = TermDeposit.DateData(LocalDateTime.MIN, duration)
+        val depositAmount = AMOUNT(tdValue, USD)
+
+        return try {
+            val flowHandle = rpcOps.startFlow(RolloverTD::RolloverInitiator, dateData, interestPercent, issuingInstitute, depositAmount, rolloverTerms, kyc)
+            // The line below blocks and waits for the future to resolve.
+            val result = flowHandle.returnValue.getOrThrow()
+            Response.status(CREATED).entity("Transaction id ${result.id} committed to ledger.\n").build()
+
+        } catch (ex: Throwable) {
+            Response.status(BAD_REQUEST).entity(ex.message!!).build()
+        }
+    }
 }
 
 //API for interacting with KYC data.
