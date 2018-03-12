@@ -16,104 +16,30 @@
 // VIA THE NODE'S RPC INTERFACE. IN THE COMING WEEKS WE'LL WRITE A TUTORIAL ON
 // HOW BEST TO DO THIS.
 
-const app = angular.module('demoAppModule', ['ui.bootstrap']);
+let myArray = ["one", "two", "three"];
 
-// Fix for unhandled rejections bug.
-app.config(['$qProvider', function ($qProvider) {
-    $qProvider.errorOnUnhandledRejections(false);
-}]);
+function getActiveDeposits() {
+  var ul = document.createElement('ul');
+   ul.setAttribute('id','proList');
 
-app.controller('DemoAppController', function($http, $location, $uibModal) {
-    const demoApp = this;
+   var t, tt;
+   document.getElementById('currentDeposits').appendChild(ul);
+   myArray.forEach(renderProductList);
 
-    // We identify the node.
-    const apiBaseURL = "/api/example/";
-    let peers = [];
+   function renderProductList(element, index, arr) {
+       var li = document.createElement('li');
+       li.setAttribute('class','item');
 
-    $http.get(apiBaseURL + "me").then((response) => demoApp.thisNode = response.data.me);
+       ul.appendChild(li);
 
-    $http.get(apiBaseURL + "peers").then((response) => peers = response.data.peers);
+       t = document.createTextNode(element);
 
-    demoApp.openModal = () => {
-        const modalInstance = $uibModal.open({
-            templateUrl: 'demoAppModal.html',
-            controller: 'ModalInstanceCtrl',
-            controllerAs: 'modalInstance',
-            resolve: {
-                demoApp: () => demoApp,
-                apiBaseURL: () => apiBaseURL,
-                peers: () => peers
-            }
-        });
+       li.innerHTML=li.innerHTML + element;
+   }
+}
 
-        modalInstance.result.then(() => {}, () => {});
-    };
+function clickButton() {
+  alert("Hello");
+}
 
-    // demoApp.getIOUs = () => $http.get(apiBaseURL + "ious")
-    //     .then((response) => demoApp.ious = Object.keys(response.data)
-    //         .map((key) => response.data[key].state.data)
-    //         .reverse());
-
-    demoApp.getIOUs = () => $http.get("/api/term_deposits/deposits")
-        .then((response) => demoApp.ious = response);
-
-    demoApp.getIOUs();
-});
-
-app.controller('ModalInstanceCtrl', function ($http, $location, $uibModalInstance, $uibModal, demoApp, apiBaseURL, peers) {
-    const modalInstance = this;
-
-    modalInstance.peers = peers;
-    modalInstance.form = {};
-    modalInstance.formError = false;
-
-    // Validate and create IOU.
-    modalInstance.create = () => {
-        if (invalidFormInput()) {
-            modalInstance.formError = true;
-        } else {
-            modalInstance.formError = false;
-
-            $uibModalInstance.close();
-
-            const createIOUEndpoint = `${apiBaseURL}create-iou?partyName=${modalInstance.form.counterparty}&iouValue=${modalInstance.form.value}`;
-
-            // Create PO and handle success / fail responses.
-            $http.put(createIOUEndpoint).then(
-                (result) => {
-                    modalInstance.displayMessage(result);
-                    demoApp.getIOUs();
-                },
-                (result) => {
-                    modalInstance.displayMessage(result);
-                }
-            );
-        }
-    };
-
-    modalInstance.displayMessage = (message) => {
-        const modalInstanceTwo = $uibModal.open({
-            templateUrl: 'messageContent.html',
-            controller: 'messageCtrl',
-            controllerAs: 'modalInstanceTwo',
-            resolve: { message: () => message }
-        });
-
-        // No behaviour on close / dismiss.
-        modalInstanceTwo.result.then(() => {}, () => {});
-    };
-
-    // Close create IOU modal dialogue.
-    modalInstance.cancel = () => $uibModalInstance.dismiss();
-
-    // Validate the IOU.
-    function invalidFormInput() {
-        return isNaN(modalInstance.form.value) || (modalInstance.form.counterparty === undefined);
-    }
-});
-
-// Controller for success/fail modal dialogue.
-app.controller('messageCtrl', function ($uibModalInstance, message) {
-    const modalInstanceTwo = this;
-    modalInstanceTwo.message = message.data;
-});
+getActiveDeposits();
