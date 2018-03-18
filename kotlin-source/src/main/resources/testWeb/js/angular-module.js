@@ -16,30 +16,106 @@
 // VIA THE NODE'S RPC INTERFACE. IN THE COMING WEEKS WE'LL WRITE A TUTORIAL ON
 // HOW BEST TO DO THIS.
 
-let myArray = ["one", "two", "three"];
 
-function getActiveDeposits() {
-  var ul = document.createElement('ul');
-   ul.setAttribute('id','proList');
+const app = angular.module('demoAppModule', ['ui.bootstrap']);
 
-   var t, tt;
-   document.getElementById('currentDeposits').appendChild(ul);
-   myArray.forEach(renderProductList);
+// Fix for unhandled rejections bug.
+app.config(['$qProvider', function ($qProvider) {
+    $qProvider.errorOnUnhandledRejections(false);
+}]);
 
-   function renderProductList(element, index, arr) {
-       var li = document.createElement('li');
-       li.setAttribute('class','item');
+app.controller('DemoAppController', function($http, $location, $uibModal) {
+    const demoApp = this;
 
-       ul.appendChild(li);
+    // We identify the node.
+    const apiBaseURL = "/api/example/";
+    let activeTDs = [];
+    // First we pull the TD's from the api
+    var test = $http.get("/api/term_deposits/deposits").then((response) {
+        return response.data.states
+        });
+//    $http.get("/api/term_deposits/deposits").then(function (response) {
+//            alert(response.data.states[0]);
+//            activeTDs = response.data.states;
+//        });
+    alert(test);
+    var ul = document.createElement('ul');
+     ul.setAttribute('id','proList');
 
-       t = document.createTextNode(element);
+     var t, tt;
+     document.getElementById('currentDeposits').appendChild(ul);
+     activeTDs.forEach(renderProductList);
 
-       li.innerHTML=li.innerHTML + element;
-   }
-}
+     function renderProductList(element, index, arr) {
+         var li = document.createElement('li');
+         li.setAttribute('class','item');
 
-function clickButton() {
-  alert("Hello");
-}
+         ul.appendChild(li);
 
-getActiveDeposits();
+         t = document.createTextNode(element);
+
+         li.innerHTML=li.innerHTML + element;
+     }
+
+    demoApp.openModal = () => {
+        const modalInstance = $uibModal.open({
+            templateUrl: 'demoAppModal.html',
+            controller: 'ModalInstanceCtrl',
+            controllerAs: 'modalInstance',
+            resolve: {
+                demoApp: () => demoApp,
+                apiBaseURL: () => apiBaseURL,
+            }
+        });
+
+        modalInstance.result.then(() => {}, () => {});
+    };
+
+});
+
+app.controller('ModalInstanceCtrl', function ($http, $location, $uibModalInstance, $uibModal, demoApp, apiBaseURL, peers) {
+    const modalInstance = this;
+
+});
+
+// Controller for success/fail modal dialogue.
+app.controller('messageCtrl', function ($uibModalInstance, message) {
+    const modalInstanceTwo = this;
+    modalInstanceTwo.message = message.data;
+});
+
+
+
+
+
+//let activeTDs = ["one"];
+//
+//function getActiveDeposits() {
+//
+//  // First we pull the TD's from the api
+//  $http.get("/api/term_deposits/deposits").then((response) => activeTDs = response);
+//
+//  var ul = document.createElement('ul');
+//   ul.setAttribute('id','proList');
+//
+//   var t, tt;
+//   document.getElementById('currentDeposits').appendChild(ul);
+//   activeTDs.forEach(renderProductList);
+//
+//   function renderProductList(element, index, arr) {
+//       var li = document.createElement('li');
+//       li.setAttribute('class','item');
+//
+//       ul.appendChild(li);
+//
+//       t = document.createTextNode(element);
+//
+//       li.innerHTML=li.innerHTML + element;
+//   }
+//}
+//
+//function clickButton() {
+//  alert("Hello");
+//}
+//
+//getActiveDeposits();

@@ -72,8 +72,10 @@ class DepositsAPI(private val rpcOps: CordaRPCOps) {
     @GET
     @Path("deposits")
     @Produces(MediaType.APPLICATION_JSON)
-    fun getDeposits() = rpcOps.vaultQueryBy<TermDeposit.State>().states
-
+    fun getDeposits(): Map<String, List<String>> {
+        val states =  rpcOps.vaultQueryBy<TermDeposit.State>().states
+        return mapOf("states" to states.map { it.state.data.toString() })
+    }
     //Get all term deposit offers that have been issued to the current node (or by the current node if they are a bank node)
     @GET
     @Path("offers")
