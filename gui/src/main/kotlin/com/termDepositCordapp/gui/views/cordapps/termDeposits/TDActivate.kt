@@ -99,7 +99,11 @@ class TDActivate : Fragment() {
                     val kycData = rpcProxy.value?.startFlow(::KYCRetrievalFlowID, linearID)!!.returnValue.getOrThrow().first()
                     val kycNameData = KYC.KYCNameData(kycData.state.data.firstName, kycData.state.data.lastName, kycData.state.data.accountNum)
                     println("${kycData.state.data.firstName} ${kycData.state.data.lastName}")
-                    val difference: Int = Period.between(offerChoiceBox.value.state.data.startDate.toLocalDate(),offerChoiceBox.value.state.data.endDate.toLocalDate()).months
+                    val monthsDiff = Period.between(offerChoiceBox.value.state.data.startDate.toLocalDate(),offerChoiceBox.value.state.data.endDate.toLocalDate()).months
+                    val yearsToMonthsDiff = Period.between(offerChoiceBox.value.state.data.startDate.toLocalDate(),offerChoiceBox.value.state.data.endDate.toLocalDate()).years * 12
+                    val difference = monthsDiff + yearsToMonthsDiff
+//                    val difference: Int = (Period.between( offerChoiceBox.value.state.data.startDate.toLocalDate(),  offerChoiceBox.value.state.data.endDate.toLocalDate()).months +
+//                            (Period.between( offerChoiceBox.value.state.data.startDate.toLocalDate(),  offerChoiceBox.value.state.data.endDate.toLocalDate()).years * 12))
                     val dateData = TermDeposit.DateData(offerChoiceBox.value.state.data.startDate,difference)
                     rpcProxy.value?.startFlow(ActivateTD::Activator, dateData, offerChoiceBox.value.state.data.interestPercent,
                             offerChoiceBox.value.state.data.institue, offerChoiceBox.value.state.data.owner.owningKey.toKnownParty().value!! ,offerChoiceBox.value.state.data.depositAmount,
@@ -125,7 +129,10 @@ class TDActivate : Fragment() {
             converter = stringConverter { "Issuing Institue: " + it.state.data.institue.toString() +
                     "\n Interest: "+ it.state.data.interestPercent+"%" +
                     "\n Deposited Amount " + it.state.data.depositAmount.toString() +
-                    "\n End Date " + it.state.data.endDate.toString()}
+                    "\n Start Date " + it.state.data.startDate.toString() +
+                    "\n End Date " + it.state.data.endDate.toString() +
+                    "\n Duration " + (Period.between(it.state.data.startDate.toLocalDate(), it.state.data.endDate.toLocalDate()).months +
+                    (Period.between(it.state.data.startDate.toLocalDate(), it.state.data.endDate.toLocalDate()).years * 12)).toString() }
         }
 
         // Validate inputs.
