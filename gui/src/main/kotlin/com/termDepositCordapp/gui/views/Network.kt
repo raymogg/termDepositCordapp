@@ -35,11 +35,11 @@ import net.corda.core.utilities.toBase58String
 //import net.corda.explorer.formatters.PartyNameFormatter
 import com.termDepositCordapp.gui.formatters.PartyNameFormatter
 import net.corda.core.internal.x500Name
+import net.corda.core.node.ServiceHub
 //import net.corda.explorer.model.CordaView
 import net.corda.finance.utils.CityDatabase
 import net.corda.finance.utils.ScreenCoordinate
 import net.corda.finance.utils.WorldMapLocation
-import net.corda.nodeapi.internal.ServiceType
 import tornadofx.*
 
 class Network : CordaView() {
@@ -106,10 +106,12 @@ class Network : CordaView() {
                     hgap = 5.0
                     vgap = 5.0
                     for (identity in identities) {
-                        val isNotary = identity.name.commonName?.let { ServiceType.parse(it).isNotary() } ?: false
-                        row("${if (isNotary) "Notary " else ""}Public Key :") {
-                            copyableLabel(SimpleObjectProperty(identity.owningKey.toBase58String()))
-                        }
+                        //TODO: Can put this back in, just not sure how to filter notaries since its no longer in the name
+                        //val isNotary = identity.name.commonName?.let { ServiceType.parse(it).isNotary() } ?: false
+//                        val isNotary = identity.owningKey
+//                        row("${if (isNotary) "Notary " else ""}Public Key :") {
+//                            copyableLabel(SimpleObjectProperty(identity.owningKey.toBase58String()))
+//                        }
                     }
                     node.getWorldMapLocation()?.apply { row("Location :") { label(this@apply.description) } }
                 }

@@ -2,7 +2,6 @@ package com.termDepositCordapp.gui.formatters
 
 import jfxtras.scene.layout.HBox
 import net.corda.core.identity.CordaX500Name
-import net.corda.core.internal.commonName
 import org.bouncycastle.asn1.x500.X500Name
 
 object PartyNameFormatter {

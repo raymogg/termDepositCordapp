@@ -19,7 +19,7 @@ import net.corda.finance.flows.CashPaymentFlow
 //import net.corda.testing.driver.NodeHandle
 //import net.corda.testing.driver.PortAllocation
 //import net.corda.testing.driver.driver
-import net.corda.nodeapi.User
+import net.corda.testing.node.User
 import org.bouncycastle.asn1.x500.X500Name
 import java.time.Instant
 import java.util.*

@@ -10,6 +10,7 @@ import net.corda.core.identity.CordaX500Name
 import net.corda.core.identity.Party
 import net.corda.core.messaging.CordaRPCOps
 import net.corda.core.messaging.startFlow
+import net.corda.core.transactions.TransactionBuilder
 import net.corda.core.utilities.OpaqueBytes
 import net.corda.core.utilities.getOrThrow
 import net.corda.finance.USD
@@ -17,12 +18,13 @@ import net.corda.finance.flows.CashExitFlow
 import net.corda.finance.flows.CashIssueAndPaymentFlow
 import net.corda.finance.flows.CashIssueFlow
 import net.corda.finance.flows.CashPaymentFlow
-import net.corda.node.services.FlowPermissions
+import net.corda.node.services.Permissions
 import net.corda.node.services.transactions.ValidatingNotaryService
-import net.corda.nodeapi.User
-import net.corda.nodeapi.internal.ServiceInfo
+import net.corda.testing.driver.DriverParameters
 import net.corda.testing.driver.NodeHandle
+import net.corda.testing.driver.NodeParameters
 import net.corda.testing.driver.driver
+import net.corda.testing.node.User
 import org.junit.Test
 import java.io.File
 import java.math.BigDecimal
@@ -49,7 +51,7 @@ import kotlin.test.assertTrue
  * You can then build using ./gradlew clean build deployNodes, then go to build/nodes and execute ./runnodes to
  * start up the nodes.
  */
-// Example change 
+// Example change
 fun main(args: Array<String>) {
     println("Start")
     Simulation("Place Options here")
@@ -81,9 +83,12 @@ class Simulation(options: String) {
     fun main(args: Array<String>) {
         println("Simulation Main")
         // No permissions required as we are not invoking flows.
-        driver(isDebug = false, extraCordappPackagesToScan = listOf("com.termDeposits.contract", "termDeposits.contract", "termDepositCordapp.com.termDeposits.contract",
-                "com.termDeposits.flow", "net.corda.finance"), startNodesInProcess = false) {
-            startNode(providedName = CordaX500Name("Controller", "London", "GB"), advertisedServices = setOf(ServiceInfo(ValidatingNotaryService.type)))
+//        driver(isDebug = false, extraCordappPackagesToScan = listOf("com.termDeposits.contract", "termDeposits.contract", "termDepositCordapp.com.termDeposits.contract",
+//                "com.termDeposits.flow", "net.corda.finance"), startNodesInProcess = false) {
+        val parameters = DriverParameters(isDebug = false, extraCordappPackagesToScan = listOf("com.termDeposits.contract", "termDeposits.contract", "termDepositCordapp.com.termDeposits.contract",
+                "com.termDeposits.flow", "net.corda.finance"), startNodesInProcess = false)
+        driver(parameters) {
+            startNode(providedName = CordaX500Name("Controller", "London", "GB")) //TODO -> How do i define this node as a notary?
             val cBank = startNode(providedName = CordaX500Name("CentralBank", "Brisbane", "AU"), rpcUsers = listOf(cashIssuer)).getOrThrow()
             val (nodeA, nodeB, nodeC, aBank, bBank) = listOf(
                     startNode(providedName = CordaX500Name("AMM", "London", "GB"), rpcUsers = listOf(stdUser)),
@@ -109,29 +114,29 @@ class Simulation(options: String) {
             setup_nodes()
             runSimulation()
             //runTests()
-            waitForAllNodesToFinish()
+            //waitForAllNodesToFinish()
         }
     }
 
 
     fun setup_nodes() {
-        val aClient = aNode.rpcClientToNode()
-        val aRPC = aClient.start(stdUser.username, stdUser.password).proxy
+        val aClient = aNode.rpc
+        val aRPC = aClient //.start(stdUser.username, stdUser.password).proxy
 
-        val bClient = bNode.rpcClientToNode()
-        val bRPC = bClient.start(stdUser.username, stdUser.password).proxy
+        val bClient = bNode.rpc
+        val bRPC = bClient //.start(stdUser.username, stdUser.password).proxy
 
-        val cClient = cNode.rpcClientToNode()
-        val cRPC = cClient.start(stdUser.username, stdUser.password).proxy
+        val cClient = cNode.rpc
+        val cRPC = cClient //.start(stdUser.username, stdUser.password).proxy
 
-        val aBankClient = bankA.rpcClientToNode()
-        val abRPC = aBankClient.start(stdUser.username, stdUser.password).proxy
+        val aBankClient = bankA.rpc
+        val abRPC = aBankClient //.start(stdUser.username, stdUser.password).proxy
 
-        val bBankClient = bankB.rpcClientToNode()
-        val bbRPC = bBankClient.start(stdUser.username, stdUser.password).proxy
+        val bBankClient = bankB.rpc
+        val bbRPC = bBankClient //.start(stdUser.username, stdUser.password).proxy
 
-        val centralBankClient = centralBank.rpcClientToNode()
-        val cbrpc = centralBankClient.start(stdUser.username, stdUser.password).proxy
+        val centralBankClient = centralBank.rpc
+        val cbrpc = centralBankClient //.start(stdUser.username, stdUser.password).proxy
 
         parties.addAll(listOf(
                 aRPC.nodeInfo().legalIdentities.first() to aRPC,
@@ -147,41 +152,43 @@ class Simulation(options: String) {
         cashIssuers.add(cbrpc.nodeInfo().legalIdentities.first() to cbrpc
         )
         arrayOf(aNode, bNode, cNode, bankA, bankB).forEach {
-            println("${it.nodeInfo.legalIdentities.first()} started on ${it.configuration.rpcAddress}")
+            println("${it.nodeInfo.legalIdentities.first()} started on ${it.rpcAddress}")
         }
     }
 
     fun allocateTDPermissions() : Set<String> = setOf(
             //FlowPermissions.startFlowPermission<IssueOffer.Initiator>(),
-            FlowPermissions.startFlowPermission<IssueTD.Initiator>(),
-            FlowPermissions.startFlowPermission<IssueTD.Acceptor>(),
+            Permissions.startFlow<IssueTD.Initiator>(),
+            Permissions.startFlow<IssueTD.Acceptor>(),
             //FlowPermissions.startFlowPermission<ActivateTD.Activator>(),
-            FlowPermissions.startFlowPermission<ActivateTD.Acceptor>(),
-            FlowPermissions.startFlowPermission<IssueOffer.Reciever>(),
-            FlowPermissions.startFlowPermission<RedeemTD.RedemptionInitiator>(),
-            FlowPermissions.startFlowPermission<RedeemTD.RedemptionAcceptor>(),
+            Permissions.startFlow<ActivateTD.Acceptor>(),
+            Permissions.startFlow<IssueOffer.Reciever>(),
+            Permissions.startFlow<RedeemTD.RedemptionInitiator>(),
+            Permissions.startFlow<RedeemTD.RedemptionAcceptor>(),
             //FlowPermissions.startFlowPermission<RolloverTD.RolloverAcceptor>(),
-            FlowPermissions.startFlowPermission<RolloverTD.RolloverInitiator>(),
-            FlowPermissions.startFlowPermission<PromptActivate.Prompter>(),
-            FlowPermissions.startFlowPermission<PromptActivate.Acceptor>(),
-            FlowPermissions.startFlowPermission<CreateKYC.Creator>(),
-            FlowPermissions.startFlowPermission<KYCRetrievalFlow>(),
-            FlowPermissions.startFlowPermission<KYCRetrievalFlowID>(),
-            FlowPermissions.startFlowPermission<UpdateKYC.Updator>()
+            Permissions.startFlow<RolloverTD.RolloverInitiator>(),
+            Permissions.startFlow<PromptActivate.Prompter>(),
+            Permissions.startFlow<PromptActivate.Acceptor>(),
+            Permissions.startFlow<CreateKYC.Creator>(),
+            Permissions.startFlow<KYCRetrievalFlow>(),
+            Permissions.startFlow<KYCRetrievalFlowID>(),
+            Permissions.startFlow<UpdateKYC.Updator>(),
+            Permissions.invokeRpc("uploadAttachment"),
+            Permissions.invokeRpc("attachmentExists")
     )
 
     fun allocateBankPermissions() : Set<String> = setOf(
-            FlowPermissions.startFlowPermission<IssueOffer.Initiator>(),
-            FlowPermissions.startFlowPermission<ActivateTD.Activator>(),
-            FlowPermissions.startFlowPermission<RolloverTD.RolloverAcceptor>(),
-            FlowPermissions.startFlowPermission<RedeemTD.RedemptionAcceptor>()
+            Permissions.startFlow<IssueOffer.Initiator>(),
+            Permissions.startFlow<ActivateTD.Activator>(),
+            Permissions.startFlow<RolloverTD.RolloverAcceptor>(),
+            Permissions.startFlow<RedeemTD.RedemptionAcceptor>()
     )
 
     fun allocateCashPermissions() : Set<String> = setOf(
-            FlowPermissions.startFlowPermission<CashIssueFlow>(),
-            FlowPermissions.startFlowPermission<CashPaymentFlow>(),
-            FlowPermissions.startFlowPermission<CashExitFlow>(),
-            FlowPermissions.startFlowPermission<CashIssueAndPaymentFlow>()
+            Permissions.startFlow<CashIssueFlow>(),
+            Permissions.startFlow<CashExitFlow>(),
+            Permissions.startFlow<CashPaymentFlow>(),
+            Permissions.startFlow<CashIssueAndPaymentFlow>()
     )
 
 
@@ -376,7 +383,14 @@ class Simulation(options: String) {
         //Get attachment hash for the txn before starting the flow
         //TODO: This hardcoding of a very specific file path probably isnt that great
         val attachmentInputStream = File("C:\\Users\\raymondm\\Documents\\TermDepositsCordapp\\kotlin-source\\src\\main\\resources\\Example_TD_Contract.zip").inputStream()
-        val attachmentHash = me.uploadAttachment(attachmentInputStream)
+        val bytes = attachmentInputStream.readBytes()
+        val hash = SecureHash.sha256(bytes)
+        val attachmentHash: SecureHash
+        if (me.attachmentExists(hash)) {
+            attachmentHash = me.uploadAttachment(attachmentInputStream)
+        } else {
+            attachmentHash = hash
+        }
         val returnVal = me.startFlow(IssueOffer::Initiator, endDate, interestPercent, me.nodeInfo().legalIdentities.first(), receiver.nodeInfo().legalIdentities.first(),
                 attachmentHash, duration).returnValue.getOrThrow()
         //println("TD Offers Issued")
