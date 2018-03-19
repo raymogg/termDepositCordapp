@@ -210,6 +210,7 @@ open class TermDeposit : Contract {
     @CordaSerializable
     data class DateData(val startDate: LocalDateTime, val duration: Int)
 
+    @CordaSerializable
     object matureInstructions {
         val rollover = "Rollover"
         val redeem = "Redeem"

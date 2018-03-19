@@ -35,6 +35,7 @@ object IssueTD {
     val issuingInstitue: Party, val depositAmount: Amount<Currency>, val KYCData: KYC.KYCNameData) : FlowLogic<SignedTransaction>() {//FlowLogic<SignedTransaction>() {
         @Suspendable
         override fun call(): SignedTransaction {//SignedTransaction {
+            println("Start Issue TD")
             //STEP 1: Retrieve TD Offer and KYC data from vault
             val flow = initiateFlow(issuingInstitue)
             val notary = serviceHub.networkMapCache.notaryIdentities.first()

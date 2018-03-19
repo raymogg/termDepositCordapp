@@ -24,6 +24,7 @@ import net.corda.testing.driver.DriverParameters
 import net.corda.testing.driver.NodeHandle
 import net.corda.testing.driver.NodeParameters
 import net.corda.testing.driver.driver
+import net.corda.testing.node.NotarySpec
 import net.corda.testing.node.User
 import org.junit.Test
 import java.io.File
@@ -86,9 +87,10 @@ class Simulation(options: String) {
 //        driver(isDebug = false, extraCordappPackagesToScan = listOf("com.termDeposits.contract", "termDeposits.contract", "termDepositCordapp.com.termDeposits.contract",
 //                "com.termDeposits.flow", "net.corda.finance"), startNodesInProcess = false) {
         val parameters = DriverParameters(isDebug = false, extraCordappPackagesToScan = listOf("com.termDeposits.contract", "termDeposits.contract", "termDepositCordapp.com.termDeposits.contract",
-                "com.termDeposits.flow", "net.corda.finance"), startNodesInProcess = false)
+                "com.termDeposits.flow", "net.corda.finance"), startNodesInProcess = false, waitForAllNodesToFinish = true,
+                notarySpecs = listOf(NotarySpec(CordaX500Name("Controller", "London", "GB"))))
         driver(parameters) {
-            startNode(providedName = CordaX500Name("Controller", "London", "GB")) //TODO -> How do i define this node as a notary?
+            //startNode(providedName = CordaX500Name("Controller", "London", "GB"))
             val cBank = startNode(providedName = CordaX500Name("CentralBank", "Brisbane", "AU"), rpcUsers = listOf(cashIssuer)).getOrThrow()
             val (nodeA, nodeB, nodeC, aBank, bBank) = listOf(
                     startNode(providedName = CordaX500Name("AMM", "London", "GB"), rpcUsers = listOf(stdUser)),
@@ -357,7 +359,9 @@ class Simulation(options: String) {
 
         println("Simulations")
         //Send out offers from the two banks at different interest percentages
+        println("Start issue first offer")
         sendTDOffers(banks[0].second, parties[0].second, LocalDateTime.MAX, 2.55f,6)
+        println("First Offer Issued")
         sendTDOffers(banks[0].second, parties[0].second, LocalDateTime.MAX, 2.65f,12)
         sendTDOffers(banks[0].second, parties[0].second, LocalDateTime.MAX, 3.1f,18)
         sendTDOffers(banks[1].second, parties[0].second, LocalDateTime.MAX, 2.7f,6)
@@ -383,17 +387,18 @@ class Simulation(options: String) {
         //Get attachment hash for the txn before starting the flow
         //TODO: This hardcoding of a very specific file path probably isnt that great
         val attachmentInputStream = File("C:\\Users\\raymondm\\Documents\\TermDepositsCordapp\\kotlin-source\\src\\main\\resources\\Example_TD_Contract.zip").inputStream()
+        val inputStreamCopy = File("C:\\Users\\raymondm\\Documents\\TermDepositsCordapp\\kotlin-source\\src\\main\\resources\\Example_TD_Contract.zip").inputStream()
         val bytes = attachmentInputStream.readBytes()
         val hash = SecureHash.sha256(bytes)
         val attachmentHash: SecureHash
         if (me.attachmentExists(hash)) {
-            attachmentHash = me.uploadAttachment(attachmentInputStream)
-        } else {
             attachmentHash = hash
+        } else {
+            attachmentHash = me.uploadAttachment(inputStreamCopy)
         }
         val returnVal = me.startFlow(IssueOffer::Initiator, endDate, interestPercent, me.nodeInfo().legalIdentities.first(), receiver.nodeInfo().legalIdentities.first(),
                 attachmentHash, duration).returnValue.getOrThrow()
-        //println("TD Offers Issued")
+        println("TD Offer Issued")
     }
 
     fun RequestTD(me : CordaRPCOps, issuer: CordaRPCOps, startDate: LocalDateTime,
@@ -403,7 +408,7 @@ class Simulation(options: String) {
         val dateData = TermDeposit.DateData(startDate, duration)
         val returnVal = me.startFlow(IssueTD::Initiator, dateData, interestPercent, issuer.nodeInfo().legalIdentities.first(), depositAmount,
                 kycData).returnValue.getOrThrow()
-        //println("TD Requested")
+        println("TD Requested")
     }
 
     fun Activate(me : CordaRPCOps, client : CordaRPCOps, startDate: LocalDateTime, endDate: LocalDateTime, interestPercent: Float, depositAmount: Amount<Currency>, duration: Int,
