@@ -8,20 +8,22 @@
           crossorigin="anonymous"></script>
   <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.6.0-rc.1/angular.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/angular-ui-bootstrap/2.2.0/ui-bootstrap-tpls.min.js"></script>
-  <!-- <script src="js/angular-module.js"></script> -->
+  <script src="js/angular-module.js"></script>
 </head>
 
 <body ng-app="demoAppModule" ng-controller="DemoAppController as demoApp">
   <!-- Few simple buttons to interact with the API and enter details -->
-  <button ng-click="clickButton()" type="button" class="btn btn-default">Issue Term Deposit</button>
-  <button ng-click="" type="button" class="btn btn-default">Activate Term Deposit</button>
+  <button ng-click="demoApp.issueTD()" type="button" class="btn btn-default">Issue Term Deposit</button>
+  <button ng-click="demoApp.activateTD()" type="button" class="btn btn-default">Activate Term Deposit</button>
   <button ng-click="" type="button" class="btn btn-default">Redeem Term Deposit</button>
   <button ng-click="" type="button" class="btn btn-default">Rollover Term Deposit</button>
   <button ng-click="" type="button" class="btn btn-default">View Offers</button>
   <button ng-click="" type="button" class="btn btn-default">View Current Term Deposits</button>
   <button ng-click="" type="button" class="btn btn-default">Random Button</button>
   <br><br>
-  <div id="currentDeposits"></div>
+  <div id="currentDeposits">
+    <h3> Current Deposits</h3>
+  </div>
 
-  <script src="js/angular-module.js"></script>
+  <!-- <script src="js/angular-module.js"></script> -->
 </body>

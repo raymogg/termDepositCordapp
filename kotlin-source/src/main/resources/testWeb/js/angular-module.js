@@ -29,33 +29,40 @@ app.controller('DemoAppController', function($http, $location, $uibModal) {
 
     // We identify the node.
     const apiBaseURL = "/api/example/";
-    let activeTDs = [];
+    var activeTDs = [];
     // First we pull the TD's from the api
-    var test = $http.get("/api/term_deposits/deposits").then((response) {
-        return response.data.states
+    $http.get("/api/term_deposits/deposits").then(function (response) {
+            response.data.states.forEach(function (element) {
+            activeTDs.push(String(element));
+            loaded(activeTDs);});
         });
-//    $http.get("/api/term_deposits/deposits").then(function (response) {
-//            alert(response.data.states[0]);
-//            activeTDs = response.data.states;
-//        });
-    alert(test);
-    var ul = document.createElement('ul');
-     ul.setAttribute('id','proList');
+    //alert(activeTDs[0])
+    function loaded(array) {
+        var ul = document.createElement('ul');
+        ul.setAttribute('id','proList');
+        var t, tt;
+        document.getElementById('currentDeposits').innerHTML = "<h3> Current Deposits</h3>";
+        document.getElementById('currentDeposits').appendChild(ul);
+        array.forEach(function (element, index, arr) {
+            var li = document.createElement('li');
+            li.setAttribute('class','item');
 
-     var t, tt;
-     document.getElementById('currentDeposits').appendChild(ul);
-     activeTDs.forEach(renderProductList);
+            ul.appendChild(li);
 
-     function renderProductList(element, index, arr) {
-         var li = document.createElement('li');
-         li.setAttribute('class','item');
+            t = document.createTextNode(element);
 
-         ul.appendChild(li);
+            li.innerHTML=li.innerHTML + element;
+                 });
+    }
 
-         t = document.createTextNode(element);
+    //OnClick methods for each button -> used for creating TDs and what not
+    demoApp.issueTD = () => {
+        alert("trying to issue td");
+    }
 
-         li.innerHTML=li.innerHTML + element;
-     }
+    demoApp.activateTD = () => {
+            alert("trying to activate td");
+        }
 
     demoApp.openModal = () => {
         const modalInstance = $uibModal.open({
