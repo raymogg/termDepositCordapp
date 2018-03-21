@@ -17,6 +17,7 @@
 // HOW BEST TO DO THIS.
 
 
+
 const app = angular.module('demoAppModule', ['ui.bootstrap']);
 
 // Fix for unhandled rejections bug.
@@ -27,6 +28,7 @@ app.config(['$qProvider', function ($qProvider) {
 app.controller('DemoAppController', function($http, $location, $uibModal) {
     const demoApp = this;
 
+    document.getElementById("issuetd_form").style.display = "none";
     // We identify the node.
     const apiBaseURL = "/api/example/";
     var activeTDs = [];
@@ -58,11 +60,26 @@ app.controller('DemoAppController', function($http, $location, $uibModal) {
     //OnClick methods for each button -> used for creating TDs and what not
     demoApp.issueTD = () => {
         alert("trying to issue td");
+        //Show some fields for the user to choose details
+        document.getElementById("issuetd_form").style.display = "block";
+        //Execute the http call (for now lets just hardcode and do this.
+        var url = "/api/term_deposits/issue_td?td_value=500&offering_institute=BankA&interest_percent=2.55&duration=6&customer_fname=Jane&customer_lname=Doe&customer_anum=9384"
+        $http.post(url).then(function (response) {
+            alert(String(response.data));
+            });
     }
 
+    //Note this will fail if not called from a bank node.
     demoApp.activateTD = () => {
-            alert("trying to activate td");
-        }
+            alert("trying to issue td");
+            //Show some fields for the user to choose details
+
+             //Execute the http call (for now lets just hardcode and do this.
+             var url = "/api/term_deposits/activate_td?td_value=500&offering_institute=BankA&interest_percent=2.55&duration=6&customer_fname=Jane&customer_lname=Doe&customer_anum=9384&start_date=2007-12-03T10:15:30&client=AMM"
+             $http.post(url).then(function (response) {
+                alert(String(response.data));
+             });
+    }
 
     demoApp.openModal = () => {
         const modalInstance = $uibModal.open({
