@@ -384,8 +384,8 @@ class Simulation(options: String) {
                      interestPercent: Float, duration: Int) {
         //Get attachment hash for the txn before starting the flow
         //TODO: This hardcoding of a very specific file path probably isnt that great
-        val attachmentInputStream = File("C:\\Users\\raymondm\\Documents\\TermDepositsCordapp\\kotlin-source\\src\\main\\resources\\Example_TD_Contract.zip").inputStream()
-        val inputStreamCopy = File("C:\\Users\\raymondm\\Documents\\TermDepositsCordapp\\kotlin-source\\src\\main\\resources\\Example_TD_Contract.zip").inputStream()
+        val attachmentInputStream = File("C:\\Users\\raymondm\\Documents\\termDepositCordapp\\kotlin-source\\src\\main\\resources\\Example_TD_Contract.zip").inputStream()
+        val inputStreamCopy = File("C:\\Users\\raymondm\\Documents\\termDepositCordapp\\kotlin-source\\src\\main\\resources\\Example_TD_Contract.zip").inputStream()
         val bytes = attachmentInputStream.readBytes()
         val hash = SecureHash.sha256(bytes)
         val attachmentHash: SecureHash
