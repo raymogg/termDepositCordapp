@@ -17,6 +17,7 @@
 // HOW BEST TO DO THIS.
 
 
+
 const app = angular.module('demoAppModule', ['ui.bootstrap']);
 
 // Fix for unhandled rejections bug.
@@ -26,36 +27,81 @@ app.config(['$qProvider', function ($qProvider) {
 
 app.controller('DemoAppController', function($http, $location, $uibModal) {
     const demoApp = this;
-
     // We identify the node.
     const apiBaseURL = "/api/example/";
-    let activeTDs = [];
+    var activeTDs = [];
     // First we pull the TD's from the api
-    var test = $http.get("/api/term_deposits/deposits").then((response) {
-        return response.data.states
+    $http.get("/api/term_deposits/deposits").then(function (response) {
+            response.data.states.forEach(function (element) {
+            activeTDs.push(String(element));
+            loaded(activeTDs);});
         });
-//    $http.get("/api/term_deposits/deposits").then(function (response) {
-//            alert(response.data.states[0]);
-//            activeTDs = response.data.states;
-//        });
-    alert(test);
-    var ul = document.createElement('ul');
-     ul.setAttribute('id','proList');
+    //alert(activeTDs[0])
+    function loaded(array) {
+        var ul = document.createElement('ul');
+        ul.setAttribute('id','proList');
+        var t, tt;
+        document.getElementById('currentDeposits').innerHTML = "<h3> Current Deposits</h3>";
+        document.getElementById('currentDeposits').appendChild(ul);
+        array.forEach(function (element, index, arr) {
+            var li = document.createElement('li');
+            li.setAttribute('class','item');
 
-     var t, tt;
-     document.getElementById('currentDeposits').appendChild(ul);
-     activeTDs.forEach(renderProductList);
+            ul.appendChild(li);
 
-     function renderProductList(element, index, arr) {
-         var li = document.createElement('li');
-         li.setAttribute('class','item');
+            t = document.createTextNode(element);
 
-         ul.appendChild(li);
+            li.innerHTML=li.innerHTML + element;
+                 });
+    }
 
-         t = document.createTextNode(element);
+    //OnClick methods for each button -> used for creating TDs and what not
+    demoApp.issueTD = () => {
+        //Go to new html page to issue td
+        window.location.href = "issue_td.html";
+        document.getElementById("issuetd_form").style.display = "block";
+    }
 
-         li.innerHTML=li.innerHTML + element;
-     }
+    demoApp.confirmIssue = () => {
+        //Load in the required data
+        var offers = [];
+        $http.get("/api/term_deposits/offers").then( function (response) {
+            response.data.offers.forEach(function (element) {
+                        offers.push(String(element));
+                        alert(offers);});
+        });
+        var value = 500;
+        var offering_institute = "BankA";
+        var interest_percent = 2.55;
+        var duration = 6;
+        var customer_fname = "Jane";
+        var customer_lname = "Doe";
+        var customer_anum = "9384";
+        var url = "/api/term_deposits/issue_td?td_value="+value+"&offering_institute="+offering_institute+"&interest_percent="+interest_percent+
+        "&duration="+duration+"&customer_fname="+customer_fname+"&customer_lname="+customer_lname+"&customer_anum="+customer_anum;
+                    //This is how you execute the post
+        $http.post(url).then(function (response) {
+            alert(String(response.data));
+            });
+        window.location.href = "index.html";
+    }
+
+    demoApp.cancel = () => {
+        alert("Cancelled");
+        window.location.href = "index.html";
+    }
+
+    //Note this will fail if not called from a bank node.
+    demoApp.activateTD = () => {
+            alert("trying to issue td");
+            //Show some fields for the user to choose details
+
+             //Execute the http call (for now lets just hardcode and do this.
+             var url = "/api/term_deposits/activate_td?td_value=500&offering_institute=BankA&interest_percent=2.55&duration=6&customer_fname=Jane&customer_lname=Doe&customer_anum=9384&start_date=2007-12-03T10:15:30&client=AMM"
+             $http.post(url).then(function (response) {
+                alert(String(response.data));
+             });
+    }
 
     demoApp.openModal = () => {
         const modalInstance = $uibModal.open({

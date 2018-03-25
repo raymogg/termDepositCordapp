@@ -80,8 +80,10 @@ class DepositsAPI(private val rpcOps: CordaRPCOps) {
     @GET
     @Path("offers")
     @Produces(MediaType.APPLICATION_JSON)
-    fun getOffers() = rpcOps.vaultQueryBy<TermDepositOffer.State>().states
-
+    fun getOffers() : Map<String, List<String>> {
+        val offers = rpcOps.vaultQueryBy<TermDepositOffer.State>().states
+        return mapOf("offers" to offers.map { it.state.data.toString() })
+    }
     //Issue a TD - Requires selecting an active TD offer from the fields provided in the POST call
     @POST
     @Path("issue_td")

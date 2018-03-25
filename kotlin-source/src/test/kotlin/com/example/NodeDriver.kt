@@ -52,7 +52,7 @@ import kotlin.test.assertTrue
  * You can then build using ./gradlew clean build deployNodes, then go to build/nodes and execute ./runnodes to
  * start up the nodes.
  */
-// Example change
+
 fun main(args: Array<String>) {
     println("Start")
     Simulation("Place Options here")
@@ -359,9 +359,7 @@ class Simulation(options: String) {
 
         println("Simulations")
         //Send out offers from the two banks at different interest percentages
-        println("Start issue first offer")
         sendTDOffers(banks[0].second, parties[0].second, LocalDateTime.MAX, 2.55f,6)
-        println("First Offer Issued")
         sendTDOffers(banks[0].second, parties[0].second, LocalDateTime.MAX, 2.65f,12)
         sendTDOffers(banks[0].second, parties[0].second, LocalDateTime.MAX, 3.1f,18)
         sendTDOffers(banks[1].second, parties[0].second, LocalDateTime.MAX, 2.7f,6)

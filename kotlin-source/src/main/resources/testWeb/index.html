@@ -8,20 +8,41 @@
           crossorigin="anonymous"></script>
   <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.6.0-rc.1/angular.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/angular-ui-bootstrap/2.2.0/ui-bootstrap-tpls.min.js"></script>
-  <!-- <script src="js/angular-module.js"></script> -->
+  <script src="js/angular-module.js"></script>
 </head>
 
 <body ng-app="demoAppModule" ng-controller="DemoAppController as demoApp">
   <!-- Few simple buttons to interact with the API and enter details -->
-  <button ng-click="clickButton()" type="button" class="btn btn-default">Issue Term Deposit</button>
-  <button ng-click="" type="button" class="btn btn-default">Activate Term Deposit</button>
+  <button ng-click="demoApp.issueTD()" type="button" class="btn btn-default">Issue Term Deposit</button>
+  <button ng-click="demoApp.activateTD()" type="button" class="btn btn-default">Activate Term Deposit</button>
   <button ng-click="" type="button" class="btn btn-default">Redeem Term Deposit</button>
   <button ng-click="" type="button" class="btn btn-default">Rollover Term Deposit</button>
   <button ng-click="" type="button" class="btn btn-default">View Offers</button>
   <button ng-click="" type="button" class="btn btn-default">View Current Term Deposits</button>
-  <button ng-click="" type="button" class="btn btn-default">Random Button</button>
-  <br><br>
-  <div id="currentDeposits"></div>
 
-  <script src="js/angular-module.js"></script>
+  <br><br>
+  <div id="currentDeposits">
+    <h3> Current Deposits</h3>
+  </div>
+
+  <!--<form id = "issuetd_form">-->
+    <!--<div class="issue-td" class="modal-body">-->
+      <!--<div class="form-group">-->
+        <!--<label for="counterparty" class="control-label">Counter-party:</label>-->
+        <!--<select ng-model="modalInstance.form.counterparty" class="form-control" id="counterparty"-->
+                <!--ng-options="peer as peer for peer in modalInstance.peers">-->
+        <!--</select>-->
+      <!--</div>-->
+      <!--<div class="form-group">-->
+        <!--<label for="value" class="control-label">Value (Int):</label>-->
+        <!--<input type="text" ng-model="modalInstance.form.value" class="form-control" id="value">-->
+      <!--</div>-->
+      <!--</div>-->
+    <!--<div class="modal-footer">-->
+      <!--<button ng-click="modalInstance.cancel()" type="button" class="btn btn-default">Close</button>-->
+      <!--<button ng-click="modalInstance.create()" type="button" class="btn btn-primary">Create IOU</button>-->
+    <!--</div>-->
+  <!--</form>-->
+
+  <!-- <script src="js/angular-module.js"></script> -->
 </body>
