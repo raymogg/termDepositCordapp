@@ -29,14 +29,16 @@ app.controller('DemoAppController', function($http, $location, $uibModal) {
     const demoApp = this;
     // We identify the node.
     const apiBaseURL = "/api/example/";
+    //Variables for TD app
     var activeTDs = [];
+
     // First we pull the TD's from the api
     $http.get("/api/term_deposits/deposits").then(function (response) {
             response.data.states.forEach(function (element) {
-            activeTDs.push(String(element));
+            activeTDs.push("From: " + String(element.from) + " Amount: " + String(element.amount) + " Ending: " +
+            String(element.endDate) + " Internal State: " + String(element.internalState));
             loaded(activeTDs);});
         });
-    //alert(activeTDs[0])
     function loaded(array) {
         var ul = document.createElement('ul');
         ul.setAttribute('id','proList');
@@ -60,6 +62,17 @@ app.controller('DemoAppController', function($http, $location, $uibModal) {
         //Go to new html page to issue td
         window.location.href = "issue_td.html";
         document.getElementById("issuetd_form").style.display = "block";
+
+        //Load in the data
+        var offers = getOffers();
+        alert(offers.length);
+        var offers_select = document.getElementById("offers_select")
+        for (var i = 0; i < offers.length; i++) {
+            var choice = document.createElement("option");
+            choice.value = String(offers[i]);
+            choice.innerHTML = String(offers[i]);
+            offers_select.appendChild(choice);
+        }
     }
 
     demoApp.confirmIssue = () => {
@@ -103,6 +116,12 @@ app.controller('DemoAppController', function($http, $location, $uibModal) {
              });
     }
 
+     function getOffers() {
+                $http.get("/api/term_deposits/offers").then(function (response) {
+                            return response.data.offers;
+                        });
+            }
+
     demoApp.openModal = () => {
         const modalInstance = $uibModal.open({
             templateUrl: 'demoAppModal.html',
@@ -119,9 +138,51 @@ app.controller('DemoAppController', function($http, $location, $uibModal) {
 
 });
 
-app.controller('ModalInstanceCtrl', function ($http, $location, $uibModalInstance, $uibModal, demoApp, apiBaseURL, peers) {
+app.controller('IssueTDCtrl', function ($http, $location, $uibModalInstance, $uibModal, demoApp, apiBaseURL, peers) {
     const modalInstance = this;
 
+        modalInstance.offers = getOffers();
+        modalInstance.clients = getClients();
+        modalInstance.form = {};
+        modalInstance.formError = false;
+
+        // Validate and create IOU.
+        modalInstance.create = () => {
+//            if (invalidFormInput()) {
+//                modalInstance.formError = true;
+//            } else {
+//                modalInstance.formError = false;
+//
+//                $uibModalInstance.close();
+//
+//                const createIOUEndpoint = `${apiBaseURL}create-iou?partyName=${modalInstance.form.counterparty}&iouValue=${modalInstance.form.value}`;
+//
+//                // Create PO and handle success / fail responses.
+//                $http.put(createIOUEndpoint).then(
+//                    (result) => {
+//                        modalInstance.displayMessage(result);
+//                        demoApp.getIOUs();
+//                    },
+//                    (result) => {
+//                        modalInstance.displayMessage(result);
+//                    }
+//                );
+//            }
+        };
+
+        function getOffers() {
+            $http.get("/api/term_deposits/offers").then(function (response) {
+                        return response.data.offers;
+                    });
+        }
+
+        function getClients() {
+//        $http.get("/api/term_deposits/offers").then(function (response) {
+//                                return response.data.offers;
+//                            });
+            return ["Client1", "Client2", "Client3"];
+
+        }
 });
 
 // Controller for success/fail modal dialogue.

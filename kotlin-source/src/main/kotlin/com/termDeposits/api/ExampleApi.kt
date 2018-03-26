@@ -68,23 +68,39 @@ class ExampleApi(private val rpcOps: CordaRPCOps) {
 @Path("term_deposits")
 class DepositsAPI(private val rpcOps: CordaRPCOps) {
 
-    //Gets all active term deposit states for the current node
+
+    /** Returns a JSON containing an array of term deposit states (mappings) for every term deposit in the nodes vault.
+     *  Each term deposit mapping contains the following fields {from: Party, to: Party, percent: Float, startDate:
+     *  LocalDateTime, endDate: LocalDateTime, amount: Amount<Currency>, internal state: }
+     */
     @GET
     @Path("deposits")
     @Produces(MediaType.APPLICATION_JSON)
-    fun getDeposits(): Map<String, List<String>> {
+    fun getDeposits(): Map<String, List<Map<String, Any>>> {
         val states =  rpcOps.vaultQueryBy<TermDeposit.State>().states
-        return mapOf("states" to states.map { it.state.data.toString() })
+        //return mapOf("states" to states.map { it.state.data.toString() })
+        return mapOf("states" to states.map { mapOf("from" to it.state.data.institue, "to" to it.state.data.owner,
+                "percent" to it.state.data.interestPercent, "startDate" to it.state.data.startDate,
+                "endDate" to it.state.data.endDate, "client" to it.state.data.clientIdentifier, "amount" to it.state.data.depositAmount.quantity,
+                "internalState" to it.state.data.internalState) })
     }
-    //Get all term deposit offers that have been issued to the current node (or by the current node if they are a bank node)
+
+    /** Returns a JSON containing an array of term deposit states (mappings) for every offer issued to this node.
+     * Each offer mapping contains the following {validTill: LocalDateTime, interest: Float, duration: Int,
+     * issuingInstitute: Party}
+     */
     @GET
     @Path("offers")
     @Produces(MediaType.APPLICATION_JSON)
-    fun getOffers() : Map<String, List<String>> {
+    fun getOffers() : Map<String, List<Map<String, Any>>> {
         val offers = rpcOps.vaultQueryBy<TermDepositOffer.State>().states
-        return mapOf("offers" to offers.map { it.state.data.toString() })
+        return mapOf("offers" to offers.map { mapOf("validTill" to it.state.data.validTill, "interest" to it.state.data.interestPercent,
+                "duration" to it.state.data.duration, "issuingInstitute" to it.state.data.institue) })
     }
-    //Issue a TD - Requires selecting an active TD offer from the fields provided in the POST call
+
+    /** Post Call to issue a term deposit from the node
+     *
+     */
     @POST
     @Path("issue_td")
     fun issueTD(@QueryParam("td_value") tdValue: Int, @QueryParam("offering_institute") offeringInstitue:String,
@@ -109,7 +125,9 @@ class DepositsAPI(private val rpcOps: CordaRPCOps) {
         }
     }
 
-    //Activate a TD - Requires selecting an pending TD based off the fields provided in the POST request
+    /** Post call to activate a TD. Requires the correct paramaters for a currently pending term deposit to be supplied
+     *
+     */
     @POST
     @Path("activate_td")
     fun activateTD(@QueryParam("td_value") tdValue: Int, @QueryParam("offering_institute") offeringInstitue:String,
@@ -138,7 +156,9 @@ class DepositsAPI(private val rpcOps: CordaRPCOps) {
         }
     }
 
-    //Redeem a TD
+    /** Post call to redeem a TD. Requires the correct paramaters for a currently expired TD.
+     *
+     */
     @POST
     @Path("redeem_td")
     fun redeemTD(@QueryParam("td_value") tdValue: Int, @QueryParam("offering_institute") offeringInstitue:String,
@@ -164,8 +184,9 @@ class DepositsAPI(private val rpcOps: CordaRPCOps) {
         }
     }
 
-    //Rollover a TD - requires date data, interest, issuing institue, deposit amount, rollover terms and kyc name data
-    //Rollover terms requires a new interest percent, institute, duration, and with interest boolean
+    /** Post call to Rollover a TD - requires date data, interest, issuing institue, deposit amount, rollover terms and kyc name data
+     * Rollover terms requires a new interest percent, institute, duration, and with interest boolean
+     */
     @POST
     @Path("rollover_td")
     fun rolloverTD(@QueryParam("td_value") tdValue: Int, @QueryParam("offering_institute") offeringInstitue:String,
@@ -199,13 +220,22 @@ class DepositsAPI(private val rpcOps: CordaRPCOps) {
 @Path("term_deposits")
 class KYCAPI(private val rpcOps: CordaRPCOps) {
 
-    //Get all KYC data known by this node
+    /** Get all KYC data known by this node
+     * returns a JSON containing an array of KYC states (mappings). Each KYC data mapping is in the following format
+     * {firstName: String, lastName: String, accountNum: String, uniqueIdentifier: UniqueIdentifier}
+     */
     @GET
     @Path("kyc")
     @Produces(MediaType.APPLICATION_JSON)
-    fun getDeposits() = rpcOps.vaultQueryBy<KYC.State>().states
+    fun getDeposits(): Map<String, List<Map<String, Any>>> {
+        val kycStates = rpcOps.vaultQueryBy<KYC.State>().states
+        return mapOf("kyc" to kycStates.map { mapOf("firstName" to it.state.data.firstName, "lastName" to it.state.data.lastName,
+                "accountNum" to it.state.data.accountNum, "uniqueIdentifier" to it.state.data.linearId) })
+    }
 
-    //Create new KYC data - first name, last name and account number must all be supplied.
+    /**POST call to create new KYC data - first name, last name and account number must all be supplied.
+     *
+     */
     @POST
     @Path("create_kyc")
     fun createKYC(@QueryParam("first_name") firstName: String, @QueryParam("last_name") lastName:String,
@@ -219,7 +249,9 @@ class KYCAPI(private val rpcOps: CordaRPCOps) {
         }
     }
 
-    //Update KYC data - the client ID (states unique identifier) must be supplied
+    /**POST call to update KYC data - the client ID (states unique identifier) must be supplied
+     *
+     */
     @POST
     @Path("update_kyc")
     fun updateKYC(@QueryParam("client_id") clientID: String, @QueryParam("new_fname") newFirstName:String?,
@@ -233,6 +265,5 @@ class KYCAPI(private val rpcOps: CordaRPCOps) {
             Response.status(BAD_REQUEST).entity(ex.message!!).build()
         }
     }
-
 }
 
