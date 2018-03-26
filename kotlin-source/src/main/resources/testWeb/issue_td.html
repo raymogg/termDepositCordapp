@@ -18,11 +18,12 @@
   <br>
   <select  id="client_select"></select>
   <br>
-  <form>
-    Deposit Amount:<br>
-    <input type="text" name="depositAmount" id="depositAmount"><br>
-  </form>
+  <input type="text" name="depositAmount" id="depositAmount"><br>
   <br>
-  <button ng-click="demoApp.issueTD()" type="button" class="btn btn-default">Issue Term Deposit</button>
+  <button ng-click="issueTDApp.confirmIssue()" type="button" class="btn btn-default">Issue Term Deposit</button>
+  <br><br>
+  <div id="loading">
+    <img id="loading-image" src="img/ajax-loader.gif" alt="Loading..." />
+  </div>
   <!-- <script src="js/angular-module.js"></script> -->
 </body>

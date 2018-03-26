@@ -59,20 +59,7 @@ app.controller('DemoAppController', function($http, $location, $uibModal) {
 
     //OnClick methods for each button -> used for creating TDs and what not
     demoApp.issueTD = () => {
-        //Go to new html page to issue td
         window.location.href = "issue_td.html";
-
-        //Load in the data
-//        var offers = getOffers();
-//        alert(offers.length);
-//        var test = ["one","two","three"];
-//        var offers_select = document.getElementById("offers_select")
-//        for (var i = 0; i < test; i++) {
-//            var option = document.createElement("option");
-//            option.value = String(test[i]);
-//            option.innerHTML = String(test[i]);
-//            offers_select.appendChild(option);
-//        }
     }
 
     //Note this will fail if not called from a bank node.

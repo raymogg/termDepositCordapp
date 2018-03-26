@@ -29,7 +29,7 @@ app.controller('IssueTDAppController', function($http, $location, $uibModal) {
     const demoApp = this;
     // We identify the node.
     const apiBaseURL = "/api/example/";
-
+    document.getElementById("loading").style.display = "none"
     //populate the current offer options
     var offers = [];
     var clients = []
@@ -39,9 +39,10 @@ app.controller('IssueTDAppController', function($http, $location, $uibModal) {
     function getOffers() {
                     $http.get("/api/term_deposits/offers").then(function (response) {
                         response.data.offers.forEach(function (element) {
-                            offers.push("Issuing Institute: " + String(element.issuingInstitute) + "\nValid Till: "+
-                            String(element.validTill) + "\nDuration: "+ String(element.duration) + "\nInterest: "+
-                            String(element.interest));
+//                            offers.push("Issuing Institute: " + String(element.issuingInstitute) + "\nValid Till: "+
+//                            String(element.validTill) + "\nDuration: "+ String(element.duration) + "\nInterest: "+
+//                            String(element.interest));
+                              offers.push(element);
                         });
                         loadOffers();
                 });
@@ -51,8 +52,10 @@ app.controller('IssueTDAppController', function($http, $location, $uibModal) {
         var offers_select = document.getElementById("offers_select")
                     for (var i = 0; i < offers.length; i++) {
                         var option = document.createElement("option");
-                        option.value = String(offers[i]);
-                        option.innerHTML = String(offers[i]);
+                        option.value = (offers[i]);
+                        option.innerHTML = "Issuing Institute: " + String(offers[i].issuingInstitute) + "\nValid Till: "+
+                                                                       String(offers[i].validTill) + "\nDuration: "+ String(offers[i].duration) + "\nInterest: "+
+                                                                       String(offers[i].interest);
                         offers_select.appendChild(option);
                     }
     }
@@ -60,9 +63,10 @@ app.controller('IssueTDAppController', function($http, $location, $uibModal) {
     function getClients() {
                         $http.get("/api/term_deposits/kyc").then(function (response) {
                             response.data.kyc.forEach(function (element) {
-                                clients.push(String(element.firstName) + " "+
-                                String(element.lastName) + "\nAccount Num: "+ String(element.accountNum) + "\nUniqueID: "+
-                                String(element.uniqueIdentifier.id));
+                                clients.push(element);
+//                                clients.push(String(element.firstName) + " "+
+//                                String(element.lastName) + "\nAccount Num: "+ String(element.accountNum) + "\nUniqueID: "+
+//                                String(element.uniqueIdentifier.id));
                             });
                             loadClients();
                     });
@@ -72,29 +76,49 @@ app.controller('IssueTDAppController', function($http, $location, $uibModal) {
             var client_select = document.getElementById("client_select")
                         for (var i = 0; i < clients.length; i++) {
                             var option = document.createElement("option");
-                            option.value = String(clients[i]);
-                            option.innerHTML = String(clients[i]);
+                            option.value = clients[i];
+                            option.innerHTML = String(clients[i].firstName) + " "+
+                                               String(clients[i].lastName) + "\nAccount Num: "+ String(clients[i].accountNum) + "\nUniqueID: "+
+                                               String(clients[i].uniqueIdentifier.id);
                             client_select.appendChild(option);
                         }
         }
 
     demoApp.confirmIssue = () => {
             //Load in the required data
+            var offer = document.getElementById("offers_select");
+            var client = document.getElementById("client_select");
+//            var selectedOffer = offer.options[offer.selectedIndex].value;
+//            var selectedClient = client.options[client.selectedIndex].value;
 
-            var value = 500;
-            var offering_institute = "BankA";
-            var interest_percent = 2.55;
-            var duration = 6;
-            var customer_fname = "Jane";
-            var customer_lname = "Doe";
-            var customer_anum = "9384";
+            //OR TRY GETTING DIRECT FROM THE ARRAYS
+            var selectedOffer = offers[offer.selectedIndex];
+            var selectedClient = clients[client.selectedIndex];
+
+            var value = parseInt(document.getElementById("depositAmount").value);
+            var offering_institute = extractOrganisationName(selectedOffer.issuingInstitute);
+            var interest_percent = selectedOffer.interest;
+            var duration = selectedOffer.duration;
+            var customer_fname = selectedClient.firstName;
+            var customer_lname = selectedClient.lastName;
+            var customer_anum = selectedClient.accountNum;
+            //var value = 500;
+            //var offering_institute = "BankA";
+            //var interest_percent = 2.55;
+            //var duration = 6;
+            //var customer_fname = "Jane";
+            //var customer_lname = "Doe";
+            //var customer_anum = "9384";
             var url = "/api/term_deposits/issue_td?td_value="+value+"&offering_institute="+offering_institute+"&interest_percent="+interest_percent+
             "&duration="+duration+"&customer_fname="+customer_fname+"&customer_lname="+customer_lname+"&customer_anum="+customer_anum;
                         //This is how you execute the post
+            //Display a loading circle
+            document.getElementById("loading").style.display = "block"
             $http.post(url).then(function (response) {
+                document.getElementById("loading").style.display = "none"
                 alert(String(response.data));
+                window.location.href = "index.html";
                 });
-            window.location.href = "index.html";
         }
 
         demoApp.cancel = () => {
@@ -102,6 +126,24 @@ app.controller('IssueTDAppController', function($http, $location, $uibModal) {
             window.location.href = "index.html";
         }
 
-
+        //Helper functino to extract the needed organisation name from a formatted Corda Name String
+        //This organisatino name is needed to issue a new TD.
+        function extractOrganisationName(partyString) {
+            var actualName = "";
+            var seenEqual = 0;
+            //Extract and return the party name by parsing a string
+            for(var i = 0; i < partyString.length; i++) {
+                if (partyString.charAt(i) == '=') {
+                    //First instance of seeing = is right after O, so from now till next L we append these to the name
+                    if (!seenEqual) {
+                        seenEqual = 1;
+                    }
+                } else if (partyString.charAt(i) == ',') {//stop parsing the name
+                    return actualName;
+                } else if (seenEqual) {
+                    actualName += partyString.charAt(i);
+                }
+            }
+        }
  });
 

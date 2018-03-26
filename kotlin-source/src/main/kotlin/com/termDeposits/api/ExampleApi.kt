@@ -81,7 +81,7 @@ class DepositsAPI(private val rpcOps: CordaRPCOps) {
         //return mapOf("states" to states.map { it.state.data.toString() })
         return mapOf("states" to states.map { mapOf("from" to it.state.data.institue, "to" to it.state.data.owner,
                 "percent" to it.state.data.interestPercent, "startDate" to it.state.data.startDate,
-                "endDate" to it.state.data.endDate, "client" to it.state.data.clientIdentifier, "amount" to it.state.data.depositAmount.quantity,
+                "endDate" to it.state.data.endDate, "client" to it.state.data.clientIdentifier, "amount" to it.state.data.depositAmount.toString(),
                 "internalState" to it.state.data.internalState) })
     }
 
