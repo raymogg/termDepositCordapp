@@ -35,8 +35,8 @@ app.controller('DemoAppController', function($http, $location, $uibModal) {
     // First we pull the TD's from the api
     $http.get("/api/term_deposits/deposits").then(function (response) {
             response.data.states.forEach(function (element) {
-            activeTDs.push("From: " + String(element.from) + " Amount: " + String(element.amount) + " Ending: " +
-            String(element.endDate) + " Internal State: " + String(element.internalState));
+            activeTDs.push("From: " + String(element.from) + ", Amount: " + String(element.amount) + ", Ending: " +
+            String(element.endDate) + ", Internal State: " + String(element.internalState));
             loaded(activeTDs);});
         });
     function loaded(array) {
@@ -61,47 +61,18 @@ app.controller('DemoAppController', function($http, $location, $uibModal) {
     demoApp.issueTD = () => {
         //Go to new html page to issue td
         window.location.href = "issue_td.html";
-        document.getElementById("issuetd_form").style.display = "block";
 
         //Load in the data
-        var offers = getOffers();
-        alert(offers.length);
-        var offers_select = document.getElementById("offers_select")
-        for (var i = 0; i < offers.length; i++) {
-            var choice = document.createElement("option");
-            choice.value = String(offers[i]);
-            choice.innerHTML = String(offers[i]);
-            offers_select.appendChild(choice);
-        }
-    }
-
-    demoApp.confirmIssue = () => {
-        //Load in the required data
-        var offers = [];
-        $http.get("/api/term_deposits/offers").then( function (response) {
-            response.data.offers.forEach(function (element) {
-                        offers.push(String(element));
-                        alert(offers);});
-        });
-        var value = 500;
-        var offering_institute = "BankA";
-        var interest_percent = 2.55;
-        var duration = 6;
-        var customer_fname = "Jane";
-        var customer_lname = "Doe";
-        var customer_anum = "9384";
-        var url = "/api/term_deposits/issue_td?td_value="+value+"&offering_institute="+offering_institute+"&interest_percent="+interest_percent+
-        "&duration="+duration+"&customer_fname="+customer_fname+"&customer_lname="+customer_lname+"&customer_anum="+customer_anum;
-                    //This is how you execute the post
-        $http.post(url).then(function (response) {
-            alert(String(response.data));
-            });
-        window.location.href = "index.html";
-    }
-
-    demoApp.cancel = () => {
-        alert("Cancelled");
-        window.location.href = "index.html";
+//        var offers = getOffers();
+//        alert(offers.length);
+//        var test = ["one","two","three"];
+//        var offers_select = document.getElementById("offers_select")
+//        for (var i = 0; i < test; i++) {
+//            var option = document.createElement("option");
+//            option.value = String(test[i]);
+//            option.innerHTML = String(test[i]);
+//            offers_select.appendChild(option);
+//        }
     }
 
     //Note this will fail if not called from a bank node.
@@ -116,11 +87,7 @@ app.controller('DemoAppController', function($http, $location, $uibModal) {
              });
     }
 
-     function getOffers() {
-                $http.get("/api/term_deposits/offers").then(function (response) {
-                            return response.data.offers;
-                        });
-            }
+
 
     demoApp.openModal = () => {
         const modalInstance = $uibModal.open({
