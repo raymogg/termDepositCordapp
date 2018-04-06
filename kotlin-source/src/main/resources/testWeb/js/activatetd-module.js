@@ -75,15 +75,20 @@ app.controller('ActivateTDAppController', function($http, $location, $uibModal) 
             var interest_percent = selectedDeposit.percent;
             //TODO: Duration has to be derived from startDate and endDate (its not a field)
             //var duration = selectedDeposit.duration;
-           var dateStart = new Date(selectedDeposit.startDate);
-           var dateEnd = new Date(selectedDeposit.endDate);
+            alert(selectedDeposit.startDate)
+            //alert(parseYear(selectedDeposit.startDate)+" "+parseMonth(selectedDeposit.startDate) + " " + parseDay(selectedDeposit.startDate));
+            //var dateStart = new Date(String(selectedDeposit.startDate));
+            //var dateEnd = new Date(String(selectedDeposit.endDate));
+
+            var duration = getDuration(selectedDeposit.startDate, selectedDeposit.endDate);
+            alert(duration);
             var customer_anum = selectedDeposit.client.id;
             //TODO: Should we make an API query for details via account num, or should this be done by iterating in javascript? for now second option
             var customer_details = getCustomerName(customer_anum);
             var customer_fname = customer_details[0];
             var customer_lname = customer_details[1];
             var startDate = selectedDeposit.startDate;
-            alert(startDate);
+            //alert(startDate);
             //var actualDate = Date(startDate[0], startDate[1], startDate[2], startDate[3], startDate[4], 0,0).toISOString();
             //Now convert this to format 2007-12-03T10:15:30 (YYYY-MM-DDTHH:MM:SS)
               var url = "/api/term_deposits/activate_td?td_value="+value+"&offering_institute="+offering_institute+"&interest_percent="+interest_percent+
@@ -132,13 +137,75 @@ app.controller('ActivateTDAppController', function($http, $location, $uibModal) 
                         alert("Client "+ element.firstName +" "+ element.lastName);
                         array.push(element.firstName);
                         array.push(element.lastName);
-
+                        return array;
                     } else {
                         //alert(element.uniqueIdentifier.id)
                     }
                 });
             });
-            return array;
         }
+
+        /** Since JS uses a different min date to Java, a custom duration calcualtor needs to be made */
+        function getDuration(startDate, endDate) {
+            //Note startDate and end date are strings in the form YYYY-MM-DD
+            //Parse both strings
+            var startDateYears = parseInt(parseYear(startDate));
+            var startDateMonths = parseInt(parseMonth(startDate));
+            var endDateYears = parseInt(parseYear(endDate));
+            var endDateMonths = parseInt(parseMonth(endDate));
+
+            var diff = (abs(endDateYears - startDateYears) * 12) + abs(endDateMonths - startDateMonths);
+            return diff;
+
+        }
+
+        function parseYear(dateString) {
+            for (var i = 1; i < dateString.length; i++) {
+            //year is all strings before the first "-" -> start at 1 due to the first char being + or - which we can always include
+                if (dateString[i] == '-') {
+                    //found the end of the year section
+                    return dateString.substring(0,i);
+                }
+            }
+        }
+
+        function parseMonth(dateString) {
+            //first get past the first '-'
+            var i = 1;
+            while (dateString[i] != '-' && i < dateString.length) {
+                i++;
+            }
+            //i is now equal to the index of first '-', increment once for start index of substring
+            var startIndex = ++i;
+            //get the end index
+            while (dateString[i] != '-' && i < dateString.length) {
+                i++;
+            }
+            //i is now equal to the index of first '-', increment once for start index of substring
+            var endIndex = i;
+            return dateString.substring(startIndex, endIndex);
+        }
+
+        function parseDay(dateString) {
+            //first get past the first and second '-'
+            var i = 1;
+            var count = 0;
+            while (count != 2 && i < dateString.length) {
+                if (dateString[i] == '-') {
+                    count++;
+                }
+                i++;
+             }
+             //i is now equal to the index of second '-', increment once for start index of substring
+             var startIndex = ++i;
+             //get the end index
+             while (dateString[i] != '\n' && i < dateString.length) {
+                i++;
+             }
+             //i is now equal to the index of first '-', increment once for start index of substring
+             var endIndex = i;
+             return dateString.substring(startIndex, endIndex);
+        }
+
 });
 

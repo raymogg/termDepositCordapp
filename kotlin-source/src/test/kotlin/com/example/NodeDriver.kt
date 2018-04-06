@@ -353,11 +353,8 @@ class Simulation(options: String) {
         val client5 = CreateKYC(parties[0].second, "Bill", "Gates", "0384")
         val client6 = CreateKYC(parties[0].second, "Matt", "Rose", "2893")
 
-        //Test retrieving  client data based of unique ID
-        val clientKYC = getClientData(parties[0].second, client4)
-        println("${clientKYC.firstName} ${clientKYC.lastName} ${client4}")
 
-        println("Simulations")
+        println("Start Term Deposit Simulations!")
         //Send out offers from the two banks at different interest percentages
         sendTDOffers(banks[0].second, parties[0].second, LocalDateTime.MAX, 2.55f,6)
         sendTDOffers(banks[0].second, parties[0].second, LocalDateTime.MAX, 2.65f,12)
@@ -370,6 +367,7 @@ class Simulation(options: String) {
         RequestTD(parties[0].second, banks[0].second, LocalDateTime.MIN, 2.65f, Amount(30000,USD), "Bob", "Smith", "1234",12)
         Activate(banks[0].second, parties[0].second, LocalDateTime.MIN, LocalDateTime.MAX, 2.65f, Amount(30000,USD), 12,
                 "Bob", "Smith", "1234")
+        //NOTE: These are not included in the simulations as they can easily be demoed in the corda demo bench or through the web api.
 //        Redeem(parties[0].second, banks[0].second, LocalDateTime.MIN, LocalDateTime.MIN.plusMonths(12), 2.65f, Amount(30000,USD), 12,
 //                "Bob", "Smith", "1234" )
 
@@ -396,7 +394,7 @@ class Simulation(options: String) {
         }
         val returnVal = me.startFlow(IssueOffer::Initiator, endDate, interestPercent, me.nodeInfo().legalIdentities.first(), receiver.nodeInfo().legalIdentities.first(),
                 attachmentHash, duration).returnValue.getOrThrow()
-        println("TD Offer Issued")
+        println("TD Offer Issued: "+interestPercent+"% for " + duration + " months from "+me.nodeInfo().legalIdentities.first());
     }
 
     fun RequestTD(me : CordaRPCOps, issuer: CordaRPCOps, startDate: LocalDateTime,
@@ -406,16 +404,15 @@ class Simulation(options: String) {
         val dateData = TermDeposit.DateData(startDate, duration)
         val returnVal = me.startFlow(IssueTD::Initiator, dateData, interestPercent, issuer.nodeInfo().legalIdentities.first(), depositAmount,
                 kycData).returnValue.getOrThrow()
-        println("TD Requested")
+        println("TD Requested: For client "+kycData.firstName+" "+kycData.lastName + "with offering institute "+ issuer.nodeInfo())
     }
 
     fun Activate(me : CordaRPCOps, client : CordaRPCOps, startDate: LocalDateTime, endDate: LocalDateTime, interestPercent: Float, depositAmount: Amount<Currency>, duration: Int,
                  firstName: String, lastName: String, accountNumber: String) {
-        println("Start activate")
         val kycNameData = KYC.KYCNameData(firstName, lastName,accountNumber)
         val dateData = TermDeposit.DateData(startDate, duration)
         val returnVal = me.startFlow(ActivateTD::Activator, dateData, interestPercent, me.nodeInfo().legalIdentities.first(), client.nodeInfo().legalIdentities.first(), depositAmount, kycNameData).returnValue.getOrThrow()
-        println("TD Activated")
+        println("TD Activated: ID "+returnVal.coreTransaction.id)
     }
 
     private fun issueCash(recipient : CordaRPCOps, notaryNode : Party) {
@@ -459,7 +456,7 @@ class Simulation(options: String) {
 
     fun updateKYC(me: CordaRPCOps, newAccountNum: String, clientID: UniqueIdentifier) {
         val returnVal = me.startFlow(UpdateKYC::Updator, clientID, null, null,newAccountNum).returnValue.getOrThrow()
-        println("KYC Updated")
+        println("KYC Updated: ClientID "+clientID.id.toString())
     }
 
 }
