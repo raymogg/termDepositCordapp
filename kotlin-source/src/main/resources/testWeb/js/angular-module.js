@@ -64,14 +64,7 @@ app.controller('DemoAppController', function($http, $location, $uibModal) {
 
     //Note this will fail if not called from a bank node.
     demoApp.activateTD = () => {
-            alert("trying to issue td");
-            //Show some fields for the user to choose details
-
-             //Execute the http call (for now lets just hardcode and do this.
-             var url = "/api/term_deposits/activate_td?td_value=500&offering_institute=BankA&interest_percent=2.55&duration=6&customer_fname=Jane&customer_lname=Doe&customer_anum=9384&start_date=2007-12-03T10:15:30&client=AMM"
-             $http.post(url).then(function (response) {
-                alert(String(response.data));
-             });
+            window.location.href = "activate_td.html";
     }
 
 

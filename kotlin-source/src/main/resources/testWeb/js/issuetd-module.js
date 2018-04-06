@@ -88,13 +88,9 @@ app.controller('IssueTDAppController', function($http, $location, $uibModal) {
             //Load in the required data
             var offer = document.getElementById("offers_select");
             var client = document.getElementById("client_select");
-//            var selectedOffer = offer.options[offer.selectedIndex].value;
-//            var selectedClient = client.options[client.selectedIndex].value;
-
-            //OR TRY GETTING DIRECT FROM THE ARRAYS
             var selectedOffer = offers[offer.selectedIndex];
             var selectedClient = clients[client.selectedIndex];
-
+            //Parse options selected and pull the data
             var value = parseInt(document.getElementById("depositAmount").value);
             var offering_institute = extractOrganisationName(selectedOffer.issuingInstitute);
             var interest_percent = selectedOffer.interest;
@@ -102,13 +98,6 @@ app.controller('IssueTDAppController', function($http, $location, $uibModal) {
             var customer_fname = selectedClient.firstName;
             var customer_lname = selectedClient.lastName;
             var customer_anum = selectedClient.accountNum;
-            //var value = 500;
-            //var offering_institute = "BankA";
-            //var interest_percent = 2.55;
-            //var duration = 6;
-            //var customer_fname = "Jane";
-            //var customer_lname = "Doe";
-            //var customer_anum = "9384";
             var url = "/api/term_deposits/issue_td?td_value="+value+"&offering_institute="+offering_institute+"&interest_percent="+interest_percent+
             "&duration="+duration+"&customer_fname="+customer_fname+"&customer_lname="+customer_lname+"&customer_anum="+customer_anum;
                         //This is how you execute the post
@@ -126,7 +115,7 @@ app.controller('IssueTDAppController', function($http, $location, $uibModal) {
             window.location.href = "index.html";
         }
 
-        //Helper functino to extract the needed organisation name from a formatted Corda Name String
+        //Helper function to extract the needed organisation name from a formatted Corda Name String
         //This organisatino name is needed to issue a new TD.
         function extractOrganisationName(partyString) {
             var actualName = "";

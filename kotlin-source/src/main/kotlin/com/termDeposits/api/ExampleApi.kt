@@ -80,8 +80,8 @@ class DepositsAPI(private val rpcOps: CordaRPCOps) {
         val states =  rpcOps.vaultQueryBy<TermDeposit.State>().states
         //return mapOf("states" to states.map { it.state.data.toString() })
         return mapOf("states" to states.map { mapOf("from" to it.state.data.institue, "to" to it.state.data.owner,
-                "percent" to it.state.data.interestPercent, "startDate" to it.state.data.startDate,
-                "endDate" to it.state.data.endDate, "client" to it.state.data.clientIdentifier, "amount" to it.state.data.depositAmount.toString(),
+                "percent" to it.state.data.interestPercent, "startDate" to it.state.data.startDate.toLocalDate().toString(),
+                "endDate" to it.state.data.endDate.toLocalDate().toString(), "client" to it.state.data.clientIdentifier, "amount" to it.state.data.depositAmount.toString(),
                 "internalState" to it.state.data.internalState) })
     }
 
@@ -94,7 +94,7 @@ class DepositsAPI(private val rpcOps: CordaRPCOps) {
     @Produces(MediaType.APPLICATION_JSON)
     fun getOffers() : Map<String, List<Map<String, Any>>> {
         val offers = rpcOps.vaultQueryBy<TermDepositOffer.State>().states
-        return mapOf("offers" to offers.map { mapOf("validTill" to it.state.data.validTill, "interest" to it.state.data.interestPercent,
+        return mapOf("offers" to offers.map { mapOf("validTill" to it.state.data.validTill.toLocalDate().toString(), "interest" to it.state.data.interestPercent,
                 "duration" to it.state.data.duration, "issuingInstitute" to it.state.data.institue) })
     }
 
