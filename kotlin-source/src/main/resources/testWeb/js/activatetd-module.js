@@ -17,7 +17,8 @@
 // HOW BEST TO DO THIS.
 
 
-
+//App module for activating a term deposit
+//NOTE: Activating a TD can only be done by the issuing node, if another node attempts this the API call will fail.
 const app = angular.module('ActivateTDAppModule', ['ui.bootstrap']);
 
 // Fix for unhandled rejections bug.
@@ -34,6 +35,7 @@ app.controller('ActivateTDAppController', function($http, $location, $uibModal) 
     var pending = [];
     getPending();
 
+    //Get all pending term deposits
     function getPending() {
                     $http.get("/api/term_deposits/deposits").then(function (response) {
                         response.data.states.forEach(function (element) {
@@ -51,6 +53,7 @@ app.controller('ActivateTDAppController', function($http, $location, $uibModal) 
                 });
     }
 
+    //Show the user all available pending term deposits
     function loadPending() {
         var pending_select = document.getElementById("pending_select");
         for (var i = 0; i < pending.length; i++) {
@@ -63,10 +66,10 @@ app.controller('ActivateTDAppController', function($http, $location, $uibModal) 
         }
     }
 
+    //OnClick method for activation
     demoApp.confirmActivate = () => {
             //Load in the required data
             var pending_selected = document.getElementById("pending_select");
-//            var client = document.getElementById("client_select");
             var selectedDeposit = pending[pending_selected.selectedIndex];
             //Parse options selected and pull the data
             var value = selectedDeposit.amount;
@@ -74,25 +77,14 @@ app.controller('ActivateTDAppController', function($http, $location, $uibModal) 
             var offering_institute = extractOrganisationName(selectedDeposit.from);
             var client = extractOrganisationName(selectedDeposit.to);
             var interest_percent = selectedDeposit.percent;
-            //TODO: Duration has to be derived from startDate and endDate (its not a field)
-            //var duration = selectedDeposit.duration;
-            alert(selectedDeposit.startDate)
-            //alert(parseYear(selectedDeposit.startDate)+" "+parseMonth(selectedDeposit.startDate) + " " + parseDay(selectedDeposit.startDate));
-            //var dateStart = new Date(String(selectedDeposit.startDate));
-            //var dateEnd = new Date(String(selectedDeposit.endDate));
-
             var duration = getDuration(selectedDeposit.startDate, selectedDeposit.endDate);
-            alert(duration);
             var customer_anum = selectedDeposit.client.id;
             //TODO: Should we make an API query for details via account num, or should this be done by iterating in javascript? for now second option
-            //var customer_details = getCustomerName(customer_anum);
-            //var customer_details = [];
             var startDate = selectedDeposit.startDate;
             $http.get("/api/term_deposits/kyc").then(function (response) {
                 response.data.kyc.forEach(function (element) {
                     if (String(element.uniqueIdentifier.id) == customer_anum) {
                         //This is the correct client
-                        alert("Client "+ element.firstName +" "+ element.lastName);
                         callActivate(actualValue, offering_institute, interest_percent, duration, element.firstName, element.lastName,
                         element.accountNum, startDate, client);
                         return;
@@ -109,6 +101,7 @@ app.controller('ActivateTDAppController', function($http, $location, $uibModal) 
             window.location.href = "index.html";
         }
 
+        //Actual API call for activating a term deposit. On sucess returns user to the home page
         function callActivate(value, offering_institute, interest_percent, duration, customer_fname, customer_lname, customer_anum, startDate, client) {
             var url = "/api/term_deposits/activate_td?td_value="+value+"&offering_institute="+offering_institute+"&interest_percent="+interest_percent+
                           "&duration="+duration+"&customer_fname="+customer_fname+"&customer_lname="+customer_lname+"&customer_anum="+customer_anum+"&start_date="+startDate+
@@ -148,7 +141,6 @@ app.controller('ActivateTDAppController', function($http, $location, $uibModal) 
                 response.data.kyc.forEach(function (element) {
                     if (String(element.uniqueIdentifier.id) == accountNum) {
                         //This is the correct client
-                        alert("Client "+ element.firstName +" "+ element.lastName);
                         array.push(element.firstName);
                         array.push(element.lastName);
                         return array;
@@ -222,10 +214,8 @@ app.controller('ActivateTDAppController', function($http, $location, $uibModal) 
         }
 
         function stripValue(value) {
-            alert(value);
             var endIndex = 0;
             for (var i = 0; i < value.length; i++) {
-                alert(value[i] + " " + i);
                 if (isNaN(value[i]) && value[i] != '.') {
                     endIndex = i;
                     i = value.length;
@@ -234,7 +224,6 @@ app.controller('ActivateTDAppController', function($http, $location, $uibModal) 
                     i++;
                 }
             }
-            alert(value.substring(0,endIndex-1));
             return parseInt(value.substring(0,endIndex));
         }
 

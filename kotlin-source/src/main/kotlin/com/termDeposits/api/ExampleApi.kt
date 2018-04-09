@@ -139,9 +139,8 @@ class DepositsAPI(private val rpcOps: CordaRPCOps) {
         val issuingInstitute = rpcOps.networkMapSnapshot().filter { it.legalIdentities.first().name.organisation == offeringInstitue }.first().legalIdentities.first()
         val clientParty = rpcOps.networkMapSnapshot().filter { it.legalIdentities.first().name.organisation == client }.first().legalIdentities.first()
         val kyc = KYC.KYCNameData(firstName, lastName, accountNum)
-        val startDateActual = LocalDateTime.parse(startDate)
-        //TODO Actually parse a correct string, for now we use LocalDateTime.min for all
-        val dateData = TermDeposit.DateData(LocalDateTime.MIN, duration)
+        val startDateActual = LocalDateTime.parse(startDate+"T00:00:00")
+        val dateData = TermDeposit.DateData(startDateActual, duration)
         val depositAmount = AMOUNT(tdValue, USD)
 
         return try {
@@ -168,9 +167,8 @@ class DepositsAPI(private val rpcOps: CordaRPCOps) {
 
         val issuingInstitute = rpcOps.networkMapSnapshot().filter { it.legalIdentities.first().name.organisation == offeringInstitue }.first().legalIdentities.first()
         val kyc = KYC.KYCNameData(firstName, lastName, accountNum)
-        val startDateActual = LocalDateTime.parse(startDate)
-        //TODO Actually parse a correct string, for now we use LocalDateTime.min for all
-        val dateData = TermDeposit.DateData(LocalDateTime.MIN, duration)
+        val startDateActual = LocalDateTime.parse(startDate+"T00:00:00")
+        val dateData = TermDeposit.DateData(startDateActual, duration)
         val depositAmount = AMOUNT(tdValue, USD)
 
         return try {

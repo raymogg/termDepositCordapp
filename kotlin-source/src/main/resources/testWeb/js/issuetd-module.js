@@ -17,7 +17,7 @@
 // HOW BEST TO DO THIS.
 
 
-
+//App module for issuing a TermDeposit
 const app = angular.module('IssueTDAppModule', ['ui.bootstrap']);
 
 // Fix for unhandled rejections bug.
@@ -36,6 +36,7 @@ app.controller('IssueTDAppController', function($http, $location, $uibModal) {
     getOffers();
     getClients();
 
+    //Load in available term deposit offers
     function getOffers() {
                     $http.get("/api/term_deposits/offers").then(function (response) {
                         response.data.offers.forEach(function (element) {
@@ -48,6 +49,7 @@ app.controller('IssueTDAppController', function($http, $location, $uibModal) {
                 });
     }
 
+    //Display the term deposit offers to the user
     function loadOffers() {
         var offers_select = document.getElementById("offers_select")
                     for (var i = 0; i < offers.length; i++) {
@@ -60,6 +62,7 @@ app.controller('IssueTDAppController', function($http, $location, $uibModal) {
                     }
     }
 
+    //Get all the kyc data this user has
     function getClients() {
                         $http.get("/api/term_deposits/kyc").then(function (response) {
                             response.data.kyc.forEach(function (element) {
@@ -72,6 +75,7 @@ app.controller('IssueTDAppController', function($http, $location, $uibModal) {
                     });
         }
 
+        //Display this KYC data
         function loadClients() {
             var client_select = document.getElementById("client_select")
                         for (var i = 0; i < clients.length; i++) {
@@ -84,6 +88,7 @@ app.controller('IssueTDAppController', function($http, $location, $uibModal) {
                         }
         }
 
+    //OnClick method for Issuing the term deposit
     demoApp.confirmIssue = () => {
             //Load in the required data
             var offer = document.getElementById("offers_select");

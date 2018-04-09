@@ -32,12 +32,12 @@ The following is the API for both Term Deposits and KYC Data. Note that for POST
 **/api/term_deposits/deposits**
 
 Returns a JSON containing an array of term deposit states for every term deposit in the nodes vault. Each term deposit contains the following fields in its mapping:
-* From: Party – the party which issued the term deposit (eg Commbank)
-* To: Party – the party which opened the term deposit (Eg AMM)
-* Percent: Float – the interest percent of the term deposit
+* from: Party – the party which issued the term deposit (eg Commbank)
+* to: Party – the party which opened the term deposit (Eg AMM)
+* percent: Float – the interest percent of the term deposit
 * startDate: LocalDateTime – the start date of the term deposit
 * endDate: LocalDateTime – the end date of the term deposit
-* Client: LinearID – the ID of the client for which this deposit was opened for (eg a customer of AMM)
+* client: LinearID – the ID of the client for which this deposit was opened for (eg a customer of AMM)
 * amount: Amount<Currency> - the deposited amount
 * internalState: String – the internal state of the term deposit (either pending, active, or terminated)
   
@@ -76,8 +76,8 @@ Returns a JSON containing an array of term deposit states for every term deposit
 
 Returns a JSON containing an array of term deposit offer states for every offer issued to this node. Each offer contains the following 
 * validTill: LocalDateTime – the date for which this offer is running until.
-* Interest: Float – the interest percent for this offer
-* Duration: Int – the duration for which this deposit runs (in months)
+* interest: Float – the interest percent for this offer
+* duration: Int – the duration for which this deposit runs (in months)
 * issuingInstitue: Party – the institute who issued this offer (eg Commbank)
 
 **Example Response**
@@ -122,11 +122,11 @@ Returns a JSON containing an array of term deposit offer states for every offer 
 POST call to issue a term deposit from this node. Inputs such as offeringInstitute, interestPercent, duration, customer_fname, customer_lname and customer_anum must match a term deposit offer held by this node and some client information respectively. It is recommended the UI allow a user to select only available offers and clients when this post call is made – otherwise the Corda flow will fail. Note that when passing in the offering institute, Corda uses its own CordaX500 naming system. The string that must be passed in is the organisation name – the cordapp will then find the appropriate CordaX500 name corresponding to this organisation name. (See https://docs.corda.net/api/kotlin/corda/net.corda.core.identity/-corda-x500-name/index.html) Required inputs are:
 * td_value: Int – the deposit amount for this term deposit.
 * offering_institute: String – the institute who’s term deposit offer is being used to issue this deposit.
-* Interest_percent: Float – the interest percent for this term deposit.
-* Duration: Int – the duration of this term deposit.
-* Customer_fname: String – the first name of the customer for which this deposit is being started on behalf of.
-* Customer_lname: String - the first name of the customer for which this deposit is being started on behalf of.
-* Customer_anum: String – the account number of the customer for which this deposit is being started on behalf of.
+* interest_percent: Float – the interest percent for this term deposit.
+* duration: Int – the duration of this term deposit.
+* customer_fname: String – the first name of the customer for which this deposit is being started on behalf of.
+* customer_lname: String - the first name of the customer for which this deposit is being started on behalf of.
+* customer_anum: String – the account number of the customer for which this deposit is being started on behalf of.
 
 **Example Call**
 
@@ -138,13 +138,13 @@ http://localhost:10010/api/term_deposits/issue_td?td_value=500&offering_institut
 POST call to activate a term deposit – this call must be made from the issuing bank node, and is to be made once the off ledger confirmation of asset transfer has been confirmed (cash has arrived at the bank). All inputs here must correspond to a currently pending term deposit – it is recommended a front end UI provide the user with a choice of pending term deposits, then all the input terms are pulled from these pending term deposits. Note that when passing in the offering institute and client strings, Corda uses its own CordaX500 naming system. The string that must be passed in is the organisation name – the cordapp will then find the appropriate CordaX500 name corresponding to this organisation name. (See https://docs.corda.net/api/kotlin/corda/net.corda.core.identity/-corda-x500-name/index.html) Required inputs are:
 * td_value: Int – the deposit amount for this term deposit.
 * offering_institute: String – the institute who’s term deposit offer is being used to issue this deposit.
-* Interest_percent: Float – the interest percent for this term deposit.
-* Duration: Int – the duration of this term deposit.
-* Customer_fname: String – the first name of the customer for which this deposit is being started on behalf of.
-* Customer_lname: String - the first name of the customer for which this deposit is being started on behalf of.
-* Customer_anum: String – the account number of the customer for which this deposit is being started on behalf of.
-* Start_date: String – the date for which this term deposit started – must be in the format “YYYY-MM-DD”
-* Client: String – the client who is opening the term deposit (eg AMM)
+* interest_percent: Float – the interest percent for this term deposit.
+* duration: Int – the duration of this term deposit.
+* customer_fname: String – the first name of the customer for which this deposit is being started on behalf of.
+* customer_lname: String - the first name of the customer for which this deposit is being started on behalf of.
+* customer_anum: String – the account number of the customer for which this deposit is being started on behalf of.
+* start_date: String – the date for which this term deposit started – must be in the format “YYYY-MM-DD”
+* client: String – the client who is opening the term deposit (eg AMM)
 
 **Example Call**
 
@@ -156,12 +156,12 @@ http://localhost:10019/api/term_deposits/activate_td?td_value=500&offering_insti
 Post call to redeem a term deposit. All paramaters passed in must belong to a currently active term deposit which has passed its end date. It is recommended the UI provide users with a choice of active term deposits which have passed their end date, then pass in the paramaters from this. The required inputs are:
 * td_value: Int – the deposit amount for this term deposit.
 * offering_institute: String – the institute who’s term deposit offer is being used to issue this deposit.
-* Interest_percent: Float – the interest percent for this term deposit.
-* Duration: Int – the duration of this term deposit.
-* Customer_fname: String – the first name of the customer for which this deposit is being started on behalf of.
-* Customer_lname: String - the first name of the customer for which this deposit is being started on behalf of.
-* Customer_anum: String – the account number of the customer for which this deposit is being started on behalf of.
-* Start_date: String – the date for which this term deposit started – must be in the format “YYYY-MM-DD”
+* interest_percent: Float – the interest percent for this term deposit.
+* duration: Int – the duration of this term deposit.
+* customer_fname: String – the first name of the customer for which this deposit is being started on behalf of.
+* customer_lname: String - the first name of the customer for which this deposit is being started on behalf of.
+* customer_anum: String – the account number of the customer for which this deposit is being started on behalf of.
+* start_date: String – the date for which this term deposit started – must be in the format “YYYY-MM-DD”
 
 **Example Call**
 
@@ -173,16 +173,16 @@ http://localhost:10010/api/term_deposits/redeem_td?td_value=300&offering_institu
 POST call to rollover a term deposit. As before, input paramaters td_value, offering_institute, interest_percent, duration, customer_fname, customer_lname, customer_anum and start_date must correspond to a currently active term deposit that has passed its end date. The paramaters new_interest, new_intstitute and new_duration must correspond to a term deposit offer held by the node. The required inputs are
 * td_value: Int – the deposit amount for this term deposit.
 * offering_institute: String – the institute who’s term deposit offer is being used to issue this deposit.
-* Interest_percent: Float – the interest percent for this term deposit.
-* Duration: Int – the duration of this term deposit.
-* Customer_fname: String – the first name of the customer for which this deposit is being started on behalf of.
-* Customer_lname: String - the first name of the customer for which this deposit is being started on behalf of.
-* Customer_anum: String – the account number of the customer for which this deposit is being started on behalf of.
-* Start_date: String – the date for which this term deposit started – must be in the format “YYYY-MM-DD”
-* New_interest: Float – the interest for the new term deposit being started
-* New_institute: String – the institute offering the new term deposit that is being started.
-* New_duration: Int – the duration (in months) of the new term deposit.
-* With_interest: Boolean – a Boolean indicating if the interest from the original term deposit should be rolled over into the new deposit (true) or if it should be returned to the client (false).
+* interest_percent: Float – the interest percent for this term deposit.
+* duration: Int – the duration of this term deposit.
+* customer_fname: String – the first name of the customer for which this deposit is being started on behalf of.
+* customer_lname: String - the first name of the customer for which this deposit is being started on behalf of.
+* customer_anum: String – the account number of the customer for which this deposit is being started on behalf of.
+* start_date: String – the date for which this term deposit started – must be in the format “YYYY-MM-DD”
+* new_interest: Float – the interest for the new term deposit being started
+* new_institute: String – the institute offering the new term deposit that is being started.
+* new_duration: Int – the duration (in months) of the new term deposit.
+* with_interest: Boolean – a Boolean indicating if the interest from the original term deposit should be rolled over into the new deposit (true) or if it should be returned to the client (false).
 
 **Example Call**
 

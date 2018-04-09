@@ -17,7 +17,7 @@
 // HOW BEST TO DO THIS.
 
 
-
+//Main JS App for Term Deposits
 const app = angular.module('demoAppModule', ['ui.bootstrap']);
 
 // Fix for unhandled rejections bug.
@@ -32,7 +32,7 @@ app.controller('DemoAppController', function($http, $location, $uibModal) {
     //Variables for TD app
     var activeTDs = [];
 
-    // First we pull the TD's from the api
+    // First we pull the TD's from the api -> these are displayed on the home screen
     $http.get("/api/term_deposits/deposits").then(function (response) {
             response.data.states.forEach(function (element) {
             activeTDs.push("From: " + String(element.from) + ", Amount: " + String(element.amount) + ", Ending: " +
@@ -57,15 +57,19 @@ app.controller('DemoAppController', function($http, $location, $uibModal) {
                  });
     }
 
-    //OnClick methods for each button -> used for creating TDs and what not
+    //OnClick methods for each button -> used for loading new pages for TD functionality
     demoApp.issueTD = () => {
         window.location.href = "issue_td.html";
     }
 
-    //Note this will fail if not called from a bank node.
     demoApp.activateTD = () => {
             window.location.href = "activate_td.html";
     }
+
+    //Note this will fail if not called from a bank node.
+        demoApp.redeemTD = () => {
+                window.location.href = "redeem_td.html";
+        }
 
 
 

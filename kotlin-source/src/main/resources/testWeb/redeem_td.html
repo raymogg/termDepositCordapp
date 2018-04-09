@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <head>
-  <title>Activate Term Deposit</title>
+  <title>Redeem Term Deposit</title>
   <!-- Insert Javascript Source -->
   <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
   <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"
@@ -8,17 +8,17 @@
           crossorigin="anonymous"></script>
   <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.6.0-rc.1/angular.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/angular-ui-bootstrap/2.2.0/ui-bootstrap-tpls.min.js"></script>
-  <script src="js/activatetd-module.js"></script>
+  <script src="js/redeemtd-module.js"></script>
 </head>
 
-<body ng-app="ActivateTDAppModule" ng-controller="ActivateTDAppController as activateTDApp">
-  <h3> Activate a pending term deposit</h3>
+<body ng-app="RedeemTDAppModule" ng-controller="RedeemTDAppController as redeemTDApp">
+  <h3> Redeem a mature term deposit</h3>
   <br>
-  <label for="pending_select"> Pending deposits </label>
-  <select  id="pending_select" ></select>
+  <label for="matured_select"> Matured deposits </label>
+  <select  id="matured_select" ></select>
   <br>
 
-  <button ng-click="activateTDApp.confirmActivate()" type="button" class="btn btn-default">Activate Term Deposit</button>
+  <button ng-click="redeemTDApp.redeem()" type="button" class="btn btn-default">Redeem Term Deposit</button>
   <br><br>
   <div id="loading">
     <img id="loading-image" src="img/ajax-loader.gif" alt="Loading..." />
