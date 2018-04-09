@@ -154,7 +154,7 @@ app.controller('ActivateTDAppController', function($http, $location, $uibModal) 
             var endDateYears = parseInt(parseYear(endDate));
             var endDateMonths = parseInt(parseMonth(endDate));
 
-            var diff = (abs(endDateYears - startDateYears) * 12) + abs(endDateMonths - startDateMonths);
+            var diff = (Math.abs(endDateYears - startDateYears) * 12) + Math.abs(endDateMonths - startDateMonths);
             return diff;
 
         }

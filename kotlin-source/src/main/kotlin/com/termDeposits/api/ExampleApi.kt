@@ -71,7 +71,7 @@ class DepositsAPI(private val rpcOps: CordaRPCOps) {
 
     /** Returns a JSON containing an array of term deposit states (mappings) for every term deposit in the nodes vault.
      *  Each term deposit mapping contains the following fields {from: Party, to: Party, percent: Float, startDate:
-     *  LocalDateTime, endDate: LocalDateTime, amount: Amount<Currency>, internal state: }
+     *  LocalDateTime, endDate: LocalDateTime, client:LinearID, amount: Amount<Currency>, internal state: }
      */
     @GET
     @Path("deposits")
@@ -254,11 +254,11 @@ class KYCAPI(private val rpcOps: CordaRPCOps) {
      */
     @POST
     @Path("update_kyc")
-    fun updateKYC(@QueryParam("client_id") clientID: String, @QueryParam("new_fname") newFirstName:String?,
+    fun updateKYC(@QueryParam("customer_id") customerID: String, @QueryParam("new_fname") newFirstName:String?,
                   @QueryParam("new_lname") newLastName:String?, @QueryParam("new_anum") newAccountNum:String?) : Response{
         return try {
-            val uniqueClientID = UniqueIdentifier.fromString(clientID)
-            val flowHandle = rpcOps.startFlow(UpdateKYC::Updator, uniqueClientID, newAccountNum, newFirstName, newLastName)
+            val uniqueCustomerID = UniqueIdentifier.fromString(customerID)
+            val flowHandle = rpcOps.startFlow(UpdateKYC::Updator, uniqueCustomerID, newAccountNum, newFirstName, newLastName)
             val result = flowHandle.returnValue.getOrThrow()
             Response.status(CREATED).entity("Transaction id ${result.id} committed to ledger.\n").build()
         } catch (ex: Throwable) {
