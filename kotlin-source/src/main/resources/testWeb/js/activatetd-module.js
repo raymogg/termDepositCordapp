@@ -70,6 +70,7 @@ app.controller('ActivateTDAppController', function($http, $location, $uibModal) 
             var selectedDeposit = pending[pending_selected.selectedIndex];
             //Parse options selected and pull the data
             var value = selectedDeposit.amount;
+            var actualValue = stripValue(value); //removes the USD from the string and returns the int
             var offering_institute = extractOrganisationName(selectedDeposit.from);
             var client = extractOrganisationName(selectedDeposit.to);
             var interest_percent = selectedDeposit.percent;
@@ -84,28 +85,41 @@ app.controller('ActivateTDAppController', function($http, $location, $uibModal) 
             alert(duration);
             var customer_anum = selectedDeposit.client.id;
             //TODO: Should we make an API query for details via account num, or should this be done by iterating in javascript? for now second option
-            var customer_details = getCustomerName(customer_anum);
-            var customer_fname = customer_details[0];
-            var customer_lname = customer_details[1];
+            //var customer_details = getCustomerName(customer_anum);
+            //var customer_details = [];
             var startDate = selectedDeposit.startDate;
-            //alert(startDate);
-            //var actualDate = Date(startDate[0], startDate[1], startDate[2], startDate[3], startDate[4], 0,0).toISOString();
-            //Now convert this to format 2007-12-03T10:15:30 (YYYY-MM-DDTHH:MM:SS)
-              var url = "/api/term_deposits/activate_td?td_value="+value+"&offering_institute="+offering_institute+"&interest_percent="+interest_percent+
-              "&duration="+duration+"&customer_fname="+customer_fname+"&customer_lname="+customer_lname+"&customer_anum="+customer_anum+"start_date="+startDate+
-              "client="+client;
-              //Display a loading circle
-            document.getElementById("loading").style.display = "block"
-            $http.post(url).then(function (response) {
-                document.getElementById("loading").style.display = "none"
-                alert(String(response.data));
-                window.location.href = "index.html";
-                });
+            $http.get("/api/term_deposits/kyc").then(function (response) {
+                response.data.kyc.forEach(function (element) {
+                    if (String(element.uniqueIdentifier.id) == customer_anum) {
+                        //This is the correct client
+                        alert("Client "+ element.firstName +" "+ element.lastName);
+                        callActivate(actualValue, offering_institute, interest_percent, duration, element.firstName, element.lastName,
+                        element.accountNum, startDate, client);
+                        return;
+                    } else {
+
+                    }
+                 });
+            });
+
         }
 
         demoApp.cancel = () => {
             alert("Cancelled");
             window.location.href = "index.html";
+        }
+
+        function callActivate(value, offering_institute, interest_percent, duration, customer_fname, customer_lname, customer_anum, startDate, client) {
+            var url = "/api/term_deposits/activate_td?td_value="+value+"&offering_institute="+offering_institute+"&interest_percent="+interest_percent+
+                          "&duration="+duration+"&customer_fname="+customer_fname+"&customer_lname="+customer_lname+"&customer_anum="+customer_anum+"&start_date="+startDate+
+                          "&client="+client;
+                          //Display a loading circle
+            document.getElementById("loading").style.display = "block"
+            $http.post(url).then(function (response) {
+                document.getElementById("loading").style.display = "none"
+                alert(String(response.data));
+                window.location.href = "index.html";
+            });
         }
 
         //Helper function to extract the needed organisation name from a formatted Corda Name String
@@ -205,6 +219,23 @@ app.controller('ActivateTDAppController', function($http, $location, $uibModal) 
              //i is now equal to the index of first '-', increment once for start index of substring
              var endIndex = i;
              return dateString.substring(startIndex, endIndex);
+        }
+
+        function stripValue(value) {
+            alert(value);
+            var endIndex = 0;
+            for (var i = 0; i < value.length; i++) {
+                alert(value[i] + " " + i);
+                if (isNaN(value[i]) && value[i] != '.') {
+                    endIndex = i;
+                    i = value.length;
+                } else {
+                    //found the end index
+                    i++;
+                }
+            }
+            alert(value.substring(0,endIndex-1));
+            return parseInt(value.substring(0,endIndex));
         }
 
 });
