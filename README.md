@@ -74,11 +74,11 @@ Returns a JSON containing an array of term deposit states for every term deposit
 #### Get All Offers (GET)
 **/api/term_deposits/offers**
 
-Returns a JSON containing an array of term deposit offer states for every offer issued to this node. Each offer contains the following {validTill: LocalDateTime, interest: Float, duration: Int, issuingInstitute: Party}
-*validTill: LocalDateTime – the date for which this offer is running until.
-*Interest: Float – the interest percent for this offer
-*Duration: Int – the duration for which this deposit runs (in months)
-*issuingInstitue: Party – the institute who issued this offer (eg Commbank)
+Returns a JSON containing an array of term deposit offer states for every offer issued to this node. Each offer contains the following 
+* validTill: LocalDateTime – the date for which this offer is running until.
+* Interest: Float – the interest percent for this offer
+* Duration: Int – the duration for which this deposit runs (in months)
+* issuingInstitue: Party – the institute who issued this offer (eg Commbank)
 
 **Example Response**
 
