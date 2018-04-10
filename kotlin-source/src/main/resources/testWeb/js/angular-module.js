@@ -122,6 +122,7 @@ app.controller('DemoAppController', function($http, $location, $uibModal) {
         var url = "/api/example/me"
         $http.get(url).then(function (response) {
             var title = document.getElementById("title").innerHTML = "TD Cordapp: " + extractOrganisationName(response.data.me);
+            var name_title = document.getElementById("node_title").innerHTML = "Welcome, " + extractOrganisationName(response.data.me);
         });
     }
 
