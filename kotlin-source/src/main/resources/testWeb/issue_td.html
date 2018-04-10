@@ -9,9 +9,11 @@
   <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.6.0-rc.1/angular.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/angular-ui-bootstrap/2.2.0/ui-bootstrap-tpls.min.js"></script>
   <script src="js/issuetd-module.js"></script>
+  <link rel="stylesheet" href="testWebStyle.css">
 </head>
 
 <body ng-app="IssueTDAppModule" ng-controller="IssueTDAppController as issueTDApp">
+  <div class="td_info">
   <h3> Issue a new term deposit</h3>
   <br>
   <label for="offers_select"> TD Offers </label>
@@ -23,10 +25,11 @@
   <label for="depositAmount"> Deposit Amount </label>
   <input type="text" name="depositAmount" id="depositAmount"><br>
   <br>
-  <button ng-click="issueTDApp.confirmIssue()" type="button" class="btn btn-default">Issue Term Deposit</button>
+  <button ng-click="issueTDApp.confirmIssue()" type="button" class="default_button">Issue Term Deposit</button>
   <br><br>
   <div id="loading">
     <img id="loading-image" src="img/ajax-loader.gif" alt="Loading..." />
+  </div>
   </div>
   <!-- <script src="js/angular-module.js"></script> -->
 </body>

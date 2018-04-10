@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <head>
-  <title>TermDeposit Cordapp</title>
+  <title id="title">TD Cordapp</title>
   <!-- Insert Javascript Source -->
   <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
   <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"
@@ -9,20 +9,25 @@
   <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.6.0-rc.1/angular.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/angular-ui-bootstrap/2.2.0/ui-bootstrap-tpls.min.js"></script>
   <script src="js/angular-module.js"></script>
+  <link rel="stylesheet" href="testWebStyle.css">
+
 </head>
 
 <body ng-app="demoAppModule" ng-controller="DemoAppController as demoApp">
   <!-- Few simple buttons to interact with the API and enter details -->
-  <button ng-click="demoApp.issueTD()" type="button" class="btn btn-default">Issue Term Deposit</button>
-  <button ng-click="demoApp.activateTD()" type="button" class="btn btn-default">Activate Term Deposit</button>
-  <button ng-click="demoApp.redeemTD()" type="button" class="btn btn-default">Redeem Term Deposit</button>
-  <button ng-click="" type="button" class="btn btn-default">Rollover Term Deposit</button>
-  <button ng-click="" type="button" class="btn btn-default">View Offers</button>
-  <button ng-click="" type="button" class="btn btn-default">View Current Term Deposits</button>
-
+  <div class="topnav">
+    <button ng-click="demoApp.issueTD()" type="button" class="topnav">Issue Term Deposit</button>
+    <button ng-click="demoApp.activateTD()" type="button" class="topnav">Activate Term Deposit</button>
+    <button ng-click="demoApp.redeemTD()" type="button" class="topnav">Redeem Term Deposit</button>
+    <button ng-click="" type="button" class="topnav">Rollover Term Deposit</button>
+  </div>
   <br><br>
-  <div id="currentDeposits">
+  <div id="currentDeposits" class="td_info">
     <h3> Current Deposits</h3>
+  </div>
+  <br><br>
+  <div id="currentOffers" class="td_info">
+    <h3>Current Offers</h3>
   </div>
 
   <!--<form id = "issuetd_form">-->

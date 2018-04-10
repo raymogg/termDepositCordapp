@@ -9,19 +9,22 @@
   <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.6.0-rc.1/angular.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/angular-ui-bootstrap/2.2.0/ui-bootstrap-tpls.min.js"></script>
   <script src="js/activatetd-module.js"></script>
+  <link rel="stylesheet" href="testWebStyle.css">
 </head>
 
 <body ng-app="ActivateTDAppModule" ng-controller="ActivateTDAppController as activateTDApp">
+  <div class="td_info">
   <h3> Activate a pending term deposit</h3>
   <br>
   <label for="pending_select"> Pending deposits </label>
   <select  id="pending_select" ></select>
   <br>
 
-  <button ng-click="activateTDApp.confirmActivate()" type="button" class="btn btn-default">Activate Term Deposit</button>
+  <button ng-click="activateTDApp.confirmActivate()" type="button" class="default_button">Activate Term Deposit</button>
   <br><br>
   <div id="loading">
     <img id="loading-image" src="img/ajax-loader.gif" alt="Loading..." />
+  </div>
   </div>
   <!-- <script src="js/angular-module.js"></script> -->
 </body>

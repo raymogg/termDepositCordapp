@@ -9,19 +9,22 @@
   <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.6.0-rc.1/angular.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/angular-ui-bootstrap/2.2.0/ui-bootstrap-tpls.min.js"></script>
   <script src="js/redeemtd-module.js"></script>
+  <link rel="stylesheet" href="testWebStyle.css">
 </head>
 
 <body ng-app="RedeemTDAppModule" ng-controller="RedeemTDAppController as redeemTDApp">
+<div class="td_info">
   <h3> Redeem a mature term deposit</h3>
   <br>
   <label for="matured_select"> Matured deposits </label>
   <select  id="matured_select" ></select>
   <br>
 
-  <button ng-click="redeemTDApp.redeem()" type="button" class="btn btn-default">Redeem Term Deposit</button>
+  <button ng-click="redeemTDApp.redeem()" type="button" class="default_button">Redeem Term Deposit</button>
   <br><br>
   <div id="loading">
     <img id="loading-image" src="img/ajax-loader.gif" alt="Loading..." />
+  </div>
   </div>
   <!-- <script src="js/angular-module.js"></script> -->
 </body>
