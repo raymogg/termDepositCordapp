@@ -1,22 +1,5 @@
 "use strict";
 
-// --------
-// WARNING:
-// --------
-
-// THIS CODE IS ONLY MADE AVAILABLE FOR DEMONSTRATION PURPOSES AND IS NOT SECURE!
-// DO NOT USE IN PRODUCTION!
-
-// FOR SECURITY REASONS, USING A JAVASCRIPT WEB APP HOSTED VIA THE CORDA NODE IS
-// NOT THE RECOMMENDED WAY TO INTERFACE WITH CORDA NODES! HOWEVER, FOR THIS
-// PRE-ALPHA RELEASE IT'S A USEFUL WAY TO EXPERIMENT WITH THE PLATFORM AS IT ALLOWS
-// YOU TO QUICKLY BUILD A UI FOR DEMONSTRATION PURPOSES.
-
-// GOING FORWARD WE RECOMMEND IMPLEMENTING A STANDALONE WEB SERVER THAT AUTHORISES
-// VIA THE NODE'S RPC INTERFACE. IN THE COMING WEEKS WE'LL WRITE A TUTORIAL ON
-// HOW BEST TO DO THIS.
-
-
 //App module for activating a term deposit
 //NOTE: Activating a TD can only be done by the issuing node, if another node attempts this the API call will fail.
 const app = angular.module('ActivateTDAppModule', ['ui.bootstrap']);
@@ -28,8 +11,6 @@ app.config(['$qProvider', function ($qProvider) {
 
 app.controller('ActivateTDAppController', function($http, $location, $uibModal) {
     const demoApp = this;
-    // We identify the node.
-    const apiBaseURL = "/api/example/";
     document.getElementById("loading").style.display = "none"
     //populate the current offer options
     var pending = [];
@@ -37,20 +18,14 @@ app.controller('ActivateTDAppController', function($http, $location, $uibModal) 
 
     //Get all pending term deposits
     function getPending() {
-                    $http.get("/api/term_deposits/deposits").then(function (response) {
-                        response.data.states.forEach(function (element) {
-                        if (String(element.internalState) == "Pending") {
-//                            pending.push("To: " + String(element.to) + "\nEnd Date: "+
-//                            String(element.validTill) + "\nAmount: "+ String(element.amount) + "\nInterest: "+
-//                            String(element.interest));
-                            pending.push(element);
-                            //alert("Pushed");
-                        } else {
-                            //alert(String(element.internalState));
-                        }
-                        });
-                        loadPending();
-                });
+        $http.get("/api/term_deposits/deposits").then(function (response) {
+            response.data.states.forEach(function (element) {
+                if (String(element.internalState) == "Pending") {
+                    pending.push(element);
+                }
+            });
+            loadPending();
+        });
     }
 
     //Show the user all available pending term deposits
@@ -68,33 +43,30 @@ app.controller('ActivateTDAppController', function($http, $location, $uibModal) 
 
     //OnClick method for activation
     demoApp.confirmActivate = () => {
-            //Load in the required data
-            var pending_selected = document.getElementById("pending_select");
-            var selectedDeposit = pending[pending_selected.selectedIndex];
-            //Parse options selected and pull the data
-            var value = selectedDeposit.amount;
-            var actualValue = stripValue(value); //removes the USD from the string and returns the int
-            var offering_institute = extractOrganisationName(selectedDeposit.from);
-            var client = extractOrganisationName(selectedDeposit.to);
-            var interest_percent = selectedDeposit.percent;
-            var duration = getDuration(selectedDeposit.startDate, selectedDeposit.endDate);
-            var customer_anum = selectedDeposit.client.id;
-            //TODO: Should we make an API query for details via account num, or should this be done by iterating in javascript? for now second option
-            var startDate = selectedDeposit.startDate;
-            $http.get("/api/term_deposits/kyc").then(function (response) {
-                response.data.kyc.forEach(function (element) {
-                    if (String(element.uniqueIdentifier.id) == customer_anum) {
-                        //This is the correct client
-                        callActivate(actualValue, offering_institute, interest_percent, duration, element.firstName, element.lastName,
-                        element.accountNum, startDate, client);
-                        return;
-                    } else {
-
-                    }
-                 });
+        //Load in the required data
+        var pending_selected = document.getElementById("pending_select");
+        var selectedDeposit = pending[pending_selected.selectedIndex];
+        //Parse options selected and pull the data
+        var value = selectedDeposit.amount;
+        var actualValue = stripValue(value); //removes the USD from the string and returns the int
+        var offering_institute = extractOrganisationName(selectedDeposit.from);
+        var client = extractOrganisationName(selectedDeposit.to);
+        var interest_percent = selectedDeposit.percent;
+        var duration = getDuration(selectedDeposit.startDate, selectedDeposit.endDate);
+        var customer_anum = selectedDeposit.client.id;
+        //TODO: Should we make an API query for details via account num, or should this be done by iterating in javascript? for now second option
+        var startDate = selectedDeposit.startDate;
+        $http.get("/api/term_deposits/kyc").then(function (response) {
+            response.data.kyc.forEach(function (element) {
+                if (String(element.uniqueIdentifier.id) == customer_anum) {
+                    //This is the correct client
+                    callActivate(actualValue, offering_institute, interest_percent, duration, element.firstName, element.lastName,
+                    element.accountNum, startDate, client);
+                    return;
+                }
             });
-
-        }
+        });
+    }
 
         demoApp.cancel = () => {
             alert("Cancelled");
