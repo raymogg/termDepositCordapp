@@ -4,6 +4,7 @@ import com.termDeposits.contract.KYC
 import com.termDeposits.contract.TermDeposit
 import com.termDeposits.contract.TermDepositOffer
 import com.termDeposits.flow.TermDeposit.*
+import net.corda.core.contracts.Amount
 import net.corda.core.contracts.UniqueIdentifier
 import net.corda.core.identity.CordaX500Name
 import net.corda.core.messaging.CordaRPCOps
@@ -14,8 +15,10 @@ import net.corda.core.utilities.getOrThrow
 import net.corda.core.utilities.loggerFor
 import net.corda.finance.AMOUNT
 import net.corda.finance.USD
+import net.corda.finance.contracts.asset.Cash
 import org.slf4j.Logger
 import java.time.LocalDateTime
+import java.util.*
 import javax.ws.rs.*
 import javax.ws.rs.core.MediaType
 import javax.ws.rs.core.Response
@@ -55,7 +58,16 @@ class ExampleApi(private val rpcOps: CordaRPCOps) {
                 //filter out myself, notary and eventual network map started by driver
                 .filter { it.organisation !in (SERVICE_NAMES + myLegalName.organisation) })
     }
-}
+
+    /** Gets the total amount of cash held by this node */
+    @GET
+    @Path("cash")
+    @Produces(MediaType.APPLICATION_JSON)
+    fun getCash(): Map<String, Double> {
+        val states =  rpcOps.vaultQueryBy<Cash.State>().states
+        val total = states.sumByDouble { it.state.data.amount.quantity.toDouble() }
+        return mapOf("cash" to total/100)
+    }}
 
 /** API for interacting with all aspects of the Term Deposits cordapp
  * Note that most API calls require many fields. Most of this data can be receieved from states currently on the
@@ -198,8 +210,8 @@ class DepositsAPI(private val rpcOps: CordaRPCOps) {
         val newInstituteParty = rpcOps.networkMapSnapshot().filter { it.legalIdentities.first().name.organisation == newInstitute }.first().legalIdentities.first()
         val rolloverTerms = TermDeposit.RolloverTerms(newInterest, newInstituteParty, newDuration, withInterest)
         val kyc = KYC.KYCNameData(firstName, lastName, accountNum)
-        val startDateActual = LocalDateTime.parse(startDate)
-        val dateData = TermDeposit.DateData(LocalDateTime.MIN, duration)
+        val startDateActual = LocalDateTime.parse(startDate+"T00:00:00")
+        val dateData = TermDeposit.DateData(startDateActual, duration)
         val depositAmount = AMOUNT(tdValue, USD)
 
         return try {

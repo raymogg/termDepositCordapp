@@ -4,10 +4,7 @@ import co.paralleluniverse.fibers.Suspendable
 import com.termDeposits.contract.KYC
 import com.termDeposits.contract.TermDeposit
 import com.termDeposits.contract.TermDepositOffer
-import net.corda.core.contracts.Amount
-import net.corda.core.contracts.StateAndRef
-import net.corda.core.contracts.TransactionState
-import net.corda.core.contracts.requireThat
+import net.corda.core.contracts.*
 import net.corda.core.flows.*
 import net.corda.core.identity.Party
 import net.corda.core.serialization.CordaSerializable
@@ -44,7 +41,7 @@ object RolloverTD {
 
         @Suspendable
         override fun call(): SignedTransaction {
-
+            println("Rollover TD")
             //STEP 1: Gather KYC Data and TD. Send these to other party with rollover instructions
             val flowSession = initiateFlow(issuingInstitue)
             val clientID = subFlow(KYCRetrievalFlow(kycNameData.firstName, kycNameData.lastName, kycNameData.accountNum)).first().state.data.linearId

@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<head>
+  <title>Rollover Term Deposit</title>
+  <!-- Insert Javascript Source -->
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"
+          integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa"
+          crossorigin="anonymous"></script>
+  <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.6.0-rc.1/angular.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/angular-ui-bootstrap/2.2.0/ui-bootstrap-tpls.min.js"></script>
+  <script src="js/rollovertd-module.js"></script>
+  <link rel="stylesheet" href="testWebStyle.css">
+</head>
+
+<body ng-app="RolloverTDAppModule" ng-controller="RolloverTDAppController as rolloverTDApp">
+<div class="td_info">
+  <h3> Rollover a mature term deposit</h3>
+  <br>
+
+  <label for="matured_select"> Matured deposits </label>
+  <select  id="matured_select" ></select>
+  <br>
+
+  <label for="deposit_offers"> Deposit Offers </label>
+  <select  id="deposit_offers" ></select>
+  <br>
+
+  <label for="with_interest"> With Interest? </label>
+  <select  id="with_interest" >
+    <option value="true">Yes</option>
+    <option value="false">No</option>
+  </select>
+  <br>
+
+  <button ng-click="rolloverTDApp.rollover()" type="button" class="default_button">Rollover Term Deposit</button>
+  <br><br>
+  <div id="loading">
+    <img id="loading-image" src="img/ajax-loader.gif" alt="Loading..." />
+  </div>
+  </div>
+  <!-- <script src="js/angular-module.js"></script> -->
+</body>

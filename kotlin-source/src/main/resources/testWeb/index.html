@@ -19,17 +19,19 @@
     <button ng-click="demoApp.issueTD()" type="button" class="topnav">Issue Term Deposit</button>
     <button ng-click="demoApp.activateTD()" type="button" class="topnav">Activate Term Deposit</button>
     <button ng-click="demoApp.redeemTD()" type="button" class="topnav">Redeem Term Deposit</button>
-    <button ng-click="" type="button" class="topnav">Rollover Term Deposit</button>
+    <button ng-click="demoApp.rolloverTD()" type="button" class="topnav">Rollover Term Deposit</button>
   </div>
   <br><br>
   <div class="td_info">
     <h3 id="node_title"> </h3>
+    <h4 id="cash">Cash: </h4>
+    <h4 id="term_deposits">Total Deposits: </h4>
   </div>
-  <br><br>
+  <br>
   <div id="currentDeposits" class="td_info">
     <h3> Current Deposits</h3>
   </div>
-  <br><br>
+  <br>
   <div id="currentOffers" class="td_info">
     <h3>Current Offers</h3>
   </div>

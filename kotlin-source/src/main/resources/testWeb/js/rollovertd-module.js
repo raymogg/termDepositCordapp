@@ -1,21 +1,23 @@
 "use strict";
 
 //App Module for redeeming a term deposit
-const app = angular.module('RedeemTDAppModule', ['ui.bootstrap']);
+const app = angular.module('RolloverTDAppModule', ['ui.bootstrap']);
 
 // Fix for unhandled rejections bug.
 app.config(['$qProvider', function ($qProvider) {
     $qProvider.errorOnUnhandledRejections(false);
 }]);
 
-app.controller('RedeemTDAppController', function($http, $location, $uibModal) {
+app.controller('RolloverTDAppController', function($http, $location, $uibModal) {
     const demoApp = this;
     // We identify the node.
     const apiBaseURL = "/api/example/";
     document.getElementById("loading").style.display = "none"
     //populate the current offer options
     var matured = [];
+    var offers = [];
     getMatured();
+    getOffers();
 
     //Get all matured term deposits (for our demo purposes this is just any active td)
     function getMatured() {
@@ -42,11 +44,38 @@ app.controller('RedeemTDAppController', function($http, $location, $uibModal) {
         }
     }
 
+    //Load in available term deposit offers
+    function getOffers() {
+        $http.get("/api/term_deposits/offers").then(function (response) {
+            response.data.offers.forEach(function (element) {
+                offers.push(element);
+            });
+            loadOffers();
+        });
+    }
+
+    //Display the term deposit offers to the user
+    function loadOffers() {
+        var offers_select = document.getElementById("deposit_offers")
+            for (var i = 0; i < offers.length; i++) {
+                var option = document.createElement("option");
+                option.value = (offers[i]);
+                option.innerHTML = "Issuing Institute: " + String(offers[i].issuingInstitute) + "\nValid Till: "+
+                        String(offers[i].validTill) + "\nDuration: "+ String(offers[i].duration) + "\nInterest: "+
+                        String(offers[i].interest);
+                offers_select.appendChild(option);
+            }
+    }
+
+
     //OnClick method for redeem button
-    demoApp.redeem = () => {
+    demoApp.rollover = () => {
         //Load in the required data
         var matured_select = document.getElementById("matured_select");
         var selectedDeposit = matured[matured_select.selectedIndex];
+        var new_deposit = document.getElementById("deposit_offers");
+        var selectedNewDeposit = offers[new_deposit.selectedIndex];
+        var with_interest_select = document.getElementById("with_interest");
         //Parse options selected and pull the data
         var value = selectedDeposit.amount;
         var actualValue = stripValue(value); //removes the USD from the string and returns the int
@@ -56,12 +85,19 @@ app.controller('RedeemTDAppController', function($http, $location, $uibModal) {
         var duration = getDuration(selectedDeposit.startDate, selectedDeposit.endDate);
         var customer_anum = selectedDeposit.client.id;
         var startDate = selectedDeposit.startDate;
+        //Parse the selected new deposit
+        var new_interest = selectedNewDeposit.interest;
+        var new_institute = extractOrganisationName(selectedNewDeposit.issuingInstitute);
+        var new_duration = selectedNewDeposit.duration;
+        //Parse the selected with interest option
+        var selectedWithInterest = with_interest_select.value;
+
         $http.get("/api/term_deposits/kyc").then(function (response) {
             response.data.kyc.forEach(function (element) {
                 if (String(element.uniqueIdentifier.id) == customer_anum) {
                     //This is the correct client
-                    callRedeem(actualValue, offering_institute, interest_percent, duration, element.firstName, element.lastName,
-                    element.accountNum, startDate, client);
+                    callRollover(actualValue, offering_institute, interest_percent, duration, element.firstName, element.lastName,
+                    element.accountNum, startDate, client, new_interest, new_institute, new_duration, selectedWithInterest);
                     return;
                 }
              });
@@ -69,21 +105,22 @@ app.controller('RedeemTDAppController', function($http, $location, $uibModal) {
     }
 
         //Redeem API call
-        function callRedeem(value, offering_institute, interest_percent, duration, customer_fname, customer_lname, customer_anum, startDate, client) {
-            var url = "/api/term_deposits/redeem_td?td_value="+value+"&offering_institute="+offering_institute+"&interest_percent="+interest_percent+
-                "&duration="+duration+"&customer_fname="+customer_fname+"&customer_lname="+customer_lname+"&customer_anum="+customer_anum+"&start_date="+startDate+
-                "&client="+client;
+        function callRollover(value, offering_institute, interest_percent, duration, customer_fname, customer_lname, customer_anum, startDate, client,
+                new_interest, new_institute, new_duration, with_interest) {
+            var url = "/api/term_deposits/rollover_td?td_value="+value+"&offering_institute="+offering_institute+"&interest_percent="+interest_percent+
+            "&duration="+duration+"&customer_fname="+customer_fname+"&customer_lname="+customer_lname+"&customer_anum="+customer_anum+
+            "&start_date="+startDate+"&client="+client+"&new_interest="+new_interest+"&new_institute="+new_institute+"&new_duration="+new_duration+
+            "&with_interest="+with_interest;
                 //Display a loading circle
-             alert(String(url));
-             //try format the reponse
-             data = {}
             document.getElementById("loading").style.display = "block"
-            $http.post(url).then(function (response) {
+            $http.post(url).then(function successCallback(response) {
                 document.getElementById("loading").style.display = "none"
                 alert(String(response.data));
                 window.location.href = "index.html";
+            }, function errorCallback(error) {
+                alert(String(error.data));
             });
-                }
+        }
 
         demoApp.cancel = () => {
             alert("Cancelled");

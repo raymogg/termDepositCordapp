@@ -16,19 +16,27 @@ app.controller('DemoAppController', function($http, $location, $uibModal) {
     //Get nodes name and display in browser
     displayNodeName();
 
+    //Get cash held by this node
+    $http.get("/api/example/cash").then(function (response) {
+            //Display the total number of deposits up the top
+            document.getElementById("cash").innerHTML = "Cash: "+ response.data.cash
+    });
+
     // First we pull the TD's from the api -> these are displayed on the home screen
     $http.get("/api/term_deposits/deposits").then(function (response) {
+            //Display the total number of deposits up the top
+            document.getElementById("term_deposits").innerHTML = "Total Deposits: "+ response.data.states.length
             response.data.states.forEach(function (element) {
-            activeTDs.push("From: " + String(element.from) + ", Amount: " + String(element.amount) + ", Ending: " +
-            String(element.endDate) + ", Internal State: " + String(element.internalState));
-            loaded(activeTDs, "currentDeposits", "Current Deposits");
+                activeTDs.push("From: " + String(element.from) + ", Amount: " + String(element.amount) + ", Ending: " +
+                String(element.endDate) + ", Internal State: " + String(element.internalState));
+                loaded(activeTDs, "currentDeposits", "Current Deposits");
             });
     });
 
 
     //Next we pull all offers this node has and display these
     $http.get("/api/term_deposits/offers").then(function (response) {
-                response.data.offers.forEach(function (element) {
+            response.data.offers.forEach(function (element) {
                 currentOffers.push("From: " + String(element.issuingInstitute) + ", Interest: " + String(element.interest) + ", Duration: " +
                 String(element.duration) + ", Valid Until: " + String(element.validTill));
                 loaded(currentOffers, "currentOffers","Current Offers");});
@@ -47,6 +55,10 @@ app.controller('DemoAppController', function($http, $location, $uibModal) {
     //Note this will fail if not called from a bank node.
     demoApp.redeemTD = () => {
         window.location.href = "redeem_td.html";
+    }
+
+    demoApp.rolloverTD = () => {
+        window.location.href = "rollover_td.html"
     }
 
     function displayNodeName() {
