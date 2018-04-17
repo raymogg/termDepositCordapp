@@ -19,6 +19,28 @@ app.controller('RolloverTDAppController', function($http, $location, $uibModal) 
     getMatured();
     getOffers();
 
+    //OnClick methods for each button -> used for loading new pages for TD functionality
+            demoApp.issueTD = () => {
+                window.location.href = "issue_td.html";
+            }
+
+            demoApp.activateTD = () => {
+                    window.location.href = "activate_td.html";
+            }
+
+            //Note this will fail if not called from a bank node.
+            demoApp.redeemTD = () => {
+                window.location.href = "redeem_td.html";
+            }
+
+            demoApp.rolloverTD = () => {
+                window.location.href = "rollover_td.html"
+            }
+
+            demoApp.home = () => {
+                        window.location.href = "index.html"
+                    }
+
     //Get all matured term deposits (for our demo purposes this is just any active td)
     function getMatured() {
         $http.get("/api/term_deposits/deposits").then(function (response) {
@@ -104,28 +126,28 @@ app.controller('RolloverTDAppController', function($http, $location, $uibModal) 
         });
     }
 
-        //Redeem API call
-        function callRollover(value, offering_institute, interest_percent, duration, customer_fname, customer_lname, customer_anum, startDate, client,
-                new_interest, new_institute, new_duration, with_interest) {
-            var url = "/api/term_deposits/rollover_td?td_value="+value+"&offering_institute="+offering_institute+"&interest_percent="+interest_percent+
-            "&duration="+duration+"&customer_fname="+customer_fname+"&customer_lname="+customer_lname+"&customer_anum="+customer_anum+
-            "&start_date="+startDate+"&client="+client+"&new_interest="+new_interest+"&new_institute="+new_institute+"&new_duration="+new_duration+
-            "&with_interest="+with_interest;
-                //Display a loading circle
-            document.getElementById("loading").style.display = "block"
-            $http.post(url).then(function successCallback(response) {
-                document.getElementById("loading").style.display = "none"
-                alert(String(response.data));
-                window.location.href = "index.html";
-            }, function errorCallback(error) {
-                alert(String(error.data));
-            });
-        }
-
-        demoApp.cancel = () => {
-            alert("Cancelled");
+    //Redeem API call
+    function callRollover(value, offering_institute, interest_percent, duration, customer_fname, customer_lname, customer_anum, startDate, client,
+            new_interest, new_institute, new_duration, with_interest) {
+        var url = "/api/term_deposits/rollover_td?td_value="+value+"&offering_institute="+offering_institute+"&interest_percent="+interest_percent+
+        "&duration="+duration+"&customer_fname="+customer_fname+"&customer_lname="+customer_lname+"&customer_anum="+customer_anum+
+        "&start_date="+startDate+"&client="+client+"&new_interest="+new_interest+"&new_institute="+new_institute+"&new_duration="+new_duration+
+        "&with_interest="+with_interest;
+            //Display a loading circle
+        document.getElementById("loading").style.display = "block"
+        $http.post(url).then(function successCallback(response) {
+            document.getElementById("loading").style.display = "none"
+            alert(String(response.data));
             window.location.href = "index.html";
-        }
+        }, function errorCallback(error) {
+            alert(String(error.data));
+        });
+    }
+
+    demoApp.cancel = () => {
+        alert("Cancelled");
+        window.location.href = "index.html";
+    }
 
         //Helper function to extract the needed organisation name from a formatted Corda Name String
                 //This organisatino name is needed to issue a new TD.

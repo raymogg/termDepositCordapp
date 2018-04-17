@@ -17,6 +17,28 @@ app.controller('RedeemTDAppController', function($http, $location, $uibModal) {
     var matured = [];
     getMatured();
 
+    //OnClick methods for each button -> used for loading new pages for TD functionality
+        demoApp.issueTD = () => {
+            window.location.href = "issue_td.html";
+        }
+
+        demoApp.activateTD = () => {
+                window.location.href = "activate_td.html";
+        }
+
+        //Note this will fail if not called from a bank node.
+        demoApp.redeemTD = () => {
+            window.location.href = "redeem_td.html";
+        }
+
+        demoApp.rolloverTD = () => {
+            window.location.href = "rollover_td.html"
+        }
+
+        demoApp.home = () => {
+                    window.location.href = "index.html"
+                }
+
     //Get all matured term deposits (for our demo purposes this is just any active td)
     function getMatured() {
         $http.get("/api/term_deposits/deposits").then(function (response) {

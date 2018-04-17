@@ -13,6 +13,7 @@ app.controller('DemoAppController', function($http, $location, $uibModal) {
     //Variables for TD app
     var activeTDs = [];
     var currentOffers = [];
+    var knownClients = [];
     //Get nodes name and display in browser
     displayNodeName();
 
@@ -42,7 +43,13 @@ app.controller('DemoAppController', function($http, $location, $uibModal) {
                 loaded(currentOffers, "currentOffers","Current Offers");});
     });
 
-
+    //TODO: Get known client data and display it on the homepage.
+    $http.get("/api/term_deposits/kyc").then(function (response) {
+                response.data.kyc.forEach(function (element) {
+                    knownClients.push("First name: " + String(element.firstName) + ", Last name: " + String(element.lastName) + ", Account Num: " +
+                    String(element.accountNum) + ", Unique Identifier: " + String(element.uniqueIdentifier.id));
+                    loaded(knownClients, "knownClients","Known Clients");});
+        });
     //OnClick methods for each button -> used for loading new pages for TD functionality
     demoApp.issueTD = () => {
         window.location.href = "issue_td.html";
@@ -60,6 +67,10 @@ app.controller('DemoAppController', function($http, $location, $uibModal) {
     demoApp.rolloverTD = () => {
         window.location.href = "rollover_td.html"
     }
+
+    demoApp.home = () => {
+            window.location.href = "index.html"
+        }
 
     function displayNodeName() {
         //Make the API Call then change the title

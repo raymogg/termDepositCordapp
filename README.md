@@ -21,8 +21,8 @@ A modified corda GUI is provided with the project under the gui folder. By runni
 When running the NodeDriver, you can add in some extra method calls to run different tests. All features of the term deposit. All methods can be found at the bottom of the NodeDriver.kt file, and some example calls of these have been commented out under the runSimulation function.
 #### API Calls
 When each node is activated,it starts up a webserver allowing you to interact with it via API calls. To do this, first see what port the webserver is started on – this will again be printed in the output of the NodeDriver.kt file, in a line stating “Webservers Started: ….”. It is recommended a API app such as postman be used. To find out what calls are available, see the API documentation below.
-#### Web UI (Under Development)
-Each node can also be accessed via browser using the provided webserver started with the node. Here a simple Web UI has been implemented which can be accessed by clicking on the TermDepositsWeb link on the main page. This feature is still under development, but currently each node will display its current term deposits, and can issue new term deposits by selecting an offer, customer and deposit amount.
+#### Web UI
+Each node can also be accessed via browser using the provided webserver started with the node. Here a simple Web UI has been implemented which can be accessed by clicking on the TermDepositsWeb link on the main page. This web app provides the same functionality as the Corda GUI - allowing you to issue, activate, redeem and transfer term deposits between nodes. You will also be able to view each nodes current deposits, current term deposit offers and current known client information.
 
 ## API
 The following is the API for both Term Deposits and KYC Data. Note that for POST calls, the cordapp will always respond with the transaction ID if the call is successful.

@@ -13,6 +13,14 @@
 </head>
 
 <body ng-app="RedeemTDAppModule" ng-controller="RedeemTDAppController as redeemTDApp">
+<div class="topnav">
+  <button ng-click="redeemTDApp.home()" type="button" class="topnav">Home</button>
+  <button ng-click="redeemTDApp.issueTD()" type="button" class="topnav">Issue Term Deposit</button>
+  <button ng-click="redeemTDApp.activateTD()" type="button" class="topnav">Activate Term Deposit</button>
+  <button ng-click="redeemTDApp.redeemTD()" type="button" class="topnav">Redeem Term Deposit</button>
+  <button ng-click="redeemTDApp.rolloverTD()" type="button" class="topnav">Rollover Term Deposit</button>
+</div>
+<br><br>
 <div class="td_user_entry">
   <h3> Redeem a mature term deposit</h3>
   <br>

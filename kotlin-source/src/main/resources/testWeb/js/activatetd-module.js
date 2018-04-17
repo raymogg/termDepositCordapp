@@ -16,6 +16,28 @@ app.controller('ActivateTDAppController', function($http, $location, $uibModal) 
     var pending = [];
     getPending();
 
+    //OnClick methods for each button -> used for loading new pages for TD functionality
+        demoApp.issueTD = () => {
+            window.location.href = "issue_td.html";
+        }
+
+        demoApp.activateTD = () => {
+                window.location.href = "activate_td.html";
+        }
+
+        //Note this will fail if not called from a bank node.
+        demoApp.redeemTD = () => {
+            window.location.href = "redeem_td.html";
+        }
+
+        demoApp.rolloverTD = () => {
+            window.location.href = "rollover_td.html"
+        }
+
+        demoApp.home = () => {
+                    window.location.href = "index.html"
+                }
+
     //Get all pending term deposits
     function getPending() {
         $http.get("/api/term_deposits/deposits").then(function (response) {

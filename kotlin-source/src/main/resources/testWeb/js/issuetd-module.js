@@ -19,6 +19,28 @@ app.controller('IssueTDAppController', function($http, $location, $uibModal) {
     getOffers();
     getClients();
 
+    //OnClick methods for each button -> used for loading new pages for TD functionality
+        demoApp.issueTD = () => {
+            window.location.href = "issue_td.html";
+        }
+
+        demoApp.activateTD = () => {
+                window.location.href = "activate_td.html";
+        }
+
+        //Note this will fail if not called from a bank node.
+        demoApp.redeemTD = () => {
+            window.location.href = "redeem_td.html";
+        }
+
+        demoApp.rolloverTD = () => {
+            window.location.href = "rollover_td.html"
+        }
+
+        demoApp.home = () => {
+                    window.location.href = "index.html"
+                }
+
     //Load in available term deposit offers
     function getOffers() {
         $http.get("/api/term_deposits/offers").then(function (response) {

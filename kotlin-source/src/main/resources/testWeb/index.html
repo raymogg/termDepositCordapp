@@ -16,6 +16,7 @@
 <body ng-app="demoAppModule" ng-controller="DemoAppController as demoApp">
   <!-- Few simple buttons to interact with the API and enter details -->
   <div class="topnav">
+    <button ng-click="demoApp.home()" type="button" class="topnav">Home</button>
     <button ng-click="demoApp.issueTD()" type="button" class="topnav">Issue Term Deposit</button>
     <button ng-click="demoApp.activateTD()" type="button" class="topnav">Activate Term Deposit</button>
     <button ng-click="demoApp.redeemTD()" type="button" class="topnav">Redeem Term Deposit</button>
@@ -35,5 +36,10 @@
   <div id="currentOffers" class="td_info">
     <h3>Current Offers</h3>
   </div>
+  <br>
+  <div id="knownClients" class="td_info">
+    <h3> Known Clients</h3>
+  </div>
+
 
 </body>
