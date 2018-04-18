@@ -30,14 +30,14 @@ object IssueOffer {
     @CordaSerializable
     @StartableByRPC
     @InitiatingFlow
-    open class Initiator(val endDate: LocalDateTime, val interestPercent: Float,
-                    val issuingInstitue: Party, val otherParty: Party, val attachmentID: SecureHash, val duration: Int) : FlowLogic<SignedTransaction>() {//FlowLogic<SignedTransaction>() {
+    open class Initiator(val dateData: TermDepositOffer.offerDateData, val interestPercent: Float,
+                    val issuingInstitue: Party, val otherParty: Party, val attachmentID: SecureHash, val earlyTerms: TermDepositOffer.earlyTerms) : FlowLogic<SignedTransaction>() {//FlowLogic<SignedTransaction>() {
         @Suspendable
         override fun call(): SignedTransaction {
             //STEP 1: Create TDOffer and build txn - including adding the term deposit terms as an attachment
             val notary = serviceHub.networkMapCache.notaryIdentities.single()
             val tx = TransactionBuilder()
-            val partTx = TermDepositOffer().generateIssue(tx, endDate, interestPercent, issuingInstitue, notary, otherParty, duration)
+            val partTx = TermDepositOffer().generateIssue(tx, dateData, interestPercent, issuingInstitue, notary, otherParty, earlyTerms)
             val flowSession = initiateFlow(otherParty)
 
             //Attach the term deposit terms

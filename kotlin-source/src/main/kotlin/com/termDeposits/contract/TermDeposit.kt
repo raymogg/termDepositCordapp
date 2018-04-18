@@ -107,7 +107,8 @@ open class TermDeposit : Contract {
                       endDate: LocalDateTime, kyc: StateAndRef<KYC.State>): TransactionBuilder {
         val offerState = TDOffer.state.data
         val TDState = TransactionState(data = TermDeposit.State(startDate, endDate, offerState.interestPercent, offerState.institue,
-                depositAmount, internalState.pending, to, clientIdentifier = kyc.state.data.linearId, onMature = null), notary = notary, contract = TERMDEPOSIT_CONTRACT_ID)
+                depositAmount, internalState.pending, to, clientIdentifier = kyc.state.data.linearId, onMature = null, earlyTerms = offerState.earlyTerms),
+                notary = notary, contract = TERMDEPOSIT_CONTRACT_ID)
         //Add the TermDeposit as the output
         builder.addOutputState(TDState)
         //Add the issue command
@@ -172,7 +173,7 @@ open class TermDeposit : Contract {
     @CordaSerializable
     data class State(val startDate: LocalDateTime, val endDate: LocalDateTime, val interestPercent: Float,
                      val institue: Party, val depositAmount: Amount<Currency>, val internalState: String, val owner: AbstractParty,
-                     override val linearId: UniqueIdentifier = UniqueIdentifier(), val clientIdentifier: UniqueIdentifier, val onMature: onMature?) : QueryableState, ContractState, LinearState {
+                     override val linearId: UniqueIdentifier = UniqueIdentifier(), val clientIdentifier: UniqueIdentifier, val onMature: onMature?, val earlyTerms: TermDepositOffer.earlyTerms) : QueryableState, ContractState, LinearState {
 
         //Participants store this state in their vault - therefor this should be both the owner (whoever has taken out the loan) and the issueing institute
         override val participants: List<AbstractParty> get() = listOf(owner, institue)

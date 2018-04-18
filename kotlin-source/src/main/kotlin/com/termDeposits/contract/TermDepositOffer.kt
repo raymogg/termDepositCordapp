@@ -87,9 +87,9 @@ open class TermDepositOffer : Contract {
         class Rollover: Commands
     }
 
-    fun generateIssue(builder: TransactionBuilder, endDate: LocalDateTime, interestPercent: Float,
-                             institue: Party, notary: Party, receiver: Party, duration: Int): TransactionBuilder {
-        val state = TransactionState(data = TermDepositOffer.State(endDate, duration, interestPercent, institue, receiver), notary = notary, contract = TERMDEPOSIT_OFFER_CONTRACT_ID)
+    fun generateIssue(builder: TransactionBuilder, dateData: offerDateData, interestPercent: Float,
+                             institue: Party, notary: Party, receiver: Party, earlyTerms: earlyTerms): TransactionBuilder {
+        val state = TransactionState(data = TermDepositOffer.State(dateData.endDate, dateData.duration, interestPercent, institue, receiver, earlyTerms), notary = notary, contract = TERMDEPOSIT_OFFER_CONTRACT_ID)
         builder.addOutputState(state)
         builder.addCommand(TermDepositOffer.Commands.Issue(), institue.owningKey)
         return builder
@@ -107,7 +107,7 @@ open class TermDepositOffer : Contract {
      */
     @CordaSerializable
     data class State(val validTill: LocalDateTime, val duration: Int,
-                                     val interestPercent: Float, val institue: Party, val owner: AbstractParty) : QueryableState, ContractState {
+                                     val interestPercent: Float, val institue: Party, val owner: AbstractParty, val earlyTerms: earlyTerms) : QueryableState, ContractState {
 
         override val participants: List<AbstractParty> get() = listOf(owner)
 
@@ -129,5 +129,17 @@ open class TermDepositOffer : Contract {
             }
         }
     }
+
+    /** Data Class to hold required terms for if a party exits the deposit early */
+    //TODO -> For now this is just true/false and then we apply a scaled ratio of time left for interest pay out, could be more detailed though
+    @CordaSerializable
+    data class earlyTerms(val earlyPenalty: Boolean)
+
+    /** Data Class to hold required terms for if a party exits the deposit early */
+    //TODO -> For now this is just true/false and then we apply a scaled ratio of time left for interest pay out, could be more detailed though
+    @CordaSerializable
+    data class offerDateData(val endDate: LocalDateTime, var duration: Int)
+
+
 
 }

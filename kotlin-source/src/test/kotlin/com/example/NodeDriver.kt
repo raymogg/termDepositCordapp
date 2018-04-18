@@ -2,6 +2,7 @@ package com.example
 
 import com.termDeposits.contract.KYC
 import com.termDeposits.contract.TermDeposit
+import com.termDeposits.contract.TermDepositOffer
 import com.termDeposits.flow.TermDeposit.*
 import net.corda.core.contracts.Amount
 import net.corda.core.contracts.UniqueIdentifier
@@ -197,7 +198,7 @@ class Simulation(options: String) {
     /** TESTING FOR FLOW ERRORS */
     @Test
     fun expiredTDOffer() {
-        sendTDOffers(banks[0].second, parties[0].second, LocalDateTime.now(), 3.4f, 6)
+        sendTDOffers(banks[0].second, parties[0].second, TermDepositOffer.offerDateData(LocalDateTime.now(), 6), 3.4f, TermDepositOffer.earlyTerms(true))
         CreateKYC(parties[0].second, "Bob", "Smith", "1234")
         Thread.sleep(1000)
         //Should throw an error due to the offer already expirying/no states being found.
@@ -215,7 +216,7 @@ class Simulation(options: String) {
     @Test
     fun exitNonExpiredTD() {
         var error = false
-        sendTDOffers(banks[0].second, parties[0].second, LocalDateTime.MAX, 3.4f, 6)
+        sendTDOffers(banks[0].second, parties[0].second, TermDepositOffer.offerDateData(LocalDateTime.MAX, 6), 3.4f, TermDepositOffer.earlyTerms(true))
         CreateKYC(parties[0].second, "Bob", "Smith", "1234")
         val startTime = LocalDateTime.now()
         RequestTD(parties[0].second, banks[0].second, startTime, 3.4f, Amount(30000, USD), "Bob", "Smith", "1234", 6)
@@ -236,7 +237,7 @@ class Simulation(options: String) {
     @Test
     fun rolloverWithInterestNonExpiredTD() {
         var error = false
-        sendTDOffers(banks[0].second, parties[0].second, LocalDateTime.MAX, 3.4f,6)
+        sendTDOffers(banks[0].second, parties[0].second, TermDepositOffer.offerDateData(LocalDateTime.MAX, 6), 3.4f, TermDepositOffer.earlyTerms(true))
         CreateKYC(parties[0].second, "Bob", "Smith", "1234")
         val startTime = LocalDateTime.now()
         RequestTD(parties[0].second, banks[0].second, startTime, 3.4f, Amount(30000, USD), "Bob", "Smith", "1234",6)
@@ -258,7 +259,7 @@ class Simulation(options: String) {
     @Test
     fun rolloverWOInterestNonExpiredTD() {
         var error = false
-        sendTDOffers(banks[0].second, parties[0].second, LocalDateTime.MAX, 3.4f, 6)
+        sendTDOffers(banks[0].second, parties[0].second, TermDepositOffer.offerDateData(LocalDateTime.MAX, 6), 3.4f, TermDepositOffer.earlyTerms(true))
         CreateKYC(parties[0].second, "Bob", "Smith", "1234")
         val startTime = LocalDateTime.now()
         RequestTD(parties[0].second, banks[0].second, startTime, 3.4f, Amount(30000, USD), "Bob", "Smith", "1234",6)
@@ -356,12 +357,12 @@ class Simulation(options: String) {
 
         println("Start Term Deposit Simulations!")
         //Send out offers from the two banks at different interest percentages
-        sendTDOffers(banks[0].second, parties[0].second, LocalDateTime.MAX, 2.55f,6)
-        sendTDOffers(banks[0].second, parties[0].second, LocalDateTime.MAX, 2.65f,12)
-        sendTDOffers(banks[0].second, parties[0].second, LocalDateTime.MAX, 3.1f,18)
-        sendTDOffers(banks[1].second, parties[0].second, LocalDateTime.MAX, 2.7f,6)
-        sendTDOffers(banks[1].second, parties[0].second, LocalDateTime.MAX, 3.0f,12)
-        sendTDOffers(banks[1].second, parties[0].second, LocalDateTime.MAX, 2.95f,18)
+        sendTDOffers(banks[0].second, parties[0].second, TermDepositOffer.offerDateData(LocalDateTime.MAX, 6), 2.55f,TermDepositOffer.earlyTerms(true))
+        sendTDOffers(banks[0].second, parties[0].second,TermDepositOffer.offerDateData(LocalDateTime.MAX, 12), 2.65f,TermDepositOffer.earlyTerms(true))
+        sendTDOffers(banks[0].second, parties[0].second, TermDepositOffer.offerDateData(LocalDateTime.MAX, 18), 3.1f,TermDepositOffer.earlyTerms(true))
+        sendTDOffers(banks[1].second, parties[0].second, TermDepositOffer.offerDateData(LocalDateTime.MAX, 6), 2.7f, TermDepositOffer.earlyTerms(true))
+        sendTDOffers(banks[1].second, parties[0].second, TermDepositOffer.offerDateData(LocalDateTime.MAX, 12), 3.0f, TermDepositOffer.earlyTerms(true))
+        sendTDOffers(banks[1].second, parties[0].second, TermDepositOffer.offerDateData(LocalDateTime.MAX, 18), 2.95f, TermDepositOffer.earlyTerms(true))
 
         //Accept some td offers
         RequestTD(parties[0].second, banks[0].second, LocalDateTime.MIN, 2.65f, Amount(30000,USD), "Bob", "Smith", "1234",12)
@@ -378,8 +379,8 @@ class Simulation(options: String) {
 //                "Bob", "Smith", "NEWACCOUNT", 3.1f, banks[0].first, 18)
     }
 
-    fun sendTDOffers(me : CordaRPCOps, receiver: CordaRPCOps, endDate: LocalDateTime,
-                     interestPercent: Float, duration: Int) {
+    fun sendTDOffers(me : CordaRPCOps, receiver: CordaRPCOps, dateData: TermDepositOffer.offerDateData,
+                     interestPercent: Float, earlyTerms: TermDepositOffer.earlyTerms) {
         //Get attachment hash for the txn before starting the flow
         //TODO: This hardcoding of a very specific file path probably isnt that great
         val attachmentInputStream = File("C:\\Users\\raymondm\\Documents\\termDepositCordapp\\kotlin-source\\src\\main\\resources\\Example_TD_Contract.zip").inputStream()
@@ -392,9 +393,9 @@ class Simulation(options: String) {
         } else {
             attachmentHash = me.uploadAttachment(inputStreamCopy)
         }
-        val returnVal = me.startFlow(IssueOffer::Initiator, endDate, interestPercent, me.nodeInfo().legalIdentities.first(), receiver.nodeInfo().legalIdentities.first(),
-                attachmentHash, duration).returnValue.getOrThrow()
-        println("TD Offer Issued: "+interestPercent+"% for " + duration + " months from "+me.nodeInfo().legalIdentities.first());
+        val returnVal = me.startFlow(IssueOffer::Initiator, dateData, interestPercent, me.nodeInfo().legalIdentities.first(), receiver.nodeInfo().legalIdentities.first(),
+                attachmentHash, earlyTerms).returnValue.getOrThrow()
+        println("TD Offer Issued: "+interestPercent+"% for " + dateData.duration + " months from "+me.nodeInfo().legalIdentities.first());
     }
 
     fun RequestTD(me : CordaRPCOps, issuer: CordaRPCOps, startDate: LocalDateTime,
