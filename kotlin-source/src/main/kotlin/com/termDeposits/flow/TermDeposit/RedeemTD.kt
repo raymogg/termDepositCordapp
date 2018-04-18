@@ -16,6 +16,8 @@ import net.corda.core.utilities.unwrap
 import net.corda.finance.USD
 import net.corda.finance.contracts.asset.Cash
 import net.corda.finance.utils.sumCashBy
+import java.time.LocalDateTime
+import java.time.Period
 import java.util.*
 
 /** Flow for redeeming a TD. This flow is invoked by a client/node that "owns" the term deposit (i.e have given money to the
@@ -81,7 +83,23 @@ object RedeemTD {
             val builder = TransactionBuilder(notary)
             val builder2 = TermDeposit().genereateRedeem(builder, TermDeposit)
             //Add our required cash
-            val (tx, cashKeys) = Cash.generateSpend(serviceHub, builder2, Amount((TermDeposit.state.data.depositAmount.quantity * (100+TermDeposit.state.data.interestPercent)/100).toLong(), USD),
+            val amountOfCash: Amount<Currency>
+            if (TermDeposit.state.data.endDate.isAfter(LocalDateTime.now()) && TermDeposit.state.data.earlyTerms.earlyPenalty == true) {
+                //The user is exiting early, we allow this but penalize them
+                val monthsDiff = Period.between(LocalDateTime.now().toLocalDate(),TermDeposit.state.data.endDate.toLocalDate()).months
+                val yearsToMonthsDiff = Period.between(LocalDateTime.now().toLocalDate(),TermDeposit.state.data.endDate.toLocalDate()).years * 12
+                val monthsLeft = monthsDiff + yearsToMonthsDiff
+                val monthsDiff2 = Period.between(TermDeposit.state.data.startDate.toLocalDate(),TermDeposit.state.data.endDate.toLocalDate()).months
+                val yearsToMonthsDiff2 = Period.between(TermDeposit.state.data.startDate.toLocalDate(),TermDeposit.state.data.endDate.toLocalDate()).years * 12
+                val totalMonths = monthsDiff2 + yearsToMonthsDiff2
+                val ratioToPay = (monthsLeft/totalMonths)
+                amountOfCash = Amount((TermDeposit.state.data.depositAmount.quantity * (100+TermDeposit.state.data.interestPercent*ratioToPay)/100).toLong(), USD)
+            } else {
+//                val (tx, cashKeys) = Cash.generateSpend(serviceHub, builder2, Amount((TermDeposit.state.data.depositAmount.quantity * (100+TermDeposit.state.data.interestPercent)/100).toLong(), USD),
+//                        flow.counterparty)
+                amountOfCash = Amount((TermDeposit.state.data.depositAmount.quantity * (100+TermDeposit.state.data.interestPercent)/100).toLong(), USD)
+            }
+            val (tx, cashKeys) = Cash.generateSpend(serviceHub, builder2, amountOfCash,
                     flow.counterparty)
 
             //STEP 5: Sign transaction and get the client to sign the transaction
