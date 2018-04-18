@@ -78,6 +78,14 @@ app.controller('DemoAppController', function($http, $location, $uibModal) {
         $http.get(url).then(function (response) {
             var title = document.getElementById("title").innerHTML = "TD Cordapp: " + extractOrganisationName(response.data.me);
             var name_title = document.getElementById("node_title").innerHTML = "Welcome, " + extractOrganisationName(response.data.me);
+            var img = document.createElement('img');
+            if (extractOrganisationName(response.data.me) == "AMM") {
+                img.src = 'img/' + 'amm_logo.png';
+                document.getElementById('img_header').appendChild(img)
+            } else if (extractOrganisationName(response.data.me) == "BankA" || name_title == "BankB") {
+                img.src = 'img/' + 'commbank_logo.png';
+                document.getElementById('img_header').appendChild(img)
+            }
         });
     }
 
