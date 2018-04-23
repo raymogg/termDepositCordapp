@@ -93,19 +93,19 @@ app.controller('RedeemTDAppController', function($http, $location, $uibModal) {
         //Redeem API call
         function callRedeem(value, offering_institute, interest_percent, duration, customer_fname, customer_lname, customer_anum, startDate, client) {
             var url = "/api/term_deposits/redeem_td?td_value="+value+"&offering_institute="+offering_institute+"&interest_percent="+interest_percent+
-                "&duration="+duration+"&customer_fname="+customer_fname+"&customer_lname="+customer_lname+"&customer_anum="+customer_anum+"&start_date="+startDate+
-                "&client="+client;
+                "&duration="+duration+"&customer_fname="+customer_fname+"&customer_lname="+customer_lname+"&customer_anum="+customer_anum+"&start_date="+startDate //+
+                //"&client="+client;
                 //Display a loading circle
-             alert(String(url));
-             //try format the reponse
-             data = {}
+             //alert(String(url));
             document.getElementById("loading").style.display = "block"
-            $http.post(url).then(function (response) {
-                document.getElementById("loading").style.display = "none"
-                alert(String(response.data));
-                window.location.href = "index.html";
-            });
-                }
+            $http.post(url).then(function successCallback(response) {
+                        document.getElementById("loading").style.display = "none"
+                        alert(String(response.data));
+                        window.location.href = "index.html";
+                    }, function errorCallback(error) {
+                        alert(String(error.data));
+                    });
+        }
 
         demoApp.cancel = () => {
             alert("Cancelled");

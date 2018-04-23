@@ -368,11 +368,11 @@ class Simulation(options: String) {
         RequestTD(parties[0].second, banks[0].second, LocalDateTime.MIN, 2.65f, Amount(30000,USD), "Bob", "Smith", "1234",12)
         Activate(banks[0].second, parties[0].second, LocalDateTime.MIN, LocalDateTime.MAX, 2.65f, Amount(30000,USD), 12,
                 "Bob", "Smith", "1234")
-        //NOTE: These are not included in the simulations as they can easily be demoed in the corda demo bench or through the web api.
+//        //NOTE: These are not included in the simulations as they can easily be demoed in the corda demo bench or through the web api.
 //        Redeem(parties[0].second, banks[0].second, LocalDateTime.MIN, LocalDateTime.MIN.plusMonths(12), 2.65f, Amount(30000,USD), 12,
 //                "Bob", "Smith", "1234" )
 
-//        //Update some KYC data
+        //Update some KYC data
 //        updateKYC(parties[0].second, "NEWACCOUNT", client1)
 //
 //        Rollover(parties[0].second, banks[0].second, LocalDateTime.MIN, 2.65f, Amount(30000,USD), true, 12,
@@ -433,6 +433,7 @@ class Simulation(options: String) {
         val kycNameData = KYC.KYCNameData(firstName, lastName, accountNumber)
         val dateData = TermDeposit.DateData(startDate, duration)
         val returnVal = me.startFlow(RedeemTD::RedemptionInitiator, dateData, interestPercent, issuer.nodeInfo().legalIdentities.first(), depositAmount, kycNameData).returnValue.getOrThrow()
+        println("TD Redeemed "+returnVal.coreTransaction.id)
     }
 
     fun Rollover(me: CordaRPCOps, issuer: CordaRPCOps, startDate: LocalDateTime, interestPercent: Float, depositAmount: Amount<Currency>, withInterest: Boolean, duration: Int,

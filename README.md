@@ -148,7 +148,7 @@ POST call to activate a term deposit – this call must be made from the issuing
 
 **Example Call**
 
-http://localhost:10019/api/term_deposits/activate_td?td_value=500&offering_institute=BankA&interest_percent=2.55&duration=6&customer_fname=Jane&customer_lname=Doe&customer_anum=9384&start_date=2007-12-03T10:15:30&client=AMM
+http://localhost:10019/api/term_deposits/activate_td?td_value=500&offering_institute=BankA&interest_percent=2.55&duration=6&customer_fname=Jane&customer_lname=Doe&customer_anum=9384&start_date=2007-12-03&client=AMM
 
 #### Redeem a Term Deposit (POST)
 **/api/term_deposits/redeem_td**
@@ -165,7 +165,7 @@ Post call to redeem a term deposit. All paramaters passed in must belong to a cu
 
 **Example Call**
 
-http://localhost:10010/api/term_deposits/redeem_td?td_value=300&offering_institute=BankA&interest_percent=2.65&duration=12&customer_fname=Bob&customer_lname=Smith&customer_anum=1234&start_date=2007-12-03T10:15:30
+http://localhost:10010/api/term_deposits/redeem_td?td_value=300&offering_institute=BankA&interest_percent=2.65&duration=12&customer_fname=Bob&customer_lname=Smith&customer_anum=1234&start_date=2007-12-03
 
 #### Rollover a Term Deposit (POST)
 **/api/term_deposits/rollover_td**
@@ -186,7 +186,7 @@ POST call to rollover a term deposit. As before, input paramaters td_value, offe
 
 **Example Call**
 
-http://localhost:10010/api/term_deposits/rollover_td?td_value=300&offering_institute=BankA&interest_percent=2.65&duration=12&customer_fname=Bob&customer_lname=Smith&customer_anum=1234&start_date=2007-12-03T10:15:30&new_interest=2.65&new_institute=BankA&new_duration=6&with_interest=true
+http://localhost:10010/api/term_deposits/rollover_td?td_value=300&offering_institute=BankA&interest_percent=2.65&duration=12&customer_fname=Bob&customer_lname=Smith&customer_anum=1234&start_date=2007-12-03&new_interest=2.65&new_institute=BankA&new_duration=6&with_interest=true
 
 ### KYC API
 #### Get Client KYC data (GET)
