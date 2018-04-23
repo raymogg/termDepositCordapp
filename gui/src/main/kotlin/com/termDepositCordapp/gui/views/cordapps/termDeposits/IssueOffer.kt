@@ -108,10 +108,12 @@ class IssueOffer : Fragment() {
                     val interest = interestTextField.text.toFloat()
                     val toParty = toChoiceBox.value
                     val duration = durationTextField.text.toInt()
+                    val dateData = TermDepositOffer.offerDateData(endDate, duration);
                     val attachmentInputStream = File("C:\\Users\\raymondm\\Documents\\termDepositsCordapp\\kotlin-source\\src\\main\\resources\\Example_TD_Contract.zip").inputStream()
                     val attachmentHash = rpcProxy.value?.uploadAttachment(attachmentInputStream)
-                    rpcProxy.value?.startFlow(IssueOffer::Initiator, endDate, interest, rpcProxy.value?.nodeInfo()!!.legalIdentities.first(),
-                            toParty, attachmentHash!!, duration)
+                    val earlyTerms = TermDepositOffer.earlyTerms(true)
+                    rpcProxy.value?.startFlow(IssueOffer::Initiator, dateData, interest, rpcProxy.value?.nodeInfo()!!.legalIdentities.first(),
+                            toParty, attachmentHash!!, earlyTerms)
                 }
                 else -> null
             }

@@ -55,7 +55,12 @@ object RedeemTD {
                     val cashNeeded = (TermDeposits.first().state.data.depositAmount.quantity * (100+TermDeposits.first().state.data.interestPercent)/100).toLong()
                     requireThat {
                         //TODO: Factor in if we exited early
-                        //"Must have been paid the correct amount of cash for this term deposit" using (cashProvided == cashNeeded)
+                        if (TermDeposits.first().state.data.endDate.isAfter(LocalDateTime.now()) && TermDeposits.first().state.data.earlyTerms.earlyPenalty == true) {
+                            //Exited early
+                            //"Must have been paid the correct amount of cash for this term deposit" using (cashProvided == cashNeeded)
+                        } else {
+                            "Must have been paid the correct amount of cash for this term deposit" using (cashProvided == cashNeeded)
+                        }
                     }
                 }
             }
