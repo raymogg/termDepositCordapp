@@ -15,6 +15,7 @@ import net.corda.core.transactions.TransactionBuilder
 import net.corda.core.utilities.OpaqueBytes
 import net.corda.core.utilities.getOrThrow
 import net.corda.finance.USD
+import net.corda.finance.contracts.asset.Cash
 import net.corda.finance.flows.CashExitFlow
 import net.corda.finance.flows.CashIssueAndPaymentFlow
 import net.corda.finance.flows.CashIssueFlow
@@ -188,7 +189,7 @@ class Simulation(options: String) {
     )
 
     fun allocateCashPermissions() : Set<String> = setOf(
-            Permissions.startFlow<CashIssueFlow>(),
+            //Permissions.startFlow<CashIssueFlow>(),
             Permissions.startFlow<CashExitFlow>(),
             Permissions.startFlow<CashPaymentFlow>(),
             Permissions.startFlow<CashIssueAndPaymentFlow>()
@@ -220,11 +221,11 @@ class Simulation(options: String) {
         CreateKYC(parties[0].second, "Bob", "Smith", "1234")
         val startTime = LocalDateTime.now()
         RequestTD(parties[0].second, banks[0].second, startTime, 3.4f, Amount(30000, USD), "Bob", "Smith", "1234", 6)
-        Activate(banks[0].second, parties[0].second, startTime, startTime.plusWeeks(6), 3.4f, Amount(30000, USD), 6,
+        Activate(banks[0].second, parties[0].second, startTime, 3.4f, Amount(30000, USD), 6,
                 "Bob", "Smith", "1234")
         //Should throw an error due to this term deposit not yet being able to exit
         try {
-            Redeem(parties[0].second, banks[0].second, startTime, startTime.plusWeeks(6), 3.4f, Amount(30000, USD), 6,
+            Redeem(parties[0].second, banks[0].second, startTime, 3.4f, Amount(30000, USD), 6,
                     "Bob", "Smith", "1234")
         } catch (e: Exception) {
             error = true
@@ -241,7 +242,7 @@ class Simulation(options: String) {
         CreateKYC(parties[0].second, "Bob", "Smith", "1234")
         val startTime = LocalDateTime.now()
         RequestTD(parties[0].second, banks[0].second, startTime, 3.4f, Amount(30000, USD), "Bob", "Smith", "1234",6)
-        Activate(banks[0].second, parties[0].second, startTime, startTime.plusWeeks(6), 3.4f, Amount(30000, USD),6,
+        Activate(banks[0].second, parties[0].second, startTime, 3.4f, Amount(30000, USD),6,
                 "Bob", "Smith", "1234")
         //Should throw an error due to this term deposit not yet being able to exit
         try {
@@ -263,7 +264,7 @@ class Simulation(options: String) {
         CreateKYC(parties[0].second, "Bob", "Smith", "1234")
         val startTime = LocalDateTime.now()
         RequestTD(parties[0].second, banks[0].second, startTime, 3.4f, Amount(30000, USD), "Bob", "Smith", "1234",6)
-        Activate(banks[0].second, parties[0].second, startTime, startTime.plusWeeks(6), 3.4f, Amount(30000, USD), 6,
+        Activate(banks[0].second, parties[0].second, startTime, 3.4f, Amount(30000, USD), 6,
                 "Bob", "Smith", "1234")
         //Should throw an error due to this term deposit not yet being able to exit
         try {
@@ -298,7 +299,7 @@ class Simulation(options: String) {
         var error = false
         val startTime = LocalDateTime.now()
         try {
-            Activate(banks[0].second, parties[0].second, startTime, startTime.plusWeeks(6), 5.5f, Amount(75000, USD), 6,
+            Activate(banks[0].second, parties[0].second, startTime, 5.5f, Amount(75000, USD), 6,
                     "Bob", "Smith", "1234")
         } catch (e: Exception) {
             println("Test Passed")
@@ -366,8 +367,18 @@ class Simulation(options: String) {
 
         //Accept some td offers
         RequestTD(parties[0].second, banks[0].second, LocalDateTime.MIN, 2.65f, Amount(30000,USD), "Bob", "Smith", "1234",12)
-        Activate(banks[0].second, parties[0].second, LocalDateTime.MIN, LocalDateTime.MAX, 2.65f, Amount(30000,USD), 12,
+        Activate(banks[0].second, parties[0].second, LocalDateTime.MIN,  2.65f, Amount(30000,USD), 12,
                 "Bob", "Smith", "1234")
+        Redeem(parties[0].second, banks[0].second, LocalDateTime.MIN, 2.65f, Amount(30000,USD), 12,
+                "Bob", "Smith", "1234" )
+
+        //Test out early redeem - interest rate should be reduced proportionally
+        val start = LocalDateTime.now()
+        RequestTD(parties[0].second, banks[0].second, start, 2.65f, Amount(30000,USD), "Elon", "Musk", "5236",12)
+        Activate(banks[0].second, parties[0].second, start, 2.65f, Amount(30000,USD), 12,
+                "Elon", "Musk", "5236")
+        Redeem(parties[0].second, banks[0].second, start, 2.65f, Amount(30000,USD), 12,
+                                "Elon", "Musk", "5236" )
 //        //NOTE: These are not included in the simulations as they can easily be demoed in the corda demo bench or through the web api.
 //        Redeem(parties[0].second, banks[0].second, LocalDateTime.MIN, LocalDateTime.MIN.plusMonths(12), 2.65f, Amount(30000,USD), 12,
 //                "Bob", "Smith", "1234" )
@@ -408,7 +419,7 @@ class Simulation(options: String) {
         println("TD Requested: For client "+kycData.firstName+" "+kycData.lastName + "with offering institute "+ issuer.nodeInfo())
     }
 
-    fun Activate(me : CordaRPCOps, client : CordaRPCOps, startDate: LocalDateTime, endDate: LocalDateTime, interestPercent: Float, depositAmount: Amount<Currency>, duration: Int,
+    fun Activate(me : CordaRPCOps, client : CordaRPCOps, startDate: LocalDateTime, interestPercent: Float, depositAmount: Amount<Currency>, duration: Int,
                  firstName: String, lastName: String, accountNumber: String) {
         val kycNameData = KYC.KYCNameData(firstName, lastName,accountNumber)
         val dateData = TermDeposit.DateData(startDate, duration)
@@ -427,13 +438,13 @@ class Simulation(options: String) {
         println("Cash Issue: ${amount} units of $USD issued to ${recipient.nodeInfo().legalIdentities.first()}")
     }
 
-    fun Redeem(me : CordaRPCOps, issuer: CordaRPCOps, startDate: LocalDateTime, endDate: LocalDateTime,
+    fun Redeem(me : CordaRPCOps, issuer: CordaRPCOps, startDate: LocalDateTime,
                interestPercent: Float, depositAmount: Amount<Currency>, duration: Int,
                firstName: String, lastName: String, accountNumber: String) {
         val kycNameData = KYC.KYCNameData(firstName, lastName, accountNumber)
         val dateData = TermDeposit.DateData(startDate, duration)
         val returnVal = me.startFlow(RedeemTD::RedemptionInitiator, dateData, interestPercent, issuer.nodeInfo().legalIdentities.first(), depositAmount, kycNameData).returnValue.getOrThrow()
-        println("TD Redeemed "+returnVal.coreTransaction.id)
+        println("TD Redeemed "+returnVal.coreTransaction.id + " Cash ${returnVal.tx.outputs.map { it.data }}" )
     }
 
     fun Rollover(me: CordaRPCOps, issuer: CordaRPCOps, startDate: LocalDateTime, interestPercent: Float, depositAmount: Amount<Currency>, withInterest: Boolean, duration: Int,

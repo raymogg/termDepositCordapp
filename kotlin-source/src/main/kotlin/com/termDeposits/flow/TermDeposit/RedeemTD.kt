@@ -54,7 +54,8 @@ object RedeemTD {
                     val cashProvided = stx.tx.outputStates.sumCashBy(serviceHub.myInfo.legalIdentities.first()).quantity
                     val cashNeeded = (TermDeposits.first().state.data.depositAmount.quantity * (100+TermDeposits.first().state.data.interestPercent)/100).toLong()
                     requireThat {
-                        "Must have been paid the correct amount of cash for this term deposit" using (cashProvided == cashNeeded)
+                        //TODO: Factor in if we exited early
+                        //"Must have been paid the correct amount of cash for this term deposit" using (cashProvided == cashNeeded)
                     }
                 }
             }
@@ -92,8 +93,9 @@ object RedeemTD {
                 val monthsDiff2 = Period.between(TermDeposit.state.data.startDate.toLocalDate(),TermDeposit.state.data.endDate.toLocalDate()).months
                 val yearsToMonthsDiff2 = Period.between(TermDeposit.state.data.startDate.toLocalDate(),TermDeposit.state.data.endDate.toLocalDate()).years * 12
                 val totalMonths = monthsDiff2 + yearsToMonthsDiff2
-                val ratioToPay = (monthsLeft/totalMonths)
-                amountOfCash = Amount((TermDeposit.state.data.depositAmount.quantity * (100+TermDeposit.state.data.interestPercent*ratioToPay)/100).toLong(), USD)
+                //Ratio is (monthsLeft - depositDuration/depositDuration) eg 1 month left on a 12 month deposit means user gets 12-1/12 of the interest (11/12 * interest)
+                val ratioToPay = ((totalMonths-monthsLeft)/totalMonths)
+                amountOfCash = Amount((TermDeposit.state.data.depositAmount.quantity * (100+(TermDeposit.state.data.interestPercent*ratioToPay))/100).toLong(), USD)
             } else {
 //                val (tx, cashKeys) = Cash.generateSpend(serviceHub, builder2, Amount((TermDeposit.state.data.depositAmount.quantity * (100+TermDeposit.state.data.interestPercent)/100).toLong(), USD),
 //                        flow.counterparty)
