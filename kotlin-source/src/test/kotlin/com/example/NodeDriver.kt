@@ -365,13 +365,11 @@ class Simulation(options: String) {
         sendTDOffers(banks[1].second, parties[0].second, TermDepositOffer.offerDateData(LocalDateTime.MAX, 12), 3.0f, TermDepositOffer.earlyTerms(true))
         sendTDOffers(banks[1].second, parties[0].second, TermDepositOffer.offerDateData(LocalDateTime.MAX, 18), 2.95f, TermDepositOffer.earlyTerms(true))
 
-        val string = "This is how long a potential comment on a review would be. I think one or two sentences would be enough. Very max would be here"
-        println("LENGTHl: ${string.length}")
         //Accept some td offers
-        RequestTD(parties[0].second, banks[0].second, LocalDateTime.MIN, 2.65f, Amount(30000,USD), "Bob", "Smith", "1234",12)
-        Activate(banks[0].second, parties[0].second, LocalDateTime.MIN,  2.65f, Amount(30000,USD), 12,
+        RequestTD(parties[0].second, banks[0].second, LocalDateTime.MIN, 2.65f, Amount(300000,USD), "Bob", "Smith", "1234",12)
+        Activate(banks[0].second, parties[0].second, LocalDateTime.MIN,  2.65f, Amount(300000,USD), 12,
                 "Bob", "Smith", "1234")
-        Redeem(parties[0].second, banks[0].second, LocalDateTime.MIN, 2.65f, Amount(30000,USD), 12,
+        Redeem(parties[0].second, banks[0].second, LocalDateTime.MIN, 2.65f, Amount(300000,USD), 12,
                 "Bob", "Smith", "1234" )
 
 
@@ -387,12 +385,12 @@ class Simulation(options: String) {
 //                "Bob", "Smith", "NEWACCOUNT", 3.1f, banks[0].first, 18)
 
         //Test out early redeem - interest rate should be reduced proportionally
-//        val start = LocalDateTime.now()
-//        RequestTD(parties[0].second, banks[0].second, start, 2.65f, Amount(30000,USD), "Elon", "Musk", "5236",12)
-//        Activate(banks[0].second, parties[0].second, start, 2.65f, Amount(30000,USD), 12,
-//                "Elon", "Musk", "5236")
-//        Redeem(parties[0].second, banks[0].second, start, 2.65f, Amount(30000,USD), 12,
-//                                "Elon", "Musk", "5236" )
+        val start = LocalDateTime.now().minusMonths(3)
+        RequestTD(parties[0].second, banks[0].second, start, 2.65f, Amount(300000,USD), "Elon", "Musk", "5236",12)
+        Activate(banks[0].second, parties[0].second, start, 2.65f, Amount(300000,USD), 12,
+                "Elon", "Musk", "5236")
+        Redeem(parties[0].second, banks[0].second, start, 2.65f, Amount(300000,USD), 12,
+                                "Elon", "Musk", "5236" )
     }
 
     fun sendTDOffers(me : CordaRPCOps, receiver: CordaRPCOps, dateData: TermDepositOffer.offerDateData,

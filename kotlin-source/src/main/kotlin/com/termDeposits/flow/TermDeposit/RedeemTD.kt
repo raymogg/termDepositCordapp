@@ -19,6 +19,7 @@ import net.corda.finance.utils.sumCashBy
 import java.time.LocalDateTime
 import java.time.Period
 import java.util.*
+import java.util.logging.Logger
 
 /** Flow for redeeming a TD. This flow is invoked by a client/node that "owns" the term deposit (i.e have given money to the
  * issuing institue). After this flow the term deposits will be consumed.
@@ -99,7 +100,8 @@ object RedeemTD {
                 val yearsToMonthsDiff2 = Period.between(TermDeposit.state.data.startDate.toLocalDate(),TermDeposit.state.data.endDate.toLocalDate()).years * 12
                 val totalMonths = monthsDiff2 + yearsToMonthsDiff2
                 //Ratio is (monthsLeft - depositDuration/depositDuration) eg 1 month left on a 12 month deposit means user gets 12-1/12 of the interest (11/12 * interest)
-                val ratioToPay = ((totalMonths-monthsLeft)/totalMonths)
+                val ratioToPay = ((totalMonths.toFloat()-monthsLeft.toFloat())/totalMonths.toFloat())
+                println("Ratio to pay $ratioToPay")
                 amountOfCash = Amount((TermDeposit.state.data.depositAmount.quantity * (100+(TermDeposit.state.data.interestPercent*ratioToPay))/100).toLong(), USD)
             } else {
 //                val (tx, cashKeys) = Cash.generateSpend(serviceHub, builder2, Amount((TermDeposit.state.data.depositAmount.quantity * (100+TermDeposit.state.data.interestPercent)/100).toLong(), USD),

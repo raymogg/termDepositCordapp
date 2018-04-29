@@ -4,7 +4,7 @@ The following documents the API and setup guide for the Term Deposits Cordapp - 
 
 ## Setup Guide
 ### Requirements
-* IntelliJ or Eclipse Java IDE.
+* IntelliJ IDE.
 * Java 1.8+
 * Kotlin 1.1.60
 ### Setup
