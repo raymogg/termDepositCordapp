@@ -369,8 +369,8 @@ class Simulation(options: String) {
         RequestTD(parties[0].second, banks[0].second, LocalDateTime.MIN, 2.65f, Amount(300000,USD), "Bob", "Smith", "1234",12)
         Activate(banks[0].second, parties[0].second, LocalDateTime.MIN,  2.65f, Amount(300000,USD), 12,
                 "Bob", "Smith", "1234")
-        Redeem(parties[0].second, banks[0].second, LocalDateTime.MIN, 2.65f, Amount(300000,USD), 12,
-                "Bob", "Smith", "1234" )
+//        Redeem(parties[0].second, banks[0].second, LocalDateTime.MIN, 2.65f, Amount(300000,USD), 12,
+//                "Bob", "Smith", "1234" )
 
 
 //        //NOTE: These are not included in the simulations as they can easily be demoed in the corda demo bench or through the web api.
@@ -385,12 +385,12 @@ class Simulation(options: String) {
 //                "Bob", "Smith", "NEWACCOUNT", 3.1f, banks[0].first, 18)
 
         //Test out early redeem - interest rate should be reduced proportionally
-        val start = LocalDateTime.now().minusMonths(3)
-        RequestTD(parties[0].second, banks[0].second, start, 2.65f, Amount(300000,USD), "Elon", "Musk", "5236",12)
-        Activate(banks[0].second, parties[0].second, start, 2.65f, Amount(300000,USD), 12,
-                "Elon", "Musk", "5236")
-        Redeem(parties[0].second, banks[0].second, start, 2.65f, Amount(300000,USD), 12,
-                                "Elon", "Musk", "5236" )
+//        val start = LocalDateTime.now().minusMonths(3)
+//        RequestTD(parties[0].second, banks[0].second, start, 2.65f, Amount(300000,USD), "Elon", "Musk", "5236",12)
+//        Activate(banks[0].second, parties[0].second, start, 2.65f, Amount(300000,USD), 12,
+//                "Elon", "Musk", "5236")
+//        Redeem(parties[0].second, banks[0].second, start, 2.65f, Amount(300000,USD), 12,
+//                                "Elon", "Musk", "5236" )
     }
 
     fun sendTDOffers(me : CordaRPCOps, receiver: CordaRPCOps, dateData: TermDepositOffer.offerDateData,
