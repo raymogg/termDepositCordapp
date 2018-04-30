@@ -22,8 +22,7 @@ import java.util.*
 import javax.ws.rs.*
 import javax.ws.rs.core.MediaType
 import javax.ws.rs.core.Response
-import javax.ws.rs.core.Response.Status.BAD_REQUEST
-import javax.ws.rs.core.Response.Status.CREATED
+import javax.ws.rs.core.Response.Status.*
 
 val SERVICE_NAMES = listOf("Controller", "Network Map Service")
 
@@ -277,3 +276,18 @@ class KYCAPI(private val rpcOps: CordaRPCOps) {
     }
 }
 
+//API for deposits
+@Path("auth")
+class Authentication(private val rpcOps: CordaRPCOps) {
+    @POST
+    @Path("login")
+    fun login(@QueryParam("username") username: String, @QueryParam("password") password: String) : Response {
+        //TODO bad security -> for demo purposes this will do though
+        if (username == "user1" && password == "test") {
+            //Grant access
+            return Response.status(ACCEPTED).entity("$username sucessfully logged in").build()
+        } else {
+            return Response.status(OK).entity("Invalid username or password").build()
+        }
+    }
+}

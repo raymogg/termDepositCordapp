@@ -16,6 +16,9 @@ app.controller('DemoAppController', function($http, $location, $uibModal) {
     var knownClients = [];
     //Get nodes name and display in browser
     displayNodeName();
+    //Show popup login
+    //promptLogin();
+
 
     //Get cash held by this node
     $http.get("/api/example/cash").then(function (response) {
@@ -69,8 +72,8 @@ app.controller('DemoAppController', function($http, $location, $uibModal) {
     }
 
     demoApp.home = () => {
-            window.location.href = "index.html"
-        }
+                        window.location.href = "homepage.html"
+                    }
 
     function displayNodeName() {
         //Make the API Call then change the title
@@ -87,6 +90,33 @@ app.controller('DemoAppController', function($http, $location, $uibModal) {
                 document.getElementById('img_header').appendChild(img)
             }
         });
+    }
+
+    //TODO: Reprompt on no user/pw once a way to do user sessions is figured out.
+    function promptLogin() {
+        var username = prompt("Username:", "");
+        if (username == null || username == "") {
+            alert("Please enter a username");
+            //promptLogin();
+        } else {
+            var password = prompt("Password:", "");
+            if (password == null || password == "") {
+                alert("Please enter a password");
+                //promptLogin();
+            } else {
+                //Submit the password
+                var url = "/api/auth/login?username="+username+"&password="+password
+                $http.post(url).then(function (response) {
+                if (response.status != 202) {
+                    alert("Login failed");
+                    promptLogin();
+                } else {
+                    alert(String(response.data));
+                }
+
+                })
+            }
+        }
     }
 
     function extractOrganisationName(partyString) {

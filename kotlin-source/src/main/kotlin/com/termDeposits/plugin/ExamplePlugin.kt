@@ -16,7 +16,7 @@ class ExamplePlugin : WebServerPluginRegistry {
      * A list of classes that expose web APIs.
      */
     override val webApis: List<Function<CordaRPCOps, out Any>> = listOf(Function(::ExampleApi), Function(::DepositsAPI),
-            Function(::KYCAPI))
+            Function(::KYCAPI), Function(::Authentication))
 
     /**
      * A list of directories in the resources directory that will be served by Jetty under /web.

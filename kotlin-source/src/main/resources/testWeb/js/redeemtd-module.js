@@ -36,8 +36,8 @@ app.controller('RedeemTDAppController', function($http, $location, $uibModal) {
         }
 
         demoApp.home = () => {
-                    window.location.href = "index.html"
-                }
+                            window.location.href = "homepage.html"
+                        }
 
     //Get all matured term deposits (for our demo purposes this is just any active td)
     function getMatured() {

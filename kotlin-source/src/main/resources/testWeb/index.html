@@ -8,39 +8,18 @@
           crossorigin="anonymous"></script>
   <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.6.0-rc.1/angular.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/angular-ui-bootstrap/2.2.0/ui-bootstrap-tpls.min.js"></script>
-  <script src="js/angular-module.js"></script>
+  <script src="js/login-module.js"></script>
   <link rel="stylesheet" href="testWebStyle.css">
 
 </head>
 
-<body ng-app="demoAppModule" ng-controller="DemoAppController as demoApp">
+<body ng-app="loginAppModule" ng-controller="LoginAppController as loginApp">
   <!-- Few simple buttons to interact with the API and enter details -->
-  <div class="topnav">
-    <button ng-click="demoApp.home()" type="button" class="topnav">Home</button>
-    <button ng-click="demoApp.issueTD()" type="button" class="topnav">Issue Term Deposit</button>
-    <button ng-click="demoApp.activateTD()" type="button" class="topnav">Activate Term Deposit</button>
-    <button ng-click="demoApp.redeemTD()" type="button" class="topnav">Redeem Term Deposit</button>
-    <button ng-click="demoApp.rolloverTD()" type="button" class="topnav">Rollover Term Deposit</button>
-  </div>
-  <br><br>
-  <div id="img_header" class="img_header"></div>
-  <div class="td_info">
-    <h3 id="node_title"> </h3>
-    <h4 id="cash">Cash: </h4>
-    <h4 id="term_deposits">Total Deposits: </h4>
-  </div>
-  <br>
-  <div id="currentDeposits" class="td_info">
-    <h3> Current Deposits</h3>
-  </div>
-  <br>
-  <div id="currentOffers" class="td_info">
-    <h3>Current Offers</h3>
-  </div>
-  <br>
-  <div id="knownClients" class="td_info">
-    <h3> Known Clients</h3>
-  </div>
-
-
+  <form>
+  <label for="username"> Username: </label>
+  <input type="text" name="username" id="username">
+  <label for="password"> Username: </label>
+  <input type="password" name="password" id="password">
+  <button ng-click="loginApp.login()" type="button" class="default_button">Login</button>
+  </form>
 </body>

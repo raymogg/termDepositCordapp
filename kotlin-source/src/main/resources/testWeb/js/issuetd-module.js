@@ -38,8 +38,8 @@ app.controller('IssueTDAppController', function($http, $location, $uibModal) {
         }
 
         demoApp.home = () => {
-                    window.location.href = "index.html"
-                }
+                            window.location.href = "homepage.html"
+                        }
 
     //Load in available term deposit offers
     function getOffers() {
