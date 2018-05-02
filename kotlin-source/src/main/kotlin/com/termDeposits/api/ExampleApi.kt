@@ -114,7 +114,7 @@ class DepositsAPI(private val rpcOps: CordaRPCOps) {
      */
     @POST
     @Path("issue_td")
-    fun issueTD(@QueryParam("td_value") tdValue: Int, @QueryParam("offering_institute") offeringInstitue:String,
+    fun issueTD(@QueryParam("td_value") tdValue: Float, @QueryParam("offering_institute") offeringInstitue:String,
                 @QueryParam("interest_percent") interestPercent: Float, @QueryParam("duration") duration: Int,
                 @QueryParam("customer_fname") firstName: String, @QueryParam("customer_lname") lastName: String,
                 @QueryParam("customer_anum") accountNum: String) : Response {
@@ -123,7 +123,7 @@ class DepositsAPI(private val rpcOps: CordaRPCOps) {
         val kyc = KYC.KYCNameData(firstName, lastName, accountNum)
         //TODO use actual dates, for testing we use LocalDateTime.MIN for now
         val dateData = TermDeposit.DateData(LocalDateTime.MIN, duration)
-        val depositAmount = AMOUNT(tdValue, USD)
+        val depositAmount = AMOUNT(tdValue.toDouble(), USD)
 
         return try {
             val flowHandle = rpcOps.startTrackedFlow(IssueTD::Initiator, dateData, interestPercent, issuingInstitute, depositAmount, kyc)
@@ -141,7 +141,7 @@ class DepositsAPI(private val rpcOps: CordaRPCOps) {
      */
     @POST
     @Path("activate_td")
-    fun activateTD(@QueryParam("td_value") tdValue: Int, @QueryParam("offering_institute") offeringInstitue:String,
+    fun activateTD(@QueryParam("td_value") tdValue: Float, @QueryParam("offering_institute") offeringInstitue:String,
                 @QueryParam("interest_percent") interestPercent: Float, @QueryParam("duration") duration: Int,
                 @QueryParam("customer_fname") firstName: String, @QueryParam("customer_lname") lastName: String,
                 @QueryParam("customer_anum") accountNum: String, @QueryParam("start_date") startDate: String,
@@ -152,7 +152,7 @@ class DepositsAPI(private val rpcOps: CordaRPCOps) {
         val kyc = KYC.KYCNameData(firstName, lastName, accountNum)
         val startDateActual = LocalDateTime.parse(startDate+"T00:00:00")
         val dateData = TermDeposit.DateData(startDateActual, duration)
-        val depositAmount = AMOUNT(tdValue, USD)
+        val depositAmount = AMOUNT(tdValue.toDouble(), USD)
 
         return try {
             val flowHandle = rpcOps.startFlow(ActivateTD::Activator, dateData, interestPercent, issuingInstitute,
@@ -171,7 +171,7 @@ class DepositsAPI(private val rpcOps: CordaRPCOps) {
      */
     @POST
     @Path("redeem_td")
-    fun redeemTD(@QueryParam("td_value") tdValue: Int, @QueryParam("offering_institute") offeringInstitue:String,
+    fun redeemTD(@QueryParam("td_value") tdValue: Float, @QueryParam("offering_institute") offeringInstitue:String,
                    @QueryParam("interest_percent") interestPercent: Float, @QueryParam("duration") duration: Int,
                    @QueryParam("customer_fname") firstName: String, @QueryParam("customer_lname") lastName: String,
                    @QueryParam("customer_anum") accountNum: String, @QueryParam("start_date") startDate: String) : Response {
@@ -180,7 +180,7 @@ class DepositsAPI(private val rpcOps: CordaRPCOps) {
         val kyc = KYC.KYCNameData(firstName, lastName, accountNum)
         val startDateActual = LocalDateTime.parse(startDate+"T00:00:00")
         val dateData = TermDeposit.DateData(startDateActual, duration)
-        val depositAmount = AMOUNT(tdValue, USD)
+        val depositAmount = AMOUNT(tdValue.toDouble(), USD)
 
         return try {
             val flowHandle = rpcOps.startFlow(RedeemTD::RedemptionInitiator, dateData, interestPercent, issuingInstitute, depositAmount, kyc)
@@ -198,7 +198,7 @@ class DepositsAPI(private val rpcOps: CordaRPCOps) {
      */
     @POST
     @Path("rollover_td")
-    fun rolloverTD(@QueryParam("td_value") tdValue: Int, @QueryParam("offering_institute") offeringInstitue:String,
+    fun rolloverTD(@QueryParam("td_value") tdValue: Float, @QueryParam("offering_institute") offeringInstitue:String,
                  @QueryParam("interest_percent") interestPercent: Float, @QueryParam("duration") duration: Int,
                  @QueryParam("customer_fname") firstName: String, @QueryParam("customer_lname") lastName: String,
                  @QueryParam("customer_anum") accountNum: String, @QueryParam("start_date") startDate: String,
@@ -211,7 +211,7 @@ class DepositsAPI(private val rpcOps: CordaRPCOps) {
         val kyc = KYC.KYCNameData(firstName, lastName, accountNum)
         val startDateActual = LocalDateTime.parse(startDate+"T00:00:00")
         val dateData = TermDeposit.DateData(startDateActual, duration)
-        val depositAmount = AMOUNT(tdValue, USD)
+        val depositAmount = AMOUNT(tdValue.toDouble(), USD)
 
         return try {
             val flowHandle = rpcOps.startFlow(RolloverTD::RolloverInitiator, dateData, interestPercent, issuingInstitute, depositAmount, rolloverTerms, kyc)

@@ -218,11 +218,12 @@ app.controller('RedeemTDAppController', function($http, $location, $uibModal) {
                 endIndex = i;
                 i = value.length;
             } else {
-                //found the end index
+                //have not found the end index
                 i++;
             }
         }
-        return parseInt(value.substring(0,endIndex));
+        alert(value.substring(0, endIndex));
+        return parseFloat(value.substring(0,endIndex));
     }
 
 
