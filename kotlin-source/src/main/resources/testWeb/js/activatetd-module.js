@@ -38,6 +38,10 @@ app.controller('ActivateTDAppController', function($http, $location, $uibModal) 
                     window.location.href = "homepage.html"
                 }
 
+        demoApp.kyc = () => {
+            window.location.href = "kyc_info.html"
+        }
+
     //Get all pending term deposits
     function getPending() {
         $http.get("/api/term_deposits/deposits").then(function (response) {

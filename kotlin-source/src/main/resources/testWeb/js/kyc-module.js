@@ -1,14 +1,14 @@
 "use strict";
 
 //App module for issuing a TermDeposit
-const app = angular.module('IssueTDAppModule', ['ui.bootstrap']);
+const app = angular.module('KYCTDAppModule', ['ui.bootstrap']);
 
 // Fix for unhandled rejections bug.
 app.config(['$qProvider', function ($qProvider) {
     $qProvider.errorOnUnhandledRejections(false);
 }]);
 
-app.controller('IssueTDAppController', function($http, $location, $uibModal) {
+app.controller('KYCTDAppController', function($http, $location, $uibModal) {
     const demoApp = this;
     // We identify the node.
     const apiBaseURL = "/api/example/";
@@ -39,10 +39,8 @@ app.controller('IssueTDAppController', function($http, $location, $uibModal) {
 
         demoApp.home = () => {
                             window.location.href = "homepage.html"
-                        }
-        demoApp.kyc = () => {
-            window.location.href = "kyc_info.html"
         }
+
     //Load in available term deposit offers
     function getOffers() {
         $http.get("/api/term_deposits/offers").then(function (response) {

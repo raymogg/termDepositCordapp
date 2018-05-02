@@ -39,6 +39,9 @@ app.controller('RedeemTDAppController', function($http, $location, $uibModal) {
                             window.location.href = "homepage.html"
                         }
 
+        demoApp.kyc = () => {
+            window.location.href = "kyc_info.html"
+        }
     //Get all matured term deposits (for our demo purposes this is just any active td)
     function getMatured() {
         $http.get("/api/term_deposits/deposits").then(function (response) {

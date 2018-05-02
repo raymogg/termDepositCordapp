@@ -72,8 +72,12 @@ app.controller('DemoAppController', function($http, $location, $uibModal) {
     }
 
     demoApp.home = () => {
-                        window.location.href = "homepage.html"
-                    }
+        window.location.href = "homepage.html"
+    }
+
+    demoApp.kyc = () => {
+        window.location.href = "kyc_info.html"
+    }
 
     function displayNodeName() {
         //Make the API Call then change the title
