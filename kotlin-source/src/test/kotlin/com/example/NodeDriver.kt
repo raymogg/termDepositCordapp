@@ -381,8 +381,11 @@ class Simulation(options: String) {
         //Update some KYC data
 //        updateKYC(parties[0].second, "NEWACCOUNT", client1)
 //
-//        Rollover(parties[0].second, banks[0].second, LocalDateTime.MIN, 2.65f, Amount(30000,USD), true, 12,
-//                "Bob", "Smith", "NEWACCOUNT", 3.1f, banks[0].first, 18)
+        Rollover(parties[0].second, banks[0].second, LocalDateTime.MIN, 2.65f, Amount(300000,USD), true, 12,
+                "Bob", "Smith", "1234", 3.1f, banks[0].first, 18)
+
+//        Redeem(parties[0].second, banks[0].second, LocalDateTime.MIN, 3.1f, Amount((300000 * (100+2.65f)/100).toLong(),USD), 18,
+//                "Bob", "Smith", "1234" )
 
         //Test out early redeem - interest rate should be reduced proportionally
 //        val start = LocalDateTime.now().minusMonths(3)
@@ -457,6 +460,7 @@ class Simulation(options: String) {
         val dateData = TermDeposit.DateData(startDate, duration)
         val returnVal = me.startFlow(RolloverTD::RolloverInitiator, dateData, interestPercent, issuer.nodeInfo().legalIdentities.first(),
                 depositAmount, rolloverTerms, kycNameData).returnValue.getOrThrow()
+        println("TD Rollover " +returnVal.coreTransaction.id )
     }
 
     fun CreateKYC(me: CordaRPCOps, firstName: String, lastName: String, accountNumber: String): UniqueIdentifier {

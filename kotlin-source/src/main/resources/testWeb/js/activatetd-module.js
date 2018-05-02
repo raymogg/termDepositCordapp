@@ -218,7 +218,7 @@ app.controller('ActivateTDAppController', function($http, $location, $uibModal) 
                     i++;
                 }
             }
-            return parseInt(value.substring(0,endIndex));
+            return parseFloat(value.substring(0,endIndex));
         }
 
 });
