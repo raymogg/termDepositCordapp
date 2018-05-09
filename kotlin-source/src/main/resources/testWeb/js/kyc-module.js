@@ -14,10 +14,10 @@ app.controller('KYCTDAppController', function($http, $location, $uibModal) {
     const apiBaseURL = "/api/example/";
     document.getElementById("loading").style.display = "none"
     //populate the current offer options
-    var offers = [];
+    //var offers = [];
     var clients = []
-    getOffers();
-    getClients();
+    //getOffers();
+    //getClients();
 
     //OnClick methods for each button -> used for loading new pages for TD functionality
         demoApp.issueTD = () => {
@@ -38,31 +38,35 @@ app.controller('KYCTDAppController', function($http, $location, $uibModal) {
         }
 
         demoApp.home = () => {
-                            window.location.href = "homepage.html"
+            window.location.href = "homepage.html"
+        }
+
+        demoApp.kyc = () => {
+            window.location.href = "kyc_info.html"
         }
 
     //Load in available term deposit offers
-    function getOffers() {
-        $http.get("/api/term_deposits/offers").then(function (response) {
-            response.data.offers.forEach(function (element) {
-                offers.push(element);
-            });
-            loadOffers();
-        });
-    }
+//    function getOffers() {
+//        $http.get("/api/term_deposits/offers").then(function (response) {
+//            response.data.offers.forEach(function (element) {
+//                offers.push(element);
+//            });
+//            loadOffers();
+//        });
+//    }
 
-    //Display the term deposit offers to the user
-    function loadOffers() {
-        var offers_select = document.getElementById("offers_select")
-            for (var i = 0; i < offers.length; i++) {
-                var option = document.createElement("option");
-                option.value = (offers[i]);
-                option.innerHTML = "Issuing Institute: " + String(offers[i].issuingInstitute) + "\nValid Till: "+
-                        String(offers[i].validTill) + "\nDuration: "+ String(offers[i].duration) + "\nInterest: "+
-                        String(offers[i].interest);
-                offers_select.appendChild(option);
-            }
-    }
+//    //Display the term deposit offers to the user
+//    function loadOffers() {
+//        var offers_select = document.getElementById("offers_select")
+//            for (var i = 0; i < offers.length; i++) {
+//                var option = document.createElement("option");
+//                option.value = (offers[i]);
+//                option.innerHTML = "Issuing Institute: " + String(offers[i].issuingInstitute) + "\nValid Till: "+
+//                        String(offers[i].validTill) + "\nDuration: "+ String(offers[i].duration) + "\nInterest: "+
+//                        String(offers[i].interest);
+//                offers_select.appendChild(option);
+//            }
+//    }
 
     //Get all the kyc data this user has
     function getClients() {
@@ -89,35 +93,16 @@ app.controller('KYCTDAppController', function($http, $location, $uibModal) {
 
     //OnClick method for Issuing the term deposit
     demoApp.confirmIssue = () => {
-        //Load in the required data
-        var offer = document.getElementById("offers_select");
-        var client = document.getElementById("client_select");
-        var selectedOffer = offers[offer.selectedIndex];
-        var selectedClient = clients[client.selectedIndex];
-        //Parse options selected and pull the data
-        var value = parseFloat(document.getElementById("depositAmount").value);
-        var offering_institute = extractOrganisationName(selectedOffer.issuingInstitute);
-        var interest_percent = selectedOffer.interest;
-        var duration = selectedOffer.duration;
-        var customer_fname = selectedClient.firstName;
-        var customer_lname = selectedClient.lastName;
-        var customer_anum = selectedClient.accountNum;
-        var url = "/api/term_deposits/issue_td?td_value="+value+"&offering_institute="+offering_institute+"&interest_percent="+interest_percent+
-        "&duration="+duration+"&customer_fname="+customer_fname+"&customer_lname="+customer_lname+"&customer_anum="+customer_anum;
-                    //This is how you execute the post
-        //Display a loading circle
-        document.getElementById("loading").style.display = "block"
-        $http.post(url).then(function (response) {
-            document.getElementById("loading").style.display = "none"
-            alert(String(response.data));
-            window.location.href = "index.html";
-        });
+        //TODO change this from confirm issue to update kyc data
+
     }
 
-        demoApp.cancel = () => {
-            alert("Cancelled");
-            window.location.href = "index.html";
-        }
+    //TODO Create edit KYC data function for editing a particular KYC dataset.
+
+    demoApp.cancel = () => {
+        alert("Cancelled");
+        window.location.href = "homepage.html";
+    }
 
         //Helper function to extract the needed organisation name from a formatted Corda Name String
         //This organisatino name is needed to issue a new TD.

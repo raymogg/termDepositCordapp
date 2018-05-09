@@ -112,13 +112,13 @@ app.controller('IssueTDAppController', function($http, $location, $uibModal) {
         $http.post(url).then(function (response) {
             document.getElementById("loading").style.display = "none"
             alert(String(response.data));
-            window.location.href = "index.html";
+            window.location.href = "homepage.html";
         });
     }
 
         demoApp.cancel = () => {
             alert("Cancelled");
-            window.location.href = "index.html";
+            window.location.href = "homepage.html";
         }
 
         //Helper function to extract the needed organisation name from a formatted Corda Name String

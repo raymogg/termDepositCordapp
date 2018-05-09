@@ -15,11 +15,13 @@
 
 <body ng-app="loginAppModule" ng-controller="LoginAppController as loginApp">
   <!-- Few simple buttons to interact with the API and enter details -->
-  <form>
   <label for="username"> Username: </label>
   <input type="text" name="username" id="username">
-  <label for="password"> Username: </label>
+  <label for="password"> Password: </label>
   <input type="password" name="password" id="password">
+  <!--<button ng-click="loginApp.login()" type="button" class="default_button">Login</button>-->
   <button ng-click="loginApp.login()" type="button" class="default_button">Login</button>
-  </form>
+  <div id="loading">
+    <img id="loading-image" src="img/ajax-loader.gif" alt="Loading..." />
+  </div>
 </body>

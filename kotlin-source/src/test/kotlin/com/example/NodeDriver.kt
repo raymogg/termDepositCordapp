@@ -11,20 +11,15 @@ import net.corda.core.identity.CordaX500Name
 import net.corda.core.identity.Party
 import net.corda.core.messaging.CordaRPCOps
 import net.corda.core.messaging.startFlow
-import net.corda.core.transactions.TransactionBuilder
 import net.corda.core.utilities.OpaqueBytes
 import net.corda.core.utilities.getOrThrow
 import net.corda.finance.USD
-import net.corda.finance.contracts.asset.Cash
 import net.corda.finance.flows.CashExitFlow
 import net.corda.finance.flows.CashIssueAndPaymentFlow
-import net.corda.finance.flows.CashIssueFlow
 import net.corda.finance.flows.CashPaymentFlow
 import net.corda.node.services.Permissions
-import net.corda.node.services.transactions.ValidatingNotaryService
 import net.corda.testing.driver.DriverParameters
 import net.corda.testing.driver.NodeHandle
-import net.corda.testing.driver.NodeParameters
 import net.corda.testing.driver.driver
 import net.corda.testing.node.NotarySpec
 import net.corda.testing.node.User
@@ -218,7 +213,7 @@ class Simulation(options: String) {
     fun exitNonExpiredTD() {
         var error = false
         sendTDOffers(banks[0].second, parties[0].second, TermDepositOffer.offerDateData(LocalDateTime.MAX, 6), 3.4f, TermDepositOffer.earlyTerms(true))
-        CreateKYC(parties[0].second, "Bob", "Smith", "1234")
+        //CreateKYC(parties[0].second, "Bob", "Smith", "1234")
         val startTime = LocalDateTime.now()
         RequestTD(parties[0].second, banks[0].second, startTime, 3.4f, Amount(30000, USD), "Bob", "Smith", "1234", 6)
         Activate(banks[0].second, parties[0].second, startTime, 3.4f, Amount(30000, USD), 6,
@@ -381,8 +376,8 @@ class Simulation(options: String) {
         //Update some KYC data
 //        updateKYC(parties[0].second, "NEWACCOUNT", client1)
 //
-        Rollover(parties[0].second, banks[0].second, LocalDateTime.MIN, 2.65f, Amount(300000,USD), true, 12,
-                "Bob", "Smith", "1234", 3.1f, banks[0].first, 18)
+//        Rollover(parties[0].second, banks[0].second, LocalDateTime.MIN, 2.65f, Amount(300000,USD), true, 12,
+//                "Bob", "Smith", "1234", 3.1f, banks[0].first, 18)
 
 //        Redeem(parties[0].second, banks[0].second, LocalDateTime.MIN, 3.1f, Amount((300000 * (100+2.65f)/100).toLong(),USD), 18,
 //                "Bob", "Smith", "1234" )

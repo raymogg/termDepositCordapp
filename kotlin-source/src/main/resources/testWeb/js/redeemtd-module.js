@@ -104,15 +104,15 @@ app.controller('RedeemTDAppController', function($http, $location, $uibModal) {
             $http.post(url).then(function successCallback(response) {
                         document.getElementById("loading").style.display = "none"
                         alert(String(response.data));
-                        window.location.href = "index.html";
+                        window.location.href = "homepage.html";
                     }, function errorCallback(error) {
-                        alert(String(error.data));
+                        alert("Error" + String(error.data));
                     });
         }
 
         demoApp.cancel = () => {
             alert("Cancelled");
-            window.location.href = "index.html";
+            window.location.href = "homepage.html";
         }
 
         //Helper function to extract the needed organisation name from a formatted Corda Name String

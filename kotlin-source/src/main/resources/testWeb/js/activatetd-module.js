@@ -96,7 +96,7 @@ app.controller('ActivateTDAppController', function($http, $location, $uibModal) 
 
         demoApp.cancel = () => {
             alert("Cancelled");
-            window.location.href = "index.html";
+            window.location.href = "homepage.html";
         }
 
         //Actual API call for activating a term deposit. On sucess returns user to the home page
@@ -109,7 +109,7 @@ app.controller('ActivateTDAppController', function($http, $location, $uibModal) 
             $http.post(url).then(function (response) {
                 document.getElementById("loading").style.display = "none"
                 alert(String(response.data));
-                window.location.href = "index.html";
+                window.location.href = "homepage.html";
             });
         }
 

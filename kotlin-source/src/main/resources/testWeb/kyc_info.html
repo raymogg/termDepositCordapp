@@ -12,13 +12,14 @@
   <link rel="stylesheet" href="testWebStyle.css">
 </head>
 
-<body ng-app="KYCAppModule" ng-controller="KYCTDAppController as kycTDApp">
+<body ng-app="KYCTDAppModule" ng-controller="KYCTDAppController as kycTDApp">
 <div class="topnav">
-  <button ng-click="issueTDApp.home()" type="button" class="topnav">Home</button>
-  <button ng-click="issueTDApp.issueTD()" type="button" class="topnav">Issue Term Deposit</button>
-  <button ng-click="issueTDApp.activateTD()" type="button" class="topnav">Activate Term Deposit</button>
-  <button ng-click="issueTDApp.redeemTD()" type="button" class="topnav">Redeem Term Deposit</button>
-  <button ng-click="issueTDApp.rolloverTD()" type="button" class="topnav">Rollover Term Deposit</button>
+  <button ng-click="kycTDApp.home()" type="button" class="topnav">Home</button>
+  <button ng-click="kycTDApp.issueTD()" type="button" class="topnav">Issue Term Deposit</button>
+  <button ng-click="kycTDApp.activateTD()" type="button" class="topnav">Activate Term Deposit</button>
+  <button ng-click="kycTDApp.redeemTD()" type="button" class="topnav">Redeem Term Deposit</button>
+  <button ng-click="kycTDApp.rolloverTD()" type="button" class="topnav">Rollover Term Deposit</button>
+  <button ng-click="kycTDApp.kyc()" type="button" class="topnav">KYC Data</button>
 </div>
 <br><br>
   <div class="td_user_entry">
@@ -33,7 +34,7 @@
   <label for="accountNum"> Account Number </label>
   <input type="text" name="accountNum" id="accountNum"><br>
   <br>
-  <button ng-click="issueTDApp.confirmIssue()" type="button" class="default_button">Issue Term Deposit</button>
+  <button ng-click="kycTDApp.confirmIssue()" type="button" class="default_button">Issue Term Deposit</button>
   <br><br>
   <div id="loading">
     <img id="loading-image" src="img/ajax-loader.gif" alt="Loading..." />
