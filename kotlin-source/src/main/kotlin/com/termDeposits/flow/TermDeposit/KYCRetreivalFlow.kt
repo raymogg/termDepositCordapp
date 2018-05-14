@@ -35,7 +35,7 @@ import net.corda.core.serialization.CordaSerializable
             if (filteredStates.isEmpty()) {
                 throw FlowException("No Client KYC Data found")
             } else if (filteredStates.size > 1) {
-                throw FlowException("Too many KYC states found for this client")
+                logger.error("Too many Client KYC States found ofr $firstName $lastName $accountNum - first instance used")
             }
 
             return filteredStates

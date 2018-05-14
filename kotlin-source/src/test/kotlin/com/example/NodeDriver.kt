@@ -11,9 +11,11 @@ import net.corda.core.identity.CordaX500Name
 import net.corda.core.identity.Party
 import net.corda.core.messaging.CordaRPCOps
 import net.corda.core.messaging.startFlow
+import net.corda.core.transactions.SignedTransaction
 import net.corda.core.utilities.OpaqueBytes
 import net.corda.core.utilities.getOrThrow
 import net.corda.finance.USD
+import net.corda.finance.contracts.asset.Cash
 import net.corda.finance.flows.CashExitFlow
 import net.corda.finance.flows.CashIssueAndPaymentFlow
 import net.corda.finance.flows.CashPaymentFlow
@@ -28,6 +30,8 @@ import java.io.File
 import java.math.BigDecimal
 import java.time.LocalDateTime
 import java.util.*
+import javax.annotation.Signed
+import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
 /**
@@ -111,8 +115,8 @@ class Simulation(options: String) {
                     "${serverBA.get().listenAddress} ${serverBB.get().listenAddress}")
 
             setup_nodes()
-            runSimulation()
-            //runTests()
+            //runSimulation()
+            runTests()
             //waitForAllNodesToFinish()
         }
     }
@@ -191,7 +195,9 @@ class Simulation(options: String) {
     )
 
 
-    /** TESTING FOR FLOW ERRORS */
+    /** TESTING Functions for Term Deposit Flows */
+
+    /** Test attempting to create a TD using an expired offer state - should throw an error */
     @Test
     fun expiredTDOffer() {
         sendTDOffers(banks[0].second, parties[0].second, TermDepositOffer.offerDateData(LocalDateTime.now(), 6), 3.4f, TermDepositOffer.earlyTerms(true))
@@ -204,91 +210,111 @@ class Simulation(options: String) {
                     3.4f, Amount(30000, USD), "Bob", "Smith", "1234", 6)
         } catch (e: Exception) {
             error = true
-            println("Test Passed")
+            println("Test Passed - Attempting to use an expired offer failed")
         }
         assertTrue(error)
     }
 
+    /** Testing attempting to exit a td early -> should exit early with a interest amount proportionally less than the full amount */
     @Test
     fun exitNonExpiredTD() {
-        var error = false
+        var error: Boolean
         sendTDOffers(banks[0].second, parties[0].second, TermDepositOffer.offerDateData(LocalDateTime.MAX, 6), 3.4f, TermDepositOffer.earlyTerms(true))
-        //CreateKYC(parties[0].second, "Bob", "Smith", "1234")
         val startTime = LocalDateTime.now()
         RequestTD(parties[0].second, banks[0].second, startTime, 3.4f, Amount(30000, USD), "Bob", "Smith", "1234", 6)
         Activate(banks[0].second, parties[0].second, startTime, 3.4f, Amount(30000, USD), 6,
                 "Bob", "Smith", "1234")
-        //Should throw an error due to this term deposit not yet being able to exit
+        val output = Redeem(parties[0].second, banks[0].second, startTime, 3.4f, Amount(30000, USD), 6,
+                "Bob", "Smith", "1234")
+        val returnedCash: List<Cash.State> = output.tx.outputs.map { it.data }.filterIsInstance<Cash.State>() //{it.data is Cash.State && it.contract == Cash.PROGRAM_ID && (it.data as Cash.State).owner == parties[0].first }
+        returnedCash.filter { it.owner == parties[0].first }
         try {
-            Redeem(parties[0].second, banks[0].second, startTime, 3.4f, Amount(30000, USD), 6,
-                    "Bob", "Smith", "1234")
+            //Because only a few seconds has past of this loan, the proportional value paid back is 0% interest (1sec / 6 months ~ 0)
+            require(returnedCash.first().amount.quantity == Amount(30000, USD).quantity)
+            println("Test Passed - Correct Cash returned for an early exit")
+            error = false
         } catch (e: Exception) {
             error = true
-            println("Test Passed")
+            println("Test Failed - incorrect amount of cash returned for early exit: ${returnedCash.first().amount.quantity} != ${Amount(30000, USD).quantity}")
         }
 
-        assertTrue(error)
+        assertFalse(error)
     }
 
+    /** Testing an early rollover with interest -> should rollover early with a interest amount proportionally less than the full amount (in test cases 0 interest) */
     @Test
     fun rolloverWithInterestNonExpiredTD() {
-        var error = false
-        sendTDOffers(banks[0].second, parties[0].second, TermDepositOffer.offerDateData(LocalDateTime.MAX, 6), 3.4f, TermDepositOffer.earlyTerms(true))
-        CreateKYC(parties[0].second, "Bob", "Smith", "1234")
-        val startTime = LocalDateTime.now()
-        RequestTD(parties[0].second, banks[0].second, startTime, 3.4f, Amount(30000, USD), "Bob", "Smith", "1234",6)
-        Activate(banks[0].second, parties[0].second, startTime, 3.4f, Amount(30000, USD),6,
+        var error: Boolean
+        sendTDOffers(banks[0].second, parties[0].second, TermDepositOffer.offerDateData(LocalDateTime.MAX, 8), 3.4f, TermDepositOffer.earlyTerms(true))
+        val startTime = LocalDateTime.now().minusMonths(4) //Loan started 4 months ago
+        RequestTD(parties[0].second, banks[0].second, startTime, 3.4f, Amount(30000, USD), "Bob", "Smith", "1234",8)
+        Activate(banks[0].second, parties[0].second, startTime, 3.4f, Amount(30000, USD),8,
                 "Bob", "Smith", "1234")
-        //Should throw an error due to this term deposit not yet being able to exit
+        val output = Rollover(parties[0].second, banks[0].second, startTime,
+                3.4f, Amount(30000, USD), true, 8,
+                "Bob", "Smith", "1234", 3.4f, banks[0].first, 6)
+        val outputLoan: List<TermDeposit.State> = output.tx.outputs.map { it.data }.filterIsInstance<TermDeposit.State>() //{it.data is Cash.State && it.contract == Cash.PROGRAM_ID && (it.data as Cash.State).owner == parties[0].first }
+        outputLoan.filter { it.owner == parties[0].first }
         try {
-            Rollover(parties[0].second, banks[0].second, startTime,
-                    3.4f, Amount(30000, USD), true, 6,
-                    "Bob", "Smith", "1234", 3.4f, banks[0].first, 6)
+            //Because half the loan time has passed, the proportional value rolled oer is 50% interest
+            require(outputLoan.first().depositAmount.quantity == Amount((30000 * (100+(3.4f*0.5f))/100).toLong(), USD).quantity)
+            println("Test Passed - Correct loan value for an early rollover with interest")
+            error = false
         } catch (e: Exception) {
             error = true
-            println("Test Passed")
+            println("Test Failed - incorrect amount of cash returned for early rollover with interest: ${outputLoan.first().depositAmount.quantity} != ${Amount(30000, USD).quantity}")
         }
 
-        assertTrue(error)
+        assertFalse(error)
     }
 
+    /** Testing an early rollover without interest -> should rollover early with a interest amount proportionally less than the full amount (in test cases 0 interest) */
     @Test
     fun rolloverWOInterestNonExpiredTD() {
-        var error = false
-        sendTDOffers(banks[0].second, parties[0].second, TermDepositOffer.offerDateData(LocalDateTime.MAX, 6), 3.4f, TermDepositOffer.earlyTerms(true))
-        CreateKYC(parties[0].second, "Bob", "Smith", "1234")
-        val startTime = LocalDateTime.now()
-        RequestTD(parties[0].second, banks[0].second, startTime, 3.4f, Amount(30000, USD), "Bob", "Smith", "1234",6)
-        Activate(banks[0].second, parties[0].second, startTime, 3.4f, Amount(30000, USD), 6,
+        var error: Boolean
+        sendTDOffers(banks[0].second, parties[0].second, TermDepositOffer.offerDateData(LocalDateTime.MAX, 12), 3.4f, TermDepositOffer.earlyTerms(true))
+        val startTime = LocalDateTime.now().minusMonths(6) //Loan started 6 months ago
+        RequestTD(parties[0].second, banks[0].second, startTime, 3.4f, Amount(30000, USD), "Bob", "Smith", "1234",12)
+        Activate(banks[0].second, parties[0].second, startTime, 3.4f, Amount(30000, USD), 12,
                 "Bob", "Smith", "1234")
-        //Should throw an error due to this term deposit not yet being able to exit
+        val output = Rollover(parties[0].second, banks[0].second, startTime,
+                3.4f, Amount(30000, USD), false, 6,
+                "Bob", "Smith", "1234", 3.4f, banks[0].first, 6)
+        val outputLoan: List<TermDeposit.State> = output.tx.outputs.map { it.data }.filterIsInstance<TermDeposit.State>() //{it.data is Cash.State && it.contract == Cash.PROGRAM_ID && (it.data as Cash.State).owner == parties[0].first }
+        outputLoan.filter { it.owner == parties[0].first }
+        val outputCash: List<Cash.State> = output.tx.outputs.map { it.data }.filterIsInstance<Cash.State>()
+        outputCash.filter { it.owner == parties[0].first }
         try {
-            Rollover(parties[0].second, banks[0].second, startTime,
-                    3.4f, Amount(30000, USD), false, 6,
-                    "Bob", "Smith", "1234", 3.4f, banks[0].first, 6)
+            //Because only a few seconds has past of this loan, the proportional value rolled oer is 0% interest (1sec / 6 months ~ 0)
+            require(outputLoan.first().depositAmount.quantity == Amount(30000, USD).quantity)
+            require(outputCash.first().amount.quantity == Amount((30000 * ((3.4f*0.5f))/100).toLong(), USD).quantity)
+            println("Test Passed - Correct loan value for an early rollover without interest")
+            error = false
         } catch (e: Exception) {
             error = true
-            println("Test Passed")
+            println("Test Failed - incorrect amount of cash returned for early rollover without interest: ${outputLoan.first().depositAmount.quantity} != ${Amount(30000, USD).quantity} OR" +
+                    "${outputCash.first().amount.quantity} != ${Amount((30000 * ((3.4f*0.5f))/100).toLong(), USD).quantity}")
         }
-
-        assertTrue(error)
+        assertFalse(error)
     }
 
+    /** Testing reqeusting a term deposit when the offer being used doesng exist */
     @Test
     fun requestNonExistentTD() {
         var error = false
         val startTime = LocalDateTime.now()
-        CreateKYC(parties[0].second, "Bob", "Smith", "1234")
 
         try {
             RequestTD(parties[0].second, banks[0].second, startTime, 3.9f, Amount(65000, USD), "Bob", "Smith", "1234",6)
+            println("Test failed - Requesting a term deposit from a non-existent offer worked")
         } catch (e: Exception) {
-            println("Test Passed")
+            println("Test Passed - Requesting a term deposit from a non-existent offer failed")
             error = true
         }
         assertTrue(error)
     }
 
+    /** Testing activating a term deposit when there is no pending term deposit that matches */
     @Test
     fun activateNonExistentTD() {
         var error = false
@@ -296,8 +322,111 @@ class Simulation(options: String) {
         try {
             Activate(banks[0].second, parties[0].second, startTime, 5.5f, Amount(75000, USD), 6,
                     "Bob", "Smith", "1234")
+            println("Test failed - Activating a non-existent Term deposit passed")
         } catch (e: Exception) {
-            println("Test Passed")
+            println("Test Passed - Activating a non-existent Term deposit failed")
+            error = true
+        }
+        assertTrue(error)
+    }
+
+    /** Testing attempting to activate an already activated term deposit */
+    @Test
+    fun doubleActivate() {
+        var error: Boolean
+        sendTDOffers(banks[0].second, parties[0].second, TermDepositOffer.offerDateData(LocalDateTime.MAX, 18), 3.1f, TermDepositOffer.earlyTerms(true))
+        val startTime = LocalDateTime.now().minusMonths(4) //Loan started 4 months ago
+        RequestTD(parties[0].second, banks[0].second, startTime, 3.1f, Amount(30000, USD), "Bob", "Smith", "1234",18)
+        Activate(banks[0].second, parties[0].second, startTime, 3.1f, Amount(30000, USD),18,
+                "Bob", "Smith", "1234")
+        try {
+            Activate(banks[0].second, parties[0].second, startTime, 3.1f, Amount(30000, USD),18,
+                    "Bob", "Smith", "1234")
+            println("Test failed - attempting to double activate worked")
+            error = false
+        } catch (e: Exception) {
+            println("Test passed - attempting to double activate failed")
+            error = true
+        }
+        assertTrue(error)
+    }
+    /** Testing exiting an already exited term deposit */
+    @Test
+    fun doubleExit() {
+        var error: Boolean
+        sendTDOffers(banks[0].second, parties[0].second, TermDepositOffer.offerDateData(LocalDateTime.MAX, 14), 2.8f, TermDepositOffer.earlyTerms(true))
+        val startTime = LocalDateTime.now().minusMonths(4) //Loan started 4 months ago
+        RequestTD(parties[0].second, banks[0].second, startTime, 2.8f, Amount(30000, USD), "Bob", "Smith", "1234",14)
+        Activate(banks[0].second, parties[0].second, startTime, 2.8f, Amount(30000, USD),14,
+                "Bob", "Smith", "1234")
+        Redeem(parties[0].second, banks[0].second, startTime, 2.8f, Amount(30000, USD), 14,
+                "Bob", "Smith", "1234")
+        try {
+            Redeem(parties[0].second, banks[0].second, startTime, 2.8f, Amount(30000, USD), 14,
+                    "Bob", "Smith", "1234")
+            println("Test failed - attempting to double exit worked")
+            error = false
+        } catch (e: Exception) {
+            println("Test passed - attempting to double exit failed")
+            error = true
+        }
+        assertTrue(error)
+    }
+
+    /** Testing exiting a term deposit when it has not been activated */
+    @Test
+    fun exitNonActivated() {
+        var error: Boolean
+        sendTDOffers(banks[0].second, parties[0].second, TermDepositOffer.offerDateData(LocalDateTime.MAX, 24), 4.1f, TermDepositOffer.earlyTerms(true))
+        val startTime = LocalDateTime.now().minusMonths(4) //Loan started 4 months ago
+        RequestTD(parties[0].second, banks[0].second, startTime, 4.1f, Amount(30000, USD), "Bob", "Smith", "1234",24)
+        try {
+            Redeem(parties[0].second, banks[0].second, startTime, 4.1f, Amount(30000, USD), 24,
+                    "Bob", "Smith", "1234")
+            println("Test failed - attempting to exit a non redeemd td worked")
+            error = false
+        } catch (e: Exception) {
+            println("Test passed - attempting to exit a non redeemd td failed")
+            error = true
+        }
+        assertTrue(error)
+    }
+
+    /** Testing rolling over a term deposit (with interest) when it has not been activated */
+    @Test
+    fun rolloverWithInterestNonActivated() {
+        var error: Boolean
+        sendTDOffers(banks[0].second, parties[0].second, TermDepositOffer.offerDateData(LocalDateTime.MAX, 20), 4.1f, TermDepositOffer.earlyTerms(true))
+        val startTime = LocalDateTime.now().minusMonths(4) //Loan started 4 months ago
+        RequestTD(parties[0].second, banks[0].second, startTime, 4.1f, Amount(30000, USD), "Bob", "Smith", "1234",20)
+        try {
+            Rollover(parties[0].second, banks[0].second, startTime,
+                    3.4f, Amount(30000, USD), true, 20,
+                    "Bob", "Smith", "1234", 3.4f, banks[0].first, 6)
+            println("Test failed - attempting to exit a non redeemd td worked")
+            error = false
+        } catch (e: Exception) {
+            println("Test passed - attempting to exit a non redeemd td failed")
+            error = true
+        }
+        assertTrue(error)
+    }
+
+    /** Testing rolling over a term deposit (without interest) when it has not been activated */
+    @Test
+    fun rolloverWithoutInterestNonActivated() {
+        var error: Boolean
+        sendTDOffers(banks[0].second, parties[0].second, TermDepositOffer.offerDateData(LocalDateTime.MAX, 20), 4.1f, TermDepositOffer.earlyTerms(true))
+        val startTime = LocalDateTime.now().minusMonths(4) //Loan started 4 months ago
+        RequestTD(parties[0].second, banks[0].second, startTime, 4.1f, Amount(30000, USD), "Bob", "Smith", "1234",20)
+        try {
+            Rollover(parties[0].second, banks[0].second, startTime,
+                    3.4f, Amount(30000, USD), false, 20,
+                    "Bob", "Smith", "1234", 3.4f, banks[0].first, 6)
+            println("Test failed - attempting to exit a non redeemd td worked")
+            error = false
+        } catch (e: Exception) {
+            println("Test passed - attempting to exit a non redeemd td failed")
             error = true
         }
         assertTrue(error)
@@ -305,11 +434,8 @@ class Simulation(options: String) {
 
 
 
-
+    /** Run all tests detailed above */
     fun runTests() {
-        //The following is some basic tests
-        //TODO: Write proper tests using a testing framework - rather than testing with exceptions thrown - possibly follow the example on corda tutorials
-
         //Issue cash to ensure that cash isnt the reason for flow errors
         parties.forEach {
             issueCash(it.second, it.second.notaryIdentities().first())
@@ -326,6 +452,11 @@ class Simulation(options: String) {
         rolloverWOInterestNonExpiredTD()
         requestNonExistentTD()
         activateNonExistentTD()
+        doubleActivate()
+        doubleExit()
+        exitNonActivated()
+        rolloverWithInterestNonActivated()
+        rolloverWithoutInterestNonActivated()
 
 
         println("All Tests Passed")
@@ -392,7 +523,7 @@ class Simulation(options: String) {
     }
 
     fun sendTDOffers(me : CordaRPCOps, receiver: CordaRPCOps, dateData: TermDepositOffer.offerDateData,
-                     interestPercent: Float, earlyTerms: TermDepositOffer.earlyTerms) {
+                     interestPercent: Float, earlyTerms: TermDepositOffer.earlyTerms): SignedTransaction {
         //Get attachment hash for the txn before starting the flow
         //TODO: This hardcoding of a very specific file path probably isnt that great
         val attachmentInputStream = File("C:\\Users\\raymondm\\Documents\\termDepositCordapp\\kotlin-source\\src\\main\\resources\\Example_TD_Contract.zip").inputStream()
@@ -408,24 +539,27 @@ class Simulation(options: String) {
         val returnVal = me.startFlow(IssueOffer::Initiator, dateData, interestPercent, me.nodeInfo().legalIdentities.first(), receiver.nodeInfo().legalIdentities.first(),
                 attachmentHash, earlyTerms).returnValue.getOrThrow()
         println("TD Offer Issued: "+interestPercent+"% for " + dateData.duration + " months from "+me.nodeInfo().legalIdentities.first());
+        return returnVal
     }
 
     fun RequestTD(me : CordaRPCOps, issuer: CordaRPCOps, startDate: LocalDateTime,
-                  interestPercent: Float, depositAmount: Amount<Currency>, firstName: String, lastName: String, accountNumber: String, duration: Int) {
+                  interestPercent: Float, depositAmount: Amount<Currency>, firstName: String, lastName: String, accountNumber: String, duration: Int): SignedTransaction {
         //Request a TD at $300 USD
         val kycData = KYC.KYCNameData(firstName, lastName, accountNumber)
         val dateData = TermDeposit.DateData(startDate, duration)
         val returnVal = me.startFlow(IssueTD::Initiator, dateData, interestPercent, issuer.nodeInfo().legalIdentities.first(), depositAmount,
                 kycData).returnValue.getOrThrow()
         println("TD Requested: For client "+kycData.firstName+" "+kycData.lastName + "with offering institute "+ issuer.nodeInfo())
+        return returnVal
     }
 
     fun Activate(me : CordaRPCOps, client : CordaRPCOps, startDate: LocalDateTime, interestPercent: Float, depositAmount: Amount<Currency>, duration: Int,
-                 firstName: String, lastName: String, accountNumber: String) {
+                 firstName: String, lastName: String, accountNumber: String): SignedTransaction {
         val kycNameData = KYC.KYCNameData(firstName, lastName,accountNumber)
         val dateData = TermDeposit.DateData(startDate, duration)
         val returnVal = me.startFlow(ActivateTD::Activator, dateData, interestPercent, me.nodeInfo().legalIdentities.first(), client.nodeInfo().legalIdentities.first(), depositAmount, kycNameData).returnValue.getOrThrow()
         println("TD Activated: ID "+returnVal.coreTransaction.id)
+        return returnVal
     }
 
     private fun issueCash(recipient : CordaRPCOps, notaryNode : Party) {
@@ -441,21 +575,23 @@ class Simulation(options: String) {
 
     fun Redeem(me : CordaRPCOps, issuer: CordaRPCOps, startDate: LocalDateTime,
                interestPercent: Float, depositAmount: Amount<Currency>, duration: Int,
-               firstName: String, lastName: String, accountNumber: String) {
+               firstName: String, lastName: String, accountNumber: String) : SignedTransaction {
         val kycNameData = KYC.KYCNameData(firstName, lastName, accountNumber)
         val dateData = TermDeposit.DateData(startDate, duration)
         val returnVal = me.startFlow(RedeemTD::RedemptionInitiator, dateData, interestPercent, issuer.nodeInfo().legalIdentities.first(), depositAmount, kycNameData).returnValue.getOrThrow()
         println("TD Redeemed "+returnVal.coreTransaction.id + " Cash ${returnVal.tx.outputs.map { it.data }}" )
+        return returnVal;
     }
 
     fun Rollover(me: CordaRPCOps, issuer: CordaRPCOps, startDate: LocalDateTime, interestPercent: Float, depositAmount: Amount<Currency>, withInterest: Boolean, duration: Int,
-                 firstName: String, lastName: String, accountNumber: String, newInterest: Float, newOfferingInstitue:Party, newDuration: Int) {
+                 firstName: String, lastName: String, accountNumber: String, newInterest: Float, newOfferingInstitue:Party, newDuration: Int): SignedTransaction {
         val kycNameData = KYC.KYCNameData(firstName, lastName, accountNumber)
         val rolloverTerms = TermDeposit.RolloverTerms(newInterest, newOfferingInstitue, newDuration, withInterest)
         val dateData = TermDeposit.DateData(startDate, duration)
         val returnVal = me.startFlow(RolloverTD::RolloverInitiator, dateData, interestPercent, issuer.nodeInfo().legalIdentities.first(),
                 depositAmount, rolloverTerms, kycNameData).returnValue.getOrThrow()
         println("TD Rollover " +returnVal.coreTransaction.id )
+        return returnVal
     }
 
     fun CreateKYC(me: CordaRPCOps, firstName: String, lastName: String, accountNumber: String): UniqueIdentifier {

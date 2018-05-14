@@ -124,14 +124,14 @@ open class TermDeposit : Contract {
     }
 
     fun generateRollover(builder: TransactionBuilder, oldState: StateAndRef<TermDeposit.State>, notary: Party,
-                          tdOffer: StateAndRef<TermDepositOffer.State>, withInterest: Boolean): TransactionBuilder {
+                          tdOffer: StateAndRef<TermDepositOffer.State>, withInterest: Boolean, ratioToPay: Float): TransactionBuilder {
         builder.addInputState(oldState)
         val newStartDate = LocalDateTime.MIN //TODO Change this to time.now()
         val newEndDate = newStartDate.plusMonths(tdOffer.state.data.duration.toLong())
         if (withInterest) {
             //Change the deposit amount to be the new amount plus interest
             builder.addOutputState(TransactionState(data = oldState.state.data.copy(startDate = newStartDate, endDate = newEndDate,
-                    depositAmount = Amount((oldState.state.data.depositAmount.quantity * (100+oldState.state.data.interestPercent)/100).toLong(), USD),
+                    depositAmount = Amount((oldState.state.data.depositAmount.quantity * (100+(oldState.state.data.interestPercent*ratioToPay))/100).toLong(), USD),
                     interestPercent = tdOffer.state.data.interestPercent),
                     notary = notary, contract = TERMDEPOSIT_CONTRACT_ID))
         } else {

@@ -15,6 +15,7 @@ import net.corda.finance.USD
 import net.corda.finance.contracts.asset.Cash
 import java.security.PublicKey
 import java.time.LocalDateTime
+import java.time.Period
 import java.util.*
 import javax.swing.plaf.nimbus.State
 
@@ -83,16 +84,40 @@ object RolloverTD {
             val builder = TransactionBuilder(notary)
             val toSignTx: TransactionBuilder
             val keys: List<PublicKey>
+            //Add our required cash
+            val amountOfCash: Amount<Currency>
+            val ratioToPay: Float
+            if (termDeposit.state.data.endDate.isAfter(LocalDateTime.now()) && termDeposit.state.data.earlyTerms.earlyPenalty == true) {
+                //The user is exiting early, we allow this but penalize them
+                val monthsDiff = Period.between(LocalDateTime.now().toLocalDate(),termDeposit.state.data.endDate.toLocalDate()).months
+                val yearsToMonthsDiff = Period.between(LocalDateTime.now().toLocalDate(),termDeposit.state.data.endDate.toLocalDate()).years * 12
+                val monthsLeft = monthsDiff + yearsToMonthsDiff
+                val monthsDiff2 = Period.between(termDeposit.state.data.startDate.toLocalDate(),termDeposit.state.data.endDate.toLocalDate()).months
+                val yearsToMonthsDiff2 = Period.between(termDeposit.state.data.startDate.toLocalDate(),termDeposit.state.data.endDate.toLocalDate()).years * 12
+                val totalMonths = monthsDiff2 + yearsToMonthsDiff2
+                //Ratio is (monthsLeft - depositDuration/depositDuration) eg 1 month left on a 12 month deposit means user gets 12-1/12 of the interest (11/12 * interest)
+                ratioToPay = ((totalMonths.toFloat()-monthsLeft.toFloat())/totalMonths.toFloat())
+                println("Ratio to pay $ratioToPay")
+                //amountOfCash = Amount((termDeposit.state.data.depositAmount.quantity * (100+(termDeposit.state.data.interestPercent*ratioToPay))/100).toLong(), USD)
+                amountOfCash = Amount((termDeposit.state.data.depositAmount.quantity/100 * termDeposit.state.data.interestPercent*ratioToPay).toLong(), USD)
+            } else {
+//                val (tx, cashKeys) = Cash.generateSpend(serviceHub, builder2, Amount((TermDeposit.state.data.depositAmount.quantity * (100+TermDeposit.state.data.interestPercent)/100).toLong(), USD),
+//                        flow.counterparty)
+                //amountOfCash = Amount((termDeposit.state.data.depositAmount.quantity * (100+termDeposit.state.data.interestPercent)/100).toLong(), USD)
+                amountOfCash = Amount((termDeposit.state.data.depositAmount.quantity/100 * termDeposit.state.data.interestPercent).toLong(), USD)
+                ratioToPay = 1.0f
+            }
             if (withInterest) {
                 //Setup the txn with interest being reinvested
-                val tx = TermDeposit().generateRollover(builder, termDeposit, notary, tdOffer, true)
+                val tx = TermDeposit().generateRollover(builder, termDeposit, notary, tdOffer, true, ratioToPay)
                 toSignTx = tx
                 keys = listOf(serviceHub.myInfo.legalIdentities.first().owningKey)
             } else {
                 //Setup the txn with interest being returned to sender
-                val tx = TermDeposit().generateRollover(builder, termDeposit, notary, tdOffer, false)
+                val tx = TermDeposit().generateRollover(builder, termDeposit, notary, tdOffer, false, ratioToPay)
                 //Return the interest earned
-                val (ptx, cashKeys) = Cash.generateSpend(serviceHub, tx, Amount((termDeposit.state.data.depositAmount.quantity/100 * termDeposit.state.data.interestPercent).toLong(), USD),
+                //Amount((termDeposit.state.data.depositAmount.quantity/100 * termDeposit.state.data.interestPercent).toLong()
+                val (ptx, cashKeys) = Cash.generateSpend(serviceHub, tx, amountOfCash,
                         termDeposit.state.data.owner)
                 toSignTx = ptx
                 keys = cashKeys

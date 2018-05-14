@@ -38,8 +38,8 @@ app.controller('IssueTDAppController', function($http, $location, $uibModal) {
         }
 
         demoApp.home = () => {
-                            window.location.href = "homepage.html"
-                        }
+            window.location.href = "homepage.html"
+        }
         demoApp.kyc = () => {
             window.location.href = "kyc_info.html"
         }
@@ -98,6 +98,7 @@ app.controller('IssueTDAppController', function($http, $location, $uibModal) {
         var selectedClient = clients[client.selectedIndex];
         //Parse options selected and pull the data
         var value = parseFloat(document.getElementById("depositAmount").value);
+        alert(value);
         var offering_institute = extractOrganisationName(selectedOffer.issuingInstitute);
         var interest_percent = selectedOffer.interest;
         var duration = selectedOffer.duration;
