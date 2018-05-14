@@ -1,6 +1,5 @@
 package com.example
 
-import com.sun.org.apache.xpath.internal.operations.Bool
 import com.termDeposits.contract.KYC
 import com.termDeposits.contract.TermDeposit
 import com.termDeposits.contract.TermDepositOffer
@@ -35,25 +34,11 @@ import javax.annotation.Signed
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
-/**
- * This file is exclusively for being able to run your nodes through an IDE (as opposed to running deployNodes)
- * Do not use in a production environment.
+/** This file is for running both tests and for starting up the nodes to run a simulation of the network (which you can
+ * then interact with using the GUI or web front end)
  *
- * To debug your CorDapp:
- *
- * 1. Firstly, run the "Run Example CorDapp" run configuration.
- * 2. Wait for all the nodes to start.
- * 3. Note the debug ports which should be output to the console for each node. They typically start at 5006, 5007,
- *    5008. The "Debug CorDapp" configuration runs with port 5007, which should be "NodeB". In any case, double check
- *    the console output to be sure.
- * 4. Set your breakpoints in your CorDapp code.
- * 5. Run the "Debug CorDapp" remote debug run configuration.
- */
-
-/** Testing Note: In order to build the project via command line, the simulation class needs to be commented out.
- * You can then build using ./gradlew clean build deployNodes, then go to build/nodes and execute ./runnodes to
- * start up the nodes.
- */
+ * To switch between running tests and running the simulation, change the line commented out on lines 104 and 105.
+*/
 
 fun main(args: Array<String>) {
     println("Start")
@@ -83,16 +68,17 @@ class Simulation(options: String) {
         main(arrayOf())
     }
 
+    /** Sets up the node driver and the nodes needed. Starts either running the simulation or starts running tests
+     * depending on which line is commented out at lines 104 and 105.
+     */
     fun main(args: Array<String>) {
         println("Simulation Main")
-        // No permissions required as we are not invoking flows.
-//        driver(isDebug = false, extraCordappPackagesToScan = listOf("com.termDeposits.contract", "termDeposits.contract", "termDepositCordapp.com.termDeposits.contract",
-//                "com.termDeposits.flow", "net.corda.finance"), startNodesInProcess = false) {
+        //Startup the node driver
         val parameters = DriverParameters(isDebug = false, extraCordappPackagesToScan = listOf("com.termDeposits.contract", "termDeposits.contract", "termDepositCordapp.com.termDeposits.contract",
                 "com.termDeposits.flow", "net.corda.finance"), startNodesInProcess = false, waitForAllNodesToFinish = true,
                 notarySpecs = listOf(NotarySpec(CordaX500Name("Controller", "London", "GB"))))
         driver(parameters) {
-            //startNode(providedName = CordaX500Name("Controller", "London", "GB"))
+            //Startup the nodes
             val cBank = startNode(providedName = CordaX500Name("CentralBank", "Brisbane", "AU"), rpcUsers = listOf(cashIssuer)).getOrThrow()
             val (nodeA, nodeB, nodeC, aBank, bBank) = listOf(
                     startNode(providedName = CordaX500Name("AMM", "London", "GB"), rpcUsers = listOf(stdUser)),
@@ -107,6 +93,8 @@ class Simulation(options: String) {
             bankA = aBank
             bankB = bBank
             centralBank = cBank
+
+            //Startup a webserver for each node -> this will allow us to serve the frontend found in resources/testWeb on every nodes server
             val serverA = startWebserver(aNode)
             val serverB = startWebserver(bNode)
             val serverC = startWebserver(cNode)
@@ -116,13 +104,14 @@ class Simulation(options: String) {
                     "${serverBA.get().listenAddress} ${serverBB.get().listenAddress}")
 
             setup_nodes()
-            //runSimulation()
-            runTests()
+            //Comment out one of runSimulation() and runTests() -> only one of these should be run at once
+            runSimulation()
+            //runTests()
             //waitForAllNodesToFinish()
         }
     }
 
-
+    /**Setups the nodes to allow this class access to the nodes rpc methods. lets us invoke flows as each node */
     fun setup_nodes() {
         val aClient = aNode.rpc
         val aRPC = aClient //.start(stdUser.username, stdUser.password).proxy
@@ -142,6 +131,7 @@ class Simulation(options: String) {
         val centralBankClient = centralBank.rpc
         val cbrpc = centralBankClient //.start(stdUser.username, stdUser.password).proxy
 
+        //Keep track of these so they can be accessed from anywhere
         parties.addAll(listOf(
                 aRPC.nodeInfo().legalIdentities.first() to aRPC,
                 bRPC.nodeInfo().legalIdentities.first() to bRPC,
@@ -160,6 +150,7 @@ class Simulation(options: String) {
         }
     }
 
+    /** Function to allocate permissions needed for all term deposit and KYC functionality */
     fun allocateTDPermissions() : Set<String> = setOf(
             //FlowPermissions.startFlowPermission<IssueOffer.Initiator>(),
             Permissions.startFlow<IssueTD.Initiator>(),
@@ -181,6 +172,7 @@ class Simulation(options: String) {
             Permissions.invokeRpc("attachmentExists")
     )
 
+    /** Function to allocate permissions required for banks in regard to term deposits */
     fun allocateBankPermissions() : Set<String> = setOf(
             Permissions.startFlow<IssueOffer.Initiator>(),
             Permissions.startFlow<ActivateTD.Activator>(),
@@ -188,6 +180,7 @@ class Simulation(options: String) {
             Permissions.startFlow<RedeemTD.RedemptionAcceptor>()
     )
 
+    /** Function to allocate cash permissions */
     fun allocateCashPermissions() : Set<String> = setOf(
             //Permissions.startFlow<CashIssueFlow>(),
             Permissions.startFlow<CashExitFlow>(),
@@ -204,7 +197,7 @@ class Simulation(options: String) {
         sendTDOffers(banks[0].second, parties[0].second, TermDepositOffer.offerDateData(LocalDateTime.now(), 6), 3.4f, TermDepositOffer.earlyTerms(true))
         CreateKYC(parties[0].second, "Bob", "Smith", "1234")
         Thread.sleep(1000)
-        //Should throw an error due to the offer already expirying/no states being found.
+        //Should throw an error due to the offer already expiring
         var error = false
         try {
             RequestTD(parties[0].second, banks[0].second, LocalDateTime.now(),
@@ -553,7 +546,7 @@ class Simulation(options: String) {
     fun updateNonExistentClient() {
         var error: Boolean
         try {
-            updateKYC(parties[0].second, "1234", UniqueIdentifier.fromString("No Client for this ID"))
+            updateKYC(parties[0].second, "1234", null, null,UniqueIdentifier.fromString("No Client for this ID"))
             error = false
             println("Test failed - updating a non existent client worked")
         } catch (e: Exception) {
@@ -568,7 +561,7 @@ class Simulation(options: String) {
     fun issueWithUpdatedClient() {
         var error: Boolean
         val linearID = CreateKYC(parties[0].second, "Update","Guy", "1234")
-        updateKYC(parties[0].second, "new1234", linearID)
+        updateKYC(parties[0].second, "new1234", null,null, linearID)
         val startTime = LocalDateTime.now()
         try {
             RequestTD(parties[0].second, banks[0].second, startTime, 4.1f, Amount(30000, USD), "Update", "Guy", "1234",20)
@@ -621,7 +614,9 @@ class Simulation(options: String) {
         println("All Tests Passed")
     }
 
-    /** Simulations for Cordapp */
+    /** Simulations for Cordapp
+     * This simulation issues some cash around the network, creates some clients, and issues various term deposit offers/term deposits*/
+
     fun runSimulation() {
         //Issue some cash to each party
         parties.forEach {
@@ -640,9 +635,7 @@ class Simulation(options: String) {
         val client5 = CreateKYC(parties[0].second, "Bill", "Gates", "0384")
         val client6 = CreateKYC(parties[0].second, "Matt", "Rose", "2893")
 
-
-        println("Start Term Deposit Simulations!")
-        //Send out offers from the two banks at different interest percentages
+        //Send out some example offers from the two banks at different interest percentages
         sendTDOffers(banks[0].second, parties[0].second, TermDepositOffer.offerDateData(LocalDateTime.MAX, 6), 2.55f,TermDepositOffer.earlyTerms(true))
         sendTDOffers(banks[0].second, parties[0].second,TermDepositOffer.offerDateData(LocalDateTime.MAX, 12), 2.65f,TermDepositOffer.earlyTerms(true))
         sendTDOffers(banks[0].second, parties[0].second, TermDepositOffer.offerDateData(LocalDateTime.MAX, 18), 3.1f,TermDepositOffer.earlyTerms(true))
@@ -650,15 +643,13 @@ class Simulation(options: String) {
         sendTDOffers(banks[1].second, parties[0].second, TermDepositOffer.offerDateData(LocalDateTime.MAX, 12), 3.0f, TermDepositOffer.earlyTerms(true))
         sendTDOffers(banks[1].second, parties[0].second, TermDepositOffer.offerDateData(LocalDateTime.MAX, 18), 2.95f, TermDepositOffer.earlyTerms(true))
 
-        //Accept some td offers
+        //Accept an offer
         RequestTD(parties[0].second, banks[0].second, LocalDateTime.MIN, 2.65f, Amount(300000,USD), "Bob", "Smith", "1234",12)
         Activate(banks[0].second, parties[0].second, LocalDateTime.MIN,  2.65f, Amount(300000,USD), 12,
                 "Bob", "Smith", "1234")
-//        Redeem(parties[0].second, banks[0].second, LocalDateTime.MIN, 2.65f, Amount(300000,USD), 12,
-//                "Bob", "Smith", "1234" )
-
 
 //        //NOTE: These are not included in the simulations as they can easily be demoed in the corda demo bench or through the web api.
+//        //Should you wish to include them simply uncomment the lines below.
 
 //        Redeem(parties[0].second, banks[0].second, LocalDateTime.MIN, LocalDateTime.MIN.plusMonths(12), 2.65f, Amount(30000,USD), 12,
 //                "Bob", "Smith", "1234" )
@@ -672,15 +663,9 @@ class Simulation(options: String) {
 //        Redeem(parties[0].second, banks[0].second, LocalDateTime.MIN, 3.1f, Amount((300000 * (100+2.65f)/100).toLong(),USD), 18,
 //                "Bob", "Smith", "1234" )
 
-        //Test out early redeem - interest rate should be reduced proportionally
-//        val start = LocalDateTime.now().minusMonths(3)
-//        RequestTD(parties[0].second, banks[0].second, start, 2.65f, Amount(300000,USD), "Elon", "Musk", "5236",12)
-//        Activate(banks[0].second, parties[0].second, start, 2.65f, Amount(300000,USD), 12,
-//                "Elon", "Musk", "5236")
-//        Redeem(parties[0].second, banks[0].second, start, 2.65f, Amount(300000,USD), 12,
-//                                "Elon", "Musk", "5236" )
     }
 
+    /** Helper method for sending a term deposit offer. Sent from a bank to all parties in the network */
     fun sendTDOffers(me : CordaRPCOps, receiver: CordaRPCOps, dateData: TermDepositOffer.offerDateData,
                      interestPercent: Float, earlyTerms: TermDepositOffer.earlyTerms): SignedTransaction {
         //Get attachment hash for the txn before starting the flow
@@ -693,25 +678,30 @@ class Simulation(options: String) {
         if (me.attachmentExists(hash)) {
             attachmentHash = hash
         } else {
+            //Upload the attachment to our node
             attachmentHash = me.uploadAttachment(inputStreamCopy)
         }
+        //Start the flow for issuing a td offer
         val returnVal = me.startFlow(IssueOffer::Initiator, dateData, interestPercent, me.nodeInfo().legalIdentities.first(), receiver.nodeInfo().legalIdentities.first(),
                 attachmentHash, earlyTerms).returnValue.getOrThrow()
         println("TD Offer Issued: "+interestPercent+"% for " + dateData.duration + " months from "+me.nodeInfo().legalIdentities.first());
         return returnVal
     }
 
+    /** Helper method for requesting (issuing) a term deposit for a specific client */
     fun RequestTD(me : CordaRPCOps, issuer: CordaRPCOps, startDate: LocalDateTime,
                   interestPercent: Float, depositAmount: Amount<Currency>, firstName: String, lastName: String, accountNumber: String, duration: Int): SignedTransaction {
         //Request a TD at $300 USD
         val kycData = KYC.KYCNameData(firstName, lastName, accountNumber)
         val dateData = TermDeposit.DateData(startDate, duration)
+        //Start the flow for issuing a term deposit
         val returnVal = me.startFlow(IssueTD::Initiator, dateData, interestPercent, issuer.nodeInfo().legalIdentities.first(), depositAmount,
                 kycData).returnValue.getOrThrow()
         println("TD Requested: For client "+kycData.firstName+" "+kycData.lastName + " with offering institute "+ issuer.nodeInfo())
         return returnVal
     }
 
+    /** Helper method for activating a term deposit. Called by a bank node that has a term deposit in "pending" state */
     fun Activate(me : CordaRPCOps, client : CordaRPCOps, startDate: LocalDateTime, interestPercent: Float, depositAmount: Amount<Currency>, duration: Int,
                  firstName: String, lastName: String, accountNumber: String): SignedTransaction {
         val kycNameData = KYC.KYCNameData(firstName, lastName,accountNumber)
@@ -721,6 +711,7 @@ class Simulation(options: String) {
         return returnVal
     }
 
+    /** Helper method for issuing some USD */
     private fun issueCash(recipient : CordaRPCOps, notaryNode : Party) {
         val rand = Random()
         val dollaryDoos = BigDecimal((rand.nextInt(100 + 1 - 1) + 1) * 1000000)     // $1,000,000 to $100,000,000
@@ -732,40 +723,50 @@ class Simulation(options: String) {
         println("Cash Issue: ${amount} units of $USD issued to ${recipient.nodeInfo().legalIdentities.first()}")
     }
 
+    /** Helper method for redeeming a term deposit */
     fun Redeem(me : CordaRPCOps, issuer: CordaRPCOps, startDate: LocalDateTime,
                interestPercent: Float, depositAmount: Amount<Currency>, duration: Int,
                firstName: String, lastName: String, accountNumber: String) : SignedTransaction {
         val kycNameData = KYC.KYCNameData(firstName, lastName, accountNumber)
         val dateData = TermDeposit.DateData(startDate, duration)
+        //Call the flow to redeem the term deposit
         val returnVal = me.startFlow(RedeemTD::RedemptionInitiator, dateData, interestPercent, issuer.nodeInfo().legalIdentities.first(), depositAmount, kycNameData).returnValue.getOrThrow()
         println("TD Redeemed "+returnVal.coreTransaction.id + " Cash ${returnVal.tx.outputs.map { it.data }}" )
         return returnVal;
     }
 
+    /** Helper method for rolling over a term deposit */
     fun Rollover(me: CordaRPCOps, issuer: CordaRPCOps, startDate: LocalDateTime, interestPercent: Float, depositAmount: Amount<Currency>, withInterest: Boolean, duration: Int,
                  firstName: String, lastName: String, accountNumber: String, newInterest: Float, newOfferingInstitue:Party, newDuration: Int): SignedTransaction {
         val kycNameData = KYC.KYCNameData(firstName, lastName, accountNumber)
         val rolloverTerms = TermDeposit.RolloverTerms(newInterest, newOfferingInstitue, newDuration, withInterest)
         val dateData = TermDeposit.DateData(startDate, duration)
+        //Call the flow to roll over a term deposit
         val returnVal = me.startFlow(RolloverTD::RolloverInitiator, dateData, interestPercent, issuer.nodeInfo().legalIdentities.first(),
                 depositAmount, rolloverTerms, kycNameData).returnValue.getOrThrow()
         println("TD Rollover " +returnVal.coreTransaction.id )
         return returnVal
     }
 
+    /** Helper method for creating some KYC data */
     fun CreateKYC(me: CordaRPCOps, firstName: String, lastName: String, accountNumber: String): UniqueIdentifier {
+        //Call the flow to create KYC data
         val returnVal = me.startFlow(CreateKYC::Creator, firstName, lastName, accountNumber).returnValue.getOrThrow()
         return returnVal
     }
 
+    /** Helper method for retrieving some client data (name and account number) given a UniqueIdentifier (linearID for a KYC state) */
     fun getClientData(me: CordaRPCOps, linearID: UniqueIdentifier): KYC.KYCNameData {
+        //Call the flow to retrieve kyc data
         val returnVal = me.startFlow(::KYCRetrievalFlowID, linearID).returnValue.getOrThrow().first().state.data
+        //assemble a kycNameData wrapper object
         val kycNameData = KYC.KYCNameData(returnVal.firstName, returnVal.lastName, returnVal.accountNum)
         return kycNameData
     }
 
-    fun updateKYC(me: CordaRPCOps, newAccountNum: String, clientID: UniqueIdentifier) {
-        val returnVal = me.startFlow(UpdateKYC::Updator, clientID, null, null,newAccountNum).returnValue.getOrThrow()
+    /** Helper method for updating KYC data */
+    fun updateKYC(me: CordaRPCOps, firstName: String ?= null, lastName: String ?= null, newAccountNum: String ?= null, clientID: UniqueIdentifier) {
+        val returnVal = me.startFlow(UpdateKYC::Updator, clientID, firstName, lastName,newAccountNum).returnValue.getOrThrow()
         println("KYC Updated: ClientID "+clientID.id.toString())
     }
 
