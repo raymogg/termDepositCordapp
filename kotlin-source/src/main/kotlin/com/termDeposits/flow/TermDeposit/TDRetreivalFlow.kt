@@ -71,6 +71,8 @@ object TDRetreivalFlows {
                             it.state.data.clientIdentifier == clientIdentifier
                 }
             }
+
+            //Maturing filter
             else if (state == TermDeposit.internalState.maturing) {
                 filteredStates = offerStates.states.filter {
                     //Get all states expirying within the next 3 days
@@ -84,6 +86,8 @@ object TDRetreivalFlows {
                             it.state.data.clientIdentifier == clientIdentifier
                 }
             }
+
+            //Matured filter
             else if (state == TermDeposit.internalState.matured) {
                 filteredStates = offerStates.states.filter {
                     //Get all states that have expired
@@ -104,7 +108,10 @@ object TDRetreivalFlows {
             }
 
             if (filteredStates.size > 1) {
-                throw FlowException("Too many Term Deposit states found")
+                //throw FlowException("Too many Term Deposit states found")
+                //If more than one state found, use the first state. The states are identical (one client might have two loans
+                //that are exactly the same. No error should be thrown.
+                logger.info("More than one term deposit states found. First state being used")
             }
 
             return filteredStates
@@ -145,6 +152,11 @@ object TDRetreivalFlows {
 
             if (filteredStates.isEmpty()) {
                 throw FlowException("No Term Deposit states found")
+            }
+
+            if (filteredStates.size > 1) {
+                //Throw an error as two states with same UniqueID is bad.
+                throw FlowException("More than one term deposit state found with UniqueID $id")
             }
 
             return filteredStates

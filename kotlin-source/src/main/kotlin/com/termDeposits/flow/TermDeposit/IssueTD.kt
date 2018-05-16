@@ -35,12 +35,13 @@ object IssueTD {
     val issuingInstitue: Party, val depositAmount: Amount<Currency>, val KYCData: KYC.KYCNameData) : FlowLogic<SignedTransaction>() {//FlowLogic<SignedTransaction>() {
         @Suspendable
         override fun call(): SignedTransaction {//SignedTransaction {
-            println("Start Issue TD")
             //STEP 1: Retrieve TD Offer and KYC data from vault
             val flow = initiateFlow(issuingInstitue)
             val notary = serviceHub.networkMapCache.notaryIdentities.first()
+            //Get td offer
             val TDOffers = subFlow(OfferRetrievalFlow(issuingInstitue, interestPercent, dateData.duration))
             val TDOffer = TDOffers.first() //Doesnt matter if there is more than one offer as they will be identical offer states
+            //Get KYC data
             val KYCData = subFlow(KYCRetrievalFlow(KYCData.firstName, KYCData.lastName, KYCData.accountNum))
 
             //STEP 2: Build Txn with TDOffer as input and TDOffer + TDState as output TODO Work in attachments
@@ -83,7 +84,6 @@ object IssueTD {
         override fun call(): SignedTransaction {
 
             //STEP 4: Sync Identities, Receive the txn and sign it
-
             // Sync identities to ensure we know all of the identities involved in the transaction we're about to
             // be asked to sign
             subFlow(IdentitySyncFlow.Receive(counterPartySession))

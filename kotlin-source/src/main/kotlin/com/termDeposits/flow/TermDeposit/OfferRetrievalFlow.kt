@@ -26,7 +26,7 @@ class OfferRetrievalFlow(val offeringInstitute: Party,
         //Query the vault for unconsumed states and then for Security loan states
         val criteria = QueryCriteria.VaultQueryCriteria(status = Vault.StateStatus.UNCONSUMED)
         val offerStates = serviceHub.vaultService.queryBy<TermDepositOffer.State>(criteria)
-        //Filter offer states to get the states we want
+        //Filter offer states to get the states we i.e still valid, from a set institute at a set interest with a set duration.
         val filteredStates = offerStates.states.filter {
             it.state.data.validTill.isAfter(LocalDateTime.now())  &&
                     it.state.data.institue == offeringInstitute &&

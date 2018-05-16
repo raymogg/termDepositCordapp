@@ -16,7 +16,7 @@ import net.corda.core.serialization.CordaSerializable
  * Created by raymondm on 7/12/2017.
  *
  * Flow for retrieving customer KYC data based both on the fields (i.e first name, last name, account number) or the linear ID
- * of their KYC state
+ * of their KYC state. This flow queries the calling nodes vault to see if the KYC data is contained there.
  */
 
     @StartableByRPC
@@ -24,8 +24,9 @@ import net.corda.core.serialization.CordaSerializable
     class KYCRetrievalFlow(val firstName: String, val lastName: String, val accountNum: String) : FlowLogic<List<StateAndRef<KYC.State>>>() {
         @Suspendable
         override fun call(): List<StateAndRef<KYC.State>> {
-            //Query the vault for unconsumed states and then for Security loan states
+            //Query the vault for unconsumed states and then for KYC states
             val criteria = QueryCriteria.VaultQueryCriteria(status = Vault.StateStatus.UNCONSUMED)
+            //Filter the states to match the first name, last name and account num
             val filteredStates = serviceHub.vaultService.queryBy<KYC.State>(criteria).states.filter {
                 it.state.data.firstName == firstName &&
                         it.state.data.lastName == lastName &&
@@ -35,9 +36,9 @@ import net.corda.core.serialization.CordaSerializable
             if (filteredStates.isEmpty()) {
                 throw FlowException("No Client KYC Data found")
             } else if (filteredStates.size > 1) {
+                //More than one KYC state found for this client, should never happen but this log is here to inform if it does.
                 logger.error("Too many Client KYC States found ofr $firstName $lastName $accountNum - first instance used")
             }
-
             return filteredStates
         }
     }
@@ -52,6 +53,7 @@ import net.corda.core.serialization.CordaSerializable
         override fun call(): List<StateAndRef<KYC.State>> {
             //Query the vault for unconsumed states and then for Security loan states
             val criteria = QueryCriteria.VaultQueryCriteria(status = Vault.StateStatus.UNCONSUMED)
+            //Query to find the unique id
             val filteredStates = serviceHub.vaultService.queryBy<KYC.State>(criteria).states.filter {
                 it.state.data.linearId == linearID
             }
@@ -59,6 +61,7 @@ import net.corda.core.serialization.CordaSerializable
             if (filteredStates.isEmpty()) {
                 throw FlowException("No Client KYC Data found")
             } else if (filteredStates.size > 1) {
+                //Rather than log an error, this throws. Two states with same uniqueID is not good....
                 throw FlowException("Too many KYC states found for this client")
             }
 

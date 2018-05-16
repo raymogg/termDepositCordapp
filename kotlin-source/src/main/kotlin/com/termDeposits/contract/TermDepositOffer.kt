@@ -34,6 +34,7 @@ open class TermDepositOffer : Contract {
         // Verification logic for each of the TDOffer commands
         val command = tx.commands.requireSingleCommand<TermDepositOffer.Commands>()
         when (command.value) {
+
             is Commands.CreateTD -> {
                 val offer = tx.inputStates.filterIsInstance<TermDepositOffer.State>().first()
                 requireThat {
@@ -87,21 +88,28 @@ open class TermDepositOffer : Contract {
         class Rollover: Commands
     }
 
+    /** Helper function for issuing a Term deposit offer in a flow
+     *
+     */
     fun generateIssue(builder: TransactionBuilder, dateData: offerDateData, interestPercent: Float,
                              institue: Party, notary: Party, receiver: Party, earlyTerms: earlyTerms): TransactionBuilder {
+        //Create the offer state
         val state = TransactionState(data = TermDepositOffer.State(dateData.endDate, dateData.duration, interestPercent, institue, receiver, earlyTerms), notary = notary, contract = TERMDEPOSIT_OFFER_CONTRACT_ID)
+        //Add this as the output state
         builder.addOutputState(state)
+        //Attach the issue command
         builder.addCommand(TermDepositOffer.Commands.Issue(), institue.owningKey)
         return builder
     }
 
 
-    // *********
-    // * State *
-    // *********
     /** Term Deposit Offer Contract State
      * See flows for how a TD Offer is convereted to a TD - not that the state is reproduced so one TD offer can produce many
      * identical TD's.
+     *
+     * Each TD offer has a validTill date - for when this offer can be used up until. A duration for deposits created using this offer,
+     * a interest percent, the institute issuing the offer, the owner (same as institute in this case) and a earlyTerms wrapper object which identifier
+     * whether there is a penalty for exiting early or not todo in the future this would be more detailed (i.e how much will they be penalized)
      *
      * Potential other terms : minimum deposit amount, max deposit amount, fees - (todo would these be kept within contract or just in the attachment?)
      */
@@ -130,13 +138,13 @@ open class TermDepositOffer : Contract {
         }
     }
 
-    /** Data Class to hold required terms for if a party exits the deposit early */
+    /** Data Class / wrapper to hold the early exit terms for an offer.*/
     //TODO -> For now this is just true/false and then we apply a scaled ratio of time left for interest pay out, could be more detailed though
     @CordaSerializable
     data class earlyTerms(val earlyPenalty: Boolean)
 
-    /** Data Class to hold required terms for if a party exits the deposit early */
-    //TODO -> For now this is just true/false and then we apply a scaled ratio of time left for interest pay out, could be more detailed though
+    /** Data Class / wrapper to hold the date data for the offer - when this offer expires (endDate) and the duration of a loan
+     * created using this offer (duration) */
     @CordaSerializable
     data class offerDateData(val endDate: LocalDateTime, var duration: Int)
 

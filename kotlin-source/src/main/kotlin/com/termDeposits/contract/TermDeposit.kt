@@ -118,7 +118,9 @@ open class TermDeposit : Contract {
     }
 
     fun genereateRedeem(builder: TransactionBuilder, TDOffer: StateAndRef<TermDeposit.State>): TransactionBuilder {
+        //Add the old term deposit as an input
         builder.addInputState(TDOffer)
+        //Attach the redeem command
         builder.addCommand(TermDeposit.Commands.Redeem(), TDOffer.state.data.institue.owningKey, TDOffer.state.data.owner.owningKey)
         return builder
     }
@@ -128,6 +130,7 @@ open class TermDeposit : Contract {
         builder.addInputState(oldState)
         val newStartDate = LocalDateTime.MIN //TODO Change this to time.now()
         val newEndDate = newStartDate.plusMonths(tdOffer.state.data.duration.toLong())
+        //Generate the new output term deposit state
         if (withInterest) {
             //Change the deposit amount to be the new amount plus interest
             builder.addOutputState(TransactionState(data = oldState.state.data.copy(startDate = newStartDate, endDate = newEndDate,
@@ -139,14 +142,18 @@ open class TermDeposit : Contract {
             builder.addOutputState(TransactionState(data = oldState.state.data.copy(startDate = newStartDate, endDate = newEndDate, interestPercent = tdOffer.state.data.interestPercent)
                     , notary = notary, contract = TERMDEPOSIT_CONTRACT_ID))
         }
+        //Attach the rollover command
         builder.addCommand(TermDeposit.Commands.Rollover(), oldState.state.data.institue.owningKey, oldState.state.data.owner.owningKey)
         return builder
     }
 
     fun generateActivate(builder: TransactionBuilder, TDState: StateAndRef<TermDeposit.State>,
                          notary: Party): TransactionBuilder {
+        //Add the pending TD state as input
         builder.addInputState(TDState)
+        //Add the now active state as output
         builder.addOutputState(TransactionState(data = TDState.state.data.copy(internalState = internalState.active), notary = TDState.state.notary, contract = TERMDEPOSIT_CONTRACT_ID))
+        //Attach the activate command
         builder.addCommand(TermDeposit.Commands.Activate(), TDState.state.data.institue.owningKey, TDState.state.data.owner.owningKey)
         return builder
     }
@@ -167,10 +174,14 @@ open class TermDeposit : Contract {
     }
 
 
-    // **********************
-    // * Term Deposit State *
-    // **********************
-
+    /** Term Deposit State
+     * This state is used to represent each individual term deposit on the ledger. A term deposit must have a start and end date, a
+     * intersest percent, a institute (the issuer of the deposit), a deposit amount, an internal state and an owner. The term deposit
+     * state also uses the linearID to track its evolution over time. This value remains the same throughout the entire life of the deposit state.
+     *
+     * It should also be noted each term deposit is linked to a KYC data state through the clientIdentifier. This is the linearID of the KYC data
+     * state that this loan belongs to. See contract/KYC.kt for more.
+     */
     @CordaSerializable
     data class State(val startDate: LocalDateTime, val endDate: LocalDateTime, val interestPercent: Float,
                      val institue: Party, val depositAmount: Amount<Currency>, val internalState: String, val owner: AbstractParty,
@@ -201,14 +212,14 @@ open class TermDeposit : Contract {
     }
 
     /**
-     * Data class to hold the required terms for a Term deposit rollover. Needed as the number of variables that can be past
+     * Data class / wrapper to hold the required terms for a Term deposit rollover. Needed as the number of variables that can be past
      * to a flow is limited to 6 - so these three need to be grouped into a single object.
      */
     @CordaSerializable
     data class RolloverTerms(val interestPercent: Float, val offeringInstitue: Party, val duration: Int, val withInterest: Boolean)
 
 
-    /** Data Class to hold required date data. Needed for same reason as rolloverTerms data class above */
+    /** Data Class / wrapper to hold required date data. Needed for same reason as rolloverTerms data class above */
     @CordaSerializable
     data class DateData(val startDate: LocalDateTime, val duration: Int)
 
@@ -218,7 +229,7 @@ open class TermDeposit : Contract {
         val redeem = "Redeem"
     }
 
-    /** Data class to hold the instructions for what action to execute when a term deposit becomes matured */
+    /** Data class / wrapper to hold the instructions for what action to execute when a term deposit becomes matured */
     @CordaSerializable
     data class onMature(val type: matureInstructions, val rolloverTerms: RolloverTerms? , val tdOffer: StateAndRef<TermDepositOffer.State>? )
 }

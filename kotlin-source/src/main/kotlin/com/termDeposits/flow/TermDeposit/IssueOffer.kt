@@ -39,22 +39,20 @@ object IssueOffer {
             val tx = TransactionBuilder()
             val partTx = TermDepositOffer().generateIssue(tx, dateData, interestPercent, issuingInstitue, notary, otherParty, earlyTerms)
             val flowSession = initiateFlow(otherParty)
-
             //Attach the term deposit terms
             partTx.addAttachment(attachmentID)
 
-            //Send the Transaction to the other party
+            //STEP 2: Send the Transaction to the other party
             flowSession.send(Pair(partTx, attachmentID))
 
-            //STEP 4: Receieve back txn
+            //STEP 5: Receieve back txn
             val stx = flowSession.receive<SignedTransaction>().unwrap { it }
 
-            //STEP 5: Notarise and finalize this txn
+            //STEP 6: Notarise and finalize this txn
             val unnotarisedTX = serviceHub.addSignature(stx)
             subFlow(ResolveTransactionsFlow(unnotarisedTX, flowSession)) //This is required for notary validation to pass
             println("Offer Issued to $otherParty for a TD at $interestPercent% by ${issuingInstitue.name}")
-            val finishedTX = subFlow(FinalityFlow(unnotarisedTX, setOf(otherParty))) //This parties vault will receieve the txn data and state in their vault.
-            return finishedTX
+            return subFlow(FinalityFlow(unnotarisedTX, setOf(otherParty))) //This parties vault will receieve the txn data and state in their vault.
         }
     }
 
@@ -64,7 +62,7 @@ object IssueOffer {
     open class Reciever(val flow: FlowSession) : FlowLogic<SignedTransaction>() {
         @Suspendable
         override fun call(): SignedTransaction {
-            //STEP 2: Receive txn from issuing institute
+            //STEP 3: Receive txn from issuing institute
             val tx = flow.receive<Pair<TransactionBuilder, SecureHash>>().unwrap {
                 requireThat {
                     //"Contract hash matches" using (it.first.attachments().first() == getFileHash(it.second)) //TODO Instead of receiving this, check with our contracts - if we dont have this hash need to download
@@ -72,7 +70,7 @@ object IssueOffer {
                 it
             }
 
-            //STEP 3: Sign and send back this offer
+            //STEP 4: Sign and send back this offer
             val stx = serviceHub.signInitialTransaction(tx.first)
             flow.send(stx)
             return waitForLedgerCommit(stx.id)
@@ -80,6 +78,7 @@ object IssueOffer {
         }
     }
 
+    /** Helper function to get the filehash of a particular file (i.e external legal documents */
     fun getFileHash(filename: String) : SecureHash {
         val loader = Thread.currentThread().contextClassLoader.getResourceAsStream(filename)
         val md = MessageDigest.getInstance("MD5")

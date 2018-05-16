@@ -39,7 +39,7 @@ object ActivateTD {
         //STEP 6: Sync Identities
         subFlow(IdentitySyncFlow.Receive(flow))
 
-        //STEP 7: Sign the txn and send back to the other party
+        //STEP 8: Sign the txn and send back to the other party
         //Sign the txn
         val signTransactionFlow = object : SignTransactionFlow(flow, SignTransactionFlow.tracker()) {
             override fun checkTransaction(stx: SignedTransaction)  {
@@ -86,7 +86,7 @@ object ActivateTD {
             // Sync up confidential identities in the transaction with our counterparty
             subFlow(IdentitySyncFlow.Send(flow, tx2.toWireTransaction(serviceHub)))
 
-            //STEP 6: Sign and retrieve the other parties sig
+            //STEP 7: Sign and retrieve the other parties sig
             val ptx = serviceHub.signInitialTransaction(tx2, cashKeys+serviceHub.myInfo.legalIdentities.first().owningKey)
             val otherPartySig = subFlow(CollectSignaturesFlow(ptx, setOf(flow), CollectSignaturesFlow.tracker()))
             val twiceSignedTx = ptx.plus(otherPartySig.sigs)

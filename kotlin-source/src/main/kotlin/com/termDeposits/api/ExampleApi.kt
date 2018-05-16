@@ -69,7 +69,7 @@ class ExampleApi(private val rpcOps: CordaRPCOps) {
     }}
 
 /** API for interacting with all aspects of the Term Deposits cordapp
- * Note that most API calls require many fields. Most of this data can be receieved from states currently on the
+ * Note that most API calls require many fields. Most of this data can be received from states currently on the
  * ledger (eg customer name and account number, start date of a term deposit, etc). It is expected a front end
  * would be provided that allows the user to simply select a client from a drop down list, and all their paramaters
  * will be passed to the API call - rather than requiring all fields be entered manually.

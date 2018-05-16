@@ -19,7 +19,6 @@ import net.corda.finance.utils.sumCashBy
 import java.time.LocalDateTime
 import java.time.Period
 import java.util.*
-import java.util.logging.Logger
 
 /** Flow for redeeming a TD. This flow is invoked by a client/node that "owns" the term deposit (i.e have given money to the
  * issuing institue). After this flow the term deposits will be consumed.
@@ -89,7 +88,7 @@ object RedeemTD {
             val notary = serviceHub.networkMapCache.notaryIdentities.first()
             val builder = TransactionBuilder(notary)
             val builder2 = TermDeposit().genereateRedeem(builder, TermDeposit)
-            //Add our required cash
+            //Add our required cash to repay back the term deposit.
             val amountOfCash: Amount<Currency>
             if (TermDeposit.state.data.endDate.isAfter(LocalDateTime.now()) && TermDeposit.state.data.earlyTerms.earlyPenalty == true) {
                 //The user is exiting early, we allow this but penalize them
@@ -101,13 +100,14 @@ object RedeemTD {
                 val totalMonths = monthsDiff2 + yearsToMonthsDiff2
                 //Ratio is (monthsLeft - depositDuration/depositDuration) eg 1 month left on a 12 month deposit means user gets 12-1/12 of the interest (11/12 * interest)
                 val ratioToPay = ((totalMonths.toFloat()-monthsLeft.toFloat())/totalMonths.toFloat())
-                println("Ratio to pay $ratioToPay")
+                //println("Ratio to pay $ratioToPay")
                 amountOfCash = Amount((TermDeposit.state.data.depositAmount.quantity * (100+(TermDeposit.state.data.interestPercent*ratioToPay))/100).toLong(), USD)
             } else {
 //                val (tx, cashKeys) = Cash.generateSpend(serviceHub, builder2, Amount((TermDeposit.state.data.depositAmount.quantity * (100+TermDeposit.state.data.interestPercent)/100).toLong(), USD),
 //                        flow.counterparty)
                 amountOfCash = Amount((TermDeposit.state.data.depositAmount.quantity * (100+TermDeposit.state.data.interestPercent)/100).toLong(), USD)
             }
+            //Generate the cash spend based off the amount of cash calculated above
             val (tx, cashKeys) = Cash.generateSpend(serviceHub, builder2, amountOfCash,
                     flow.counterparty)
 
@@ -118,7 +118,7 @@ object RedeemTD {
             val otherPartySig = subFlow(CollectSignaturesFlow(partSignedTxn, listOf(flow), CollectSignaturesFlow.tracker()))
 
             //STEP 7: Merge all signatures and commit this to the ledger
-            val twiceSignedTx = partSignedTxn.plus(otherPartySig.sigs) //This is different to tutorial so hopefully works
+            val twiceSignedTx = partSignedTxn.plus(otherPartySig.sigs)
             println("Term Deposit Redeemed: ${TermDeposit.state.data.toString()}")
             return subFlow(FinalityFlow(twiceSignedTx, setOf(flow.counterparty)))
         }

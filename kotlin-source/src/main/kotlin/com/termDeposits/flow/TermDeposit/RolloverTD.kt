@@ -42,12 +42,12 @@ object RolloverTD {
 
         @Suspendable
         override fun call(): SignedTransaction {
-            println("Rollover TD")
             //STEP 1: Gather KYC Data and TD. Send these to other party with rollover instructions
             val flowSession = initiateFlow(issuingInstitue)
             val clientID = subFlow(KYCRetrievalFlow(kycNameData.firstName, kycNameData.lastName, kycNameData.accountNum)).first().state.data.linearId
             val termDeposit = subFlow(TDRetreivalFlows.TDRetreivalFlow(dateData, issuingInstitue, interestPercent, depositAmount, TermDeposit.internalState.active, clientID))
             val tdOffer = subFlow(OfferRetrievalFlow(rolloverTerms.offeringInstitue, rolloverTerms.interestPercent, rolloverTerms.duration))
+            //Send all info as a list
             flowSession.send(listOf(termDeposit.first(), rolloverTerms.withInterest, tdOffer.first()))
 
             //STEP 5: Sign the transaction and return to the other party
@@ -74,9 +74,19 @@ object RolloverTD {
             //STEP 2: Receieve the term deposit and rollover instruction
             val notary = serviceHub.networkMapCache.notaryIdentities.first()
             val params = flowSession.receive<List<*>>().unwrap { it }
-            val termDeposit = params[0] as StateAndRef<TermDeposit.State>
-            val withInterest = params[1] as Boolean
-            val tdOffer = params[2] as StateAndRef<TermDepositOffer.State>
+            val termDeposit: StateAndRef<TermDeposit.State>
+            val withInterest: Boolean
+            val tdOffer: StateAndRef<TermDepositOffer.State>
+            try {
+                termDeposit = params[0] as StateAndRef<TermDeposit.State>
+                withInterest = params[1] as Boolean
+                tdOffer = params[2] as StateAndRef<TermDepositOffer.State>
+            } catch (e: Exception) {
+                throw FlowException("Error in rollover: Cast exception for termDepositState or termDepositOffer state")
+            }
+//            val termDeposit = params[0] as StateAndRef<TermDeposit.State>
+//            val withInterest = params[1] as Boolean
+//            val tdOffer = params[2] as StateAndRef<TermDepositOffer.State>
 
 
 
@@ -107,6 +117,7 @@ object RolloverTD {
                 amountOfCash = Amount((termDeposit.state.data.depositAmount.quantity/100 * termDeposit.state.data.interestPercent).toLong(), USD)
                 ratioToPay = 1.0f
             }
+            //Generate the transaction. Either with Interest (Scenario 1) or without interest (Scenario 2)
             if (withInterest) {
                 //Setup the txn with interest being reinvested
                 val tx = TermDeposit().generateRollover(builder, termDeposit, notary, tdOffer, true, ratioToPay)
@@ -132,7 +143,7 @@ object RolloverTD {
             val stx = serviceHub.signInitialTransaction(toSignTx, keys)
             val otherPartySig = subFlow(CollectSignaturesFlow(stx, setOf(flowSession), CollectSignaturesFlow.tracker()))
 
-            //STEP 6: Receieve back and commit to ledger
+            //STEP 6: Receive back and commit to ledger
             val twiceSignedTx = stx.plus(otherPartySig.sigs)
             val td = toSignTx.outputStates().filterIsInstance<TransactionState<TermDeposit.State>>().first()
             println("Term Deposit Rollover ${td.data} ${td.data.depositAmount}")
