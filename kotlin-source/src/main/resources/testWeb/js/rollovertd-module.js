@@ -262,7 +262,7 @@ app.controller('RolloverTDAppController', function($http, $location, $uibModal) 
                 i++;
             }
         }
-        return parseFloat(value.substring(0,endIndex));
+        return parseDouble(value.substring(0,endIndex));
     }
 
 

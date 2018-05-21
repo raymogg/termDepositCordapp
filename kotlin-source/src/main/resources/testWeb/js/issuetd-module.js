@@ -97,7 +97,7 @@ app.controller('IssueTDAppController', function($http, $location, $uibModal) {
         var selectedOffer = offers[offer.selectedIndex];
         var selectedClient = clients[client.selectedIndex];
         //Parse options selected and pull the data
-        var value = parseFloat(document.getElementById("depositAmount").value);
+        var value = parseDouble(document.getElementById("depositAmount").value);
         alert(value);
         var offering_institute = extractOrganisationName(selectedOffer.issuingInstitute);
         var interest_percent = selectedOffer.interest;
