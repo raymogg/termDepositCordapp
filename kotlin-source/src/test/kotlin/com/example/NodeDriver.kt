@@ -104,8 +104,8 @@ class Simulation(options: String) {
 
             setup_nodes()
             //Comment out one of runSimulation() and runTests() -> only one of these should be run at once
-            runSimulation()
-            //runTests()
+            //runSimulation()
+            runTests()
             //waitForAllNodesToFinish()
         }
     }

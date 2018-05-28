@@ -12,6 +12,7 @@ import net.corda.core.transactions.LedgerTransaction
 import net.corda.core.transactions.TransactionBuilder
 import net.corda.core.utilities.toBase58String
 import net.corda.finance.USD
+import net.corda.finance.contracts.asset.Cash
 import net.corda.finance.utils.sumCashBy
 import java.time.LocalDateTime
 import java.util.*
@@ -61,6 +62,9 @@ open class TermDeposit : Contract {
                     "Issuing institue must match" using (input.institue == output.institue)
                     "interest percent must match" using (input.interestPercent == output.interestPercent)
                     "Owner must have signed the command" using (output.owner.owningKey in command.signers)
+                    val institutesCash = tx.outputStates.filterIsInstance<Cash.State>().sumCashBy(output.institue)
+                    "Provided cash amount must match the term deposit value" using
+                            (institutesCash.quantity == output.depositAmount.quantity)
                 }
             }
 
@@ -185,7 +189,8 @@ open class TermDeposit : Contract {
     @CordaSerializable
     data class State(val startDate: LocalDateTime, val endDate: LocalDateTime, val interestPercent: Float,
                      val institue: Party, val depositAmount: Amount<Currency>, val internalState: String, val owner: AbstractParty,
-                     override val linearId: UniqueIdentifier = UniqueIdentifier(), val clientIdentifier: UniqueIdentifier, val onMature: onMature?, val earlyTerms: TermDepositOffer.earlyTerms) : QueryableState, ContractState, LinearState {
+                     override val linearId: UniqueIdentifier = UniqueIdentifier(), val clientIdentifier: UniqueIdentifier,
+                     val onMature: onMature?, val earlyTerms: TermDepositOffer.earlyTerms) : QueryableState, ContractState, LinearState {
 
         //Participants store this state in their vault - therefor this should be both the owner (whoever has taken out the loan) and the issueing institute
         override val participants: List<AbstractParty> get() = listOf(owner, institue)

@@ -99,7 +99,7 @@ app.controller('RedeemTDAppController', function($http, $location, $uibModal) {
                 "&duration="+duration+"&customer_fname="+customer_fname+"&customer_lname="+customer_lname+"&customer_anum="+customer_anum+"&start_date="+startDate //+
                 //"&client="+client;
                 //Display a loading circle
-             //alert(String(url));
+             alert(String(url));
             document.getElementById("loading").style.display = "block"
             $http.post(url).then(function successCallback(response) {
                         document.getElementById("loading").style.display = "none"
