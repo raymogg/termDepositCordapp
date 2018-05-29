@@ -17,9 +17,9 @@ import java.time.LocalDateTime
 /**
  * Term Deposit Offer
  *
- * A term deposit offer is issued by an institue which provides term deposits (i.e banks, etc). Provided the current
+ * A term deposit offer is issued by an institute which provides term deposits (i.e banks, etc). Provided the current
  * date is between the offers start and end date, and other offer terms are met (i.e minimum or maximum deposit amounts),
- * a TermDeposit offer can be redeemed for an actual term deposit with the issuing institue.
+ * a TermDeposit offer can be redeemed for an actual term deposit with the issuing institute.
  */
 
 @CordaSerializable
@@ -51,15 +51,15 @@ open class TermDepositOffer : Contract {
                             TDTerms.plus(it.startDate.toString())
                             TDTerms.plus(it.endDate.toString())
                             TDTerms.plus(it.interestPercent.toString())
-                            TDTerms.plus(it.institue.name.commonName.toString())
+                            TDTerms.plus(it.institute.name.commonName.toString())
                         } else if (it is State) {
                             TDOTerms.plus(it.validTill.toString())
                             TDOTerms.plus(it.interestPercent.toString())
-                            TDOTerms.plus(it.institue.name.commonName.toString())
+                            TDOTerms.plus(it.institute.name.commonName.toString())
                         }
                     }
                     TDTerms.equals(TDOTerms) //all terms should match
-                    "Issuing party has signed the command" using (offer.institue in command.signingParties)
+                    "Issuing party has signed the command" using (offer.institute in command.signingParties)
                 }
             }
 
@@ -70,7 +70,7 @@ open class TermDepositOffer : Contract {
                 val offerState = tx.outputStates.filterIsInstance<TermDepositOffer.State>().first()
                 //Individual requirements for offer states - e.g non negative values
                 "Interest percent must be greater than zero" using (offerState.interestPercent > 0)
-                "Issuing institue must have signed the command" using (offerState.institue in command.signingParties)
+                "Issuing institute must have signed the command" using (offerState.institute in command.signingParties)
             }
 
             is Commands.Rollover -> {
@@ -92,13 +92,13 @@ open class TermDepositOffer : Contract {
      *
      */
     fun generateIssue(builder: TransactionBuilder, dateData: offerDateData, interestPercent: Float,
-                             institue: Party, notary: Party, receiver: Party, earlyTerms: earlyTerms): TransactionBuilder {
+                             institute: Party, notary: Party, receiver: Party, earlyTerms: earlyTerms): TransactionBuilder {
         //Create the offer state
-        val state = TransactionState(data = TermDepositOffer.State(dateData.endDate, dateData.duration, interestPercent, institue, receiver, earlyTerms), notary = notary, contract = TERMDEPOSIT_OFFER_CONTRACT_ID)
+        val state = TransactionState(data = TermDepositOffer.State(dateData.endDate, dateData.duration, interestPercent, institute, receiver, earlyTerms), notary = notary, contract = TERMDEPOSIT_OFFER_CONTRACT_ID)
         //Add this as the output state
         builder.addOutputState(state)
         //Attach the issue command
-        builder.addCommand(TermDepositOffer.Commands.Issue(), institue.owningKey)
+        builder.addCommand(TermDepositOffer.Commands.Issue(), institute.owningKey)
         return builder
     }
 
@@ -115,12 +115,12 @@ open class TermDepositOffer : Contract {
      */
     @CordaSerializable
     data class State(val validTill: LocalDateTime, val duration: Int,
-                                     val interestPercent: Float, val institue: Party, val owner: AbstractParty, val earlyTerms: earlyTerms) : QueryableState, ContractState {
+                                     val interestPercent: Float, val institute: Party, val owner: AbstractParty, val earlyTerms: earlyTerms) : QueryableState, ContractState {
 
         override val participants: List<AbstractParty> get() = listOf(owner)
 
         override fun toString(): String {
-            return "Term Deposit Offer: From ${institue} at ${interestPercent}%"
+            return "Term Deposit Offer: From ${institute} at ${interestPercent}%"
         }
 
         override fun supportedSchemas(): Iterable<MappedSchema> = listOf(TDOSchemaV1)
@@ -130,7 +130,7 @@ open class TermDepositOffer : Contract {
                 is TDOSchemaV1 -> TDOSchemaV1.PersistentTDOSchema(
                         endDate = this.validTill,
                         interest = this.interestPercent,
-                        institute = this.institue.owningKey.toBase58String()
+                        institute = this.institute.owningKey.toBase58String()
 
                 )
                 else -> throw IllegalArgumentException("Unrecognised Schema $schema")

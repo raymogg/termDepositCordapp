@@ -29,7 +29,7 @@ class OfferRetrievalFlow(val offeringInstitute: Party,
         //Filter offer states to get the states we i.e still valid, from a set institute at a set interest with a set duration.
         val filteredStates = offerStates.states.filter {
             it.state.data.validTill.isAfter(LocalDateTime.now())  &&
-                    it.state.data.institue == offeringInstitute &&
+                    it.state.data.institute == offeringInstitute &&
                     it.state.data.interestPercent == interest &&
                     it.state.data.duration == duration
         }

@@ -101,7 +101,7 @@ class RolloverDeposit : Fragment() {
             when (it) {
                 executeButton -> {
                     val tdOffer = offerChoiceBox.value.state.data
-                    val newTerms = TermDeposit.RolloverTerms(tdOffer.interestPercent, tdOffer.institue, tdOffer.duration, withInterestChoiceBox.value)
+                    val newTerms = TermDeposit.RolloverTerms(tdOffer.interestPercent, tdOffer.institute, tdOffer.duration, withInterestChoiceBox.value)
                     val linearID = depositChoiceBox.value.state.data.clientIdentifier
                     val kycData = rpcProxy.value?.startFlow(::KYCRetrievalFlowID, linearID)!!.returnValue.getOrThrow().first()
                     val kycNameData = KYC.KYCNameData(kycData.state.data.firstName, kycData.state.data.lastName, kycData.state.data.accountNum)
@@ -113,9 +113,9 @@ class RolloverDeposit : Fragment() {
                     val dateData = TermDeposit.DateData(LocalDateTime.MIN,
                             difference)
                     println("GUI Start ${dateData.startDate}  Amount ${depositChoiceBox.value.state.data.depositAmount} Client Ref ${linearID} \n" +
-                            "Duration ${dateData.duration} Interest ${depositChoiceBox.value.state.data.interestPercent} Institue ${depositChoiceBox.value.state.data.institue}")
+                            "Duration ${dateData.duration} Interest ${depositChoiceBox.value.state.data.interestPercent} institute ${depositChoiceBox.value.state.data.institute}")
                     rpcProxy.value?.startFlow(RolloverTD::RolloverInitiator, dateData, depositChoiceBox.value.state.data.interestPercent,
-                            depositChoiceBox.value.state.data.institue,  depositChoiceBox.value.state.data.depositAmount, newTerms, kycNameData)
+                            depositChoiceBox.value.state.data.institute,  depositChoiceBox.value.state.data.depositAmount, newTerms, kycNameData)
                 }
                 else -> null
             }
@@ -136,7 +136,7 @@ class RolloverDeposit : Fragment() {
         depositChoiceBox.apply {
             //            partyBLabel.textProperty().bind(transactionTypeCB.valueProperty().map { it?.partyNameB?.let { "$it : " } })
             items = depositStates
-            converter = stringConverter { "Issuing Institue: " + it.state.data.institue.toString() +
+            converter = stringConverter { "Issuing institute: " + it.state.data.institute.toString() +
                     "\n Interest: "+ it.state.data.interestPercent+"%" +
                     "\n Deposited Amount " + it.state.data.depositAmount.toString() +
                     "\n End Date " + it.state.data.endDate.toString()}
@@ -146,7 +146,7 @@ class RolloverDeposit : Fragment() {
         offerChoiceBox.apply {
             //            partyBLabel.textProperty().bind(transactionTypeCB.valueProperty().map { it?.partyNameB?.let { "$it : " } })
             items = offerStates
-            converter = stringConverter { "Issuing Institue: " + it.state.data.institue.toString() +
+            converter = stringConverter { "Issuing institute: " + it.state.data.institute.toString() +
                     "\n Interest: "+ it.state.data.interestPercent+"%" +
                     "\n Valid till: " + it.state.data.validTill.toString() +
                     "\n Duration (Months) "+it.state.data.duration.toString()}

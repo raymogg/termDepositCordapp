@@ -59,10 +59,10 @@ open class TermDeposit : Contract {
                     val output = tx.outputStates.filterIsInstance<TermDeposit.State>().first()
                     "Deposit amounts must match" using (input.depositAmount == output.depositAmount)
                     "End dates must match" using (input.endDate == output.endDate)
-                    "Issuing institue must match" using (input.institue == output.institue)
+                    "Issuing institute must match" using (input.institute == output.institute)
                     "interest percent must match" using (input.interestPercent == output.interestPercent)
                     "Owner must have signed the command" using (output.owner.owningKey in command.signers)
-                    val institutesCash = tx.outputStates.filterIsInstance<Cash.State>().sumCashBy(output.institue)
+                    val institutesCash = tx.outputStates.filterIsInstance<Cash.State>().sumCashBy(output.institute)
                     "Provided cash amount must match the term deposit value" using
                             (institutesCash.quantity == output.depositAmount.quantity)
                 }
@@ -87,7 +87,7 @@ open class TermDeposit : Contract {
                 "Only one term deposit output must be present" using (tx.outputStates.filterIsInstance<TermDeposit.State>().size == 1)
                 val input = tx.inputStates.filterIsInstance<TermDeposit.State>().first()
                 val output = tx.outputStates.filterIsInstance<TermDeposit.State>().first()
-                "Input and Output issuer must be the same" using (input.institue == output.institue)
+                "Input and Output issuer must be the same" using (input.institute == output.institute)
                 //"The term deposit has not yet expired" using (input.endDate.isBefore(LocalDateTime.now()))
                 "Owner must have signed the command" using (output.owner.owningKey in command.signers)
             }
@@ -111,13 +111,13 @@ open class TermDeposit : Contract {
                       notary: Party, depositAmount: Amount<Currency>, to: Party, startDate: LocalDateTime,
                       endDate: LocalDateTime, kyc: StateAndRef<KYC.State>): TransactionBuilder {
         val offerState = TDOffer.state.data
-        val TDState = TransactionState(data = TermDeposit.State(startDate, endDate, offerState.interestPercent, offerState.institue,
+        val TDState = TransactionState(data = TermDeposit.State(startDate, endDate, offerState.interestPercent, offerState.institute,
                 depositAmount, internalState.pending, to, clientIdentifier = kyc.state.data.linearId, onMature = null, earlyTerms = offerState.earlyTerms),
                 notary = notary, contract = TERMDEPOSIT_CONTRACT_ID)
         //Add the TermDeposit as the output
         builder.addOutputState(TDState)
         //Add the issue command
-        builder.addCommand(TermDeposit.Commands.Issue(), offerState.institue.owningKey, to.owningKey)
+        builder.addCommand(TermDeposit.Commands.Issue(), offerState.institute.owningKey, to.owningKey)
         return builder
     }
 
@@ -125,7 +125,7 @@ open class TermDeposit : Contract {
         //Add the old term deposit as an input
         builder.addInputState(TDOffer)
         //Attach the redeem command
-        builder.addCommand(TermDeposit.Commands.Redeem(), TDOffer.state.data.institue.owningKey, TDOffer.state.data.owner.owningKey)
+        builder.addCommand(TermDeposit.Commands.Redeem(), TDOffer.state.data.institute.owningKey, TDOffer.state.data.owner.owningKey)
         return builder
     }
 
@@ -147,7 +147,7 @@ open class TermDeposit : Contract {
                     , notary = notary, contract = TERMDEPOSIT_CONTRACT_ID))
         }
         //Attach the rollover command
-        builder.addCommand(TermDeposit.Commands.Rollover(), oldState.state.data.institue.owningKey, oldState.state.data.owner.owningKey)
+        builder.addCommand(TermDeposit.Commands.Rollover(), oldState.state.data.institute.owningKey, oldState.state.data.owner.owningKey)
         return builder
     }
 
@@ -158,7 +158,7 @@ open class TermDeposit : Contract {
         //Add the now active state as output
         builder.addOutputState(TransactionState(data = TDState.state.data.copy(internalState = internalState.active), notary = TDState.state.notary, contract = TERMDEPOSIT_CONTRACT_ID))
         //Attach the activate command
-        builder.addCommand(TermDeposit.Commands.Activate(), TDState.state.data.institue.owningKey, TDState.state.data.owner.owningKey)
+        builder.addCommand(TermDeposit.Commands.Activate(), TDState.state.data.institute.owningKey, TDState.state.data.owner.owningKey)
         return builder
     }
 
@@ -188,12 +188,12 @@ open class TermDeposit : Contract {
      */
     @CordaSerializable
     data class State(val startDate: LocalDateTime, val endDate: LocalDateTime, val interestPercent: Float,
-                     val institue: Party, val depositAmount: Amount<Currency>, val internalState: String, val owner: AbstractParty,
+                     val institute: Party, val depositAmount: Amount<Currency>, val internalState: String, val owner: AbstractParty,
                      override val linearId: UniqueIdentifier = UniqueIdentifier(), val clientIdentifier: UniqueIdentifier,
                      val onMature: onMature?, val earlyTerms: TermDepositOffer.earlyTerms) : QueryableState, ContractState, LinearState {
 
-        //Participants store this state in their vault - therefor this should be both the owner (whoever has taken out the loan) and the issueing institute
-        override val participants: List<AbstractParty> get() = listOf(owner, institue)
+        //Participants store this state in their vault - therefor this should be both the owner (whoever has taken out the loan) and the issuing institute
+        override val participants: List<AbstractParty> get() = listOf(owner, institute)
 
         override fun generateMappedObject(schema: MappedSchema): PersistentState {
             return when (schema) {
@@ -201,7 +201,7 @@ open class TermDeposit : Contract {
                         startDate = this.startDate,
                         endDate = this.endDate,
                         interest = this.interestPercent,
-                        institute = this.institue.owningKey.toBase58String()
+                        institute = this.institute.owningKey.toBase58String()
 
                 )
                 else -> throw IllegalArgumentException("Unrecognised Schema $schema")
@@ -212,7 +212,7 @@ open class TermDeposit : Contract {
 
 
         override fun toString(): String {
-            return "Term Deposit: From $institue at $interestPercent% starting on $startDate and ending on $endDate to $owner with amount $depositAmount (InternalState: $internalState)"
+            return "Term Deposit: From $institute at $interestPercent% starting on $startDate and ending on $endDate to $owner with amount $depositAmount (InternalState: $internalState)"
         }
     }
 
@@ -221,7 +221,7 @@ open class TermDeposit : Contract {
      * to a flow is limited to 6 - so these three need to be grouped into a single object.
      */
     @CordaSerializable
-    data class RolloverTerms(val interestPercent: Float, val offeringInstitue: Party, val duration: Int, val withInterest: Boolean)
+    data class RolloverTerms(val interestPercent: Float, val offeringinstitute: Party, val duration: Int, val withInterest: Boolean)
 
 
     /** Data Class / wrapper to hold required date data. Needed for same reason as rolloverTerms data class above */

@@ -95,23 +95,23 @@ class OfferViewer : CordaView("Term Deposit Offers") {
             override val root: Parent by fxml("OfferStatesViewer.fxml")
 
             val stateIdValueLabel: Label by fxid()
-            val institueValueLabel: Label by fxid()
+            val instituteValueLabel: Label by fxid()
             val originatedValueLabel: Label by fxid()
             val interestValueLabel: Label by fxid()
             val durationValueLabel: Label by fxid()
 
             init {
-                val resolvedIssuer: AbstractParty = stateRow.stateAndRef.state.data.institue
+                val resolvedIssuer: AbstractParty = stateRow.stateAndRef.state.data.institute
 
                 stateIdValueLabel.apply {
                     text = stateRow.stateAndRef.ref.toString().substring(0, 16) + "...[${stateRow.stateAndRef.ref.index}]"
                     graphic = identicon(stateRow.stateAndRef.ref.txhash, 30.0)
                     tooltip = identiconToolTip(stateRow.stateAndRef.ref.txhash)
                 }
-                institueValueLabel.textProperty().bind(SimpleStringProperty(resolvedIssuer.nameOrNull()?.let {
+                instituteValueLabel.textProperty().bind(SimpleStringProperty(resolvedIssuer.nameOrNull()?.let {
                     PartyNameFormatter.short.format(it)
                 } ?: "Anonymous"))
-                institueValueLabel.apply { tooltip(resolvedIssuer.nameOrNull()?.let { PartyNameFormatter.full.format(it) } ?: "Anonymous") }
+                instituteValueLabel.apply { tooltip(resolvedIssuer.nameOrNull()?.let { PartyNameFormatter.full.format(it) } ?: "Anonymous") }
                 originatedValueLabel.text = stateRow.stateAndRef.state.data.validTill.toString()
                 interestValueLabel.text = stateRow.stateAndRef.state.data.interestPercent.toString()
                 durationValueLabel.text = stateRow.stateAndRef.state.data.duration.toString()
@@ -155,7 +155,7 @@ class OfferViewer : CordaView("Term Deposit Offers") {
                     /**
                      * First we group the states based on the exchange. [memberStates] is all states holding stock issued by [exchange]
                      */
-                    AggregatedList(searchField.filteredData, { it.state.data.institue }) { exchange, memberStates ->
+                    AggregatedList(searchField.filteredData, { it.state.data.institute }) { exchange, memberStates ->
                         /**
                          * Next we create subgroups based on holding. [memberStates] here is all states holding stock [stock] issued by [exchange] above.
                          * Note that these states will not be displayed in the TreeTable, but rather in the side pane if the user clicks on the row.

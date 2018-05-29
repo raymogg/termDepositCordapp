@@ -100,7 +100,7 @@ class ExitDeposit : Fragment() {
                     val difference = monthsDiff + yearsToMonthsDiff
                     val dateData = TermDeposit.DateData(offerChoiceBox.value.state.data.startDate,difference)
                     rpcProxy.value?.startFlow(RedeemTD::RedemptionInitiator, dateData,
-                            offerChoiceBox.value.state.data.interestPercent, offerChoiceBox.value.state.data.institue,  offerChoiceBox.value.state.data.depositAmount, kycNameData)
+                            offerChoiceBox.value.state.data.interestPercent, offerChoiceBox.value.state.data.institute,  offerChoiceBox.value.state.data.depositAmount, kycNameData)
                 }
                 else -> null
             }
@@ -118,7 +118,7 @@ class ExitDeposit : Fragment() {
         // Loan Selection
         offerChoiceBox.apply {
             items = offerStates
-            converter = stringConverter { "Issuing Institue: " + it.state.data.institue.toString() +
+            converter = stringConverter { "Issuing institute: " + it.state.data.institute.toString() +
                     "\n Interest: "+ it.state.data.interestPercent+"%" +
                     "\n Deposited Amount " + it.state.data.depositAmount.toString() +
                     "\n End Date " + it.state.data.endDate.toString()}

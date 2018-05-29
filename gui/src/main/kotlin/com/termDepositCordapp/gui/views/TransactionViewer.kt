@@ -301,7 +301,7 @@ class TransactionViewer : CordaView("Transactions") {
                         is TermDepositOffer.State -> {
                             row {
                                 label("Issuer : ") {gridpaneConstraints { hAlignment = HPos.RIGHT }}
-                                label(data.institue.toString())
+                                label(data.institute.toString())
                             }
 
                             row {
@@ -325,7 +325,7 @@ class TransactionViewer : CordaView("Transactions") {
                         is TermDeposit.State -> {
                             row {
                                 label("Issuer : ") {gridpaneConstraints { hAlignment = HPos.RIGHT }}
-                                label(data.institue.toString())
+                                label(data.institute.toString())
                             }
 
                             row {

@@ -103,7 +103,7 @@ class AcceptOffer : Fragment() {
                     val kycCB = kycChoiceBox.value.state.data
                     val kycData = KYC.KYCNameData(kycCB.firstName, kycCB.lastName, kycCB.accountNum)
                     rpcProxy.value?.startFlow(IssueTD::Initiator, dateData, offerChoiceBox.value.state.data.interestPercent,
-                            offerChoiceBox.value.state.data.institue,  Amount(depositTextField.text.toLong()*100, USD), kycData)
+                            offerChoiceBox.value.state.data.institute,  Amount(depositTextField.text.toLong()*100, USD), kycData)
                }
                 else -> null
             }
@@ -127,7 +127,7 @@ class AcceptOffer : Fragment() {
         // Loan Selection
         offerChoiceBox.apply {
             items = offerStates
-            converter = stringConverter { "Issuing Institue: " + it.state.data.institue.toString() +
+            converter = stringConverter { "Issuing institute: " + it.state.data.institute.toString() +
                  "\n Interest: "+ it.state.data.interestPercent+"%" +
                         "\n Valid till: " + it.state.data.validTill.toString() +
             "\n Duration (Months) "+it.state.data.duration.toString()}

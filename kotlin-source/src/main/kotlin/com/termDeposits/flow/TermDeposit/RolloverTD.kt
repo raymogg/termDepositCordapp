@@ -37,16 +37,16 @@ object RolloverTD {
     @CordaSerializable
     @InitiatingFlow
     @StartableByRPC
-    open class RolloverInitiator(val dateData: TermDeposit.DateData,val interestPercent: Float, val issuingInstitue: Party,
+    open class RolloverInitiator(val dateData: TermDeposit.DateData,val interestPercent: Float, val issuinginstitute: Party,
                             val depositAmount: Amount<Currency>, val rolloverTerms: TermDeposit.RolloverTerms, val kycNameData: KYC.KYCNameData) : FlowLogic<SignedTransaction>() {
 
         @Suspendable
         override fun call(): SignedTransaction {
             //STEP 1: Gather KYC Data and TD. Send these to other party with rollover instructions
-            val flowSession = initiateFlow(issuingInstitue)
+            val flowSession = initiateFlow(issuinginstitute)
             val clientID = subFlow(KYCRetrievalFlow(kycNameData.firstName, kycNameData.lastName, kycNameData.accountNum)).first().state.data.linearId
-            val termDeposit = subFlow(TDRetreivalFlows.TDRetreivalFlow(dateData, issuingInstitue, interestPercent, depositAmount, TermDeposit.internalState.active, clientID))
-            val tdOffer = subFlow(OfferRetrievalFlow(rolloverTerms.offeringInstitue, rolloverTerms.interestPercent, rolloverTerms.duration))
+            val termDeposit = subFlow(TDRetreivalFlows.TDRetreivalFlow(dateData, issuinginstitute, interestPercent, depositAmount, TermDeposit.internalState.active, clientID))
+            val tdOffer = subFlow(OfferRetrievalFlow(rolloverTerms.offeringinstitute, rolloverTerms.interestPercent, rolloverTerms.duration))
             //Send all info as a list
             flowSession.send(listOf(termDeposit.first(), rolloverTerms.withInterest, tdOffer.first()))
 
@@ -137,7 +137,7 @@ object RolloverTD {
             //Add the TDStates and required command
             builder.addInputState(tdOffer)
             builder.addOutputState(tdOffer.state.copy())
-            builder.addCommand(TermDepositOffer.Commands.Rollover(), tdOffer.state.data.institue.owningKey)
+            builder.addCommand(TermDepositOffer.Commands.Rollover(), tdOffer.state.data.institute.owningKey)
 
             //STEP 4: Sign the initial transaction and invoke collect sigs flow
             val stx = serviceHub.signInitialTransaction(toSignTx, keys)

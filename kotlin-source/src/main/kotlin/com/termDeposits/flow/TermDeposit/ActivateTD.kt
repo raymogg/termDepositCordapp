@@ -29,12 +29,12 @@ object ActivateTD {
     @StartableByRPC
     @InitiatingFlow
     open class Activator(val dateData: TermDeposit.DateData, val interestPercent: Float,
-                         val issuingInstitue: Party, val client: Party, val depositAmount: Amount<Currency>, val kycData: KYC.KYCNameData) : FlowLogic<SignedTransaction>() {
+                         val issuinginstitute: Party, val client: Party, val depositAmount: Amount<Currency>, val kycData: KYC.KYCNameData) : FlowLogic<SignedTransaction>() {
     @Suspendable
     override fun call(): SignedTransaction {
         //STEP 1: Notify other party of activation
         val flow = initiateFlow(client)
-        flow.send(listOf(dateData, interestPercent, issuingInstitue, client, depositAmount, kycData))
+        flow.send(listOf(dateData, interestPercent, issuinginstitute, client, depositAmount, kycData))
 
         //STEP 6: Sync Identities
         subFlow(IdentitySyncFlow.Receive(flow))
@@ -80,7 +80,7 @@ object ActivateTD {
             val tx = TransactionBuilder(notary = notary)
             val generatedTx = TermDeposit().generateActivate(tx, TD.first(), notary)
             //Add cash as output
-            val (tx2, cashKeys) = Cash.generateSpend(serviceHub, generatedTx, TD.first().state.data.depositAmount, TD.first().state.data.institue)
+            val (tx2, cashKeys) = Cash.generateSpend(serviceHub, generatedTx, TD.first().state.data.depositAmount, TD.first().state.data.institute)
 
             //STEP 5: Sync Identities
             // Sync up confidential identities in the transaction with our counterparty

@@ -100,7 +100,7 @@ class PromptActivate : Fragment() {
                     val difference: Int = Period.between(offerChoiceBox.value.state.data.startDate.toLocalDate(),offerChoiceBox.value.state.data.endDate.toLocalDate()).months
                     val dateData = TermDeposit.DateData(offerChoiceBox.value.state.data.startDate,difference)
                     rpcProxy.value?.startFlow(PromptActivate::Prompter, dateData, offerChoiceBox.value.state.data.interestPercent,
-                            offerChoiceBox.value.state.data.institue, rpcProxy.value?.nodeInfo()!!.legalIdentities.first(),  offerChoiceBox.value.state.data.depositAmount,
+                            offerChoiceBox.value.state.data.institute, rpcProxy.value?.nodeInfo()!!.legalIdentities.first(),  offerChoiceBox.value.state.data.depositAmount,
                             kycNameData)
                 }
                 else -> null
@@ -120,7 +120,7 @@ class PromptActivate : Fragment() {
         offerChoiceBox.apply {
             //            partyBLabel.textProperty().bind(transactionTypeCB.valueProperty().map { it?.partyNameB?.let { "$it : " } })
             items = offerStates
-            converter = stringConverter { "Issuing Institue: " + it.state.data.institue.toString() +
+            converter = stringConverter { "Issuing institute: " + it.state.data.institute.toString() +
                     "\n Interest: "+ it.state.data.interestPercent+"%" +
                     "\n Deposited Amount " + it.state.data.depositAmount.toString() +
                     "\n End Date " + it.state.data.endDate.toString()}

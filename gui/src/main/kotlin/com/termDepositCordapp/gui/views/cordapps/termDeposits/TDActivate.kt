@@ -106,7 +106,7 @@ class TDActivate : Fragment() {
 //                            (Period.between( offerChoiceBox.value.state.data.startDate.toLocalDate(),  offerChoiceBox.value.state.data.endDate.toLocalDate()).years * 12))
                     val dateData = TermDeposit.DateData(offerChoiceBox.value.state.data.startDate,difference)
                     rpcProxy.value?.startFlow(ActivateTD::Activator, dateData, offerChoiceBox.value.state.data.interestPercent,
-                            offerChoiceBox.value.state.data.institue, offerChoiceBox.value.state.data.owner.owningKey.toKnownParty().value!! ,offerChoiceBox.value.state.data.depositAmount,
+                            offerChoiceBox.value.state.data.institute, offerChoiceBox.value.state.data.owner.owningKey.toKnownParty().value!! ,offerChoiceBox.value.state.data.depositAmount,
                             kycNameData)
                 }
                 else -> null
@@ -126,7 +126,7 @@ class TDActivate : Fragment() {
         offerChoiceBox.apply {
             //            partyBLabel.textProperty().bind(transactionTypeCB.valueProperty().map { it?.partyNameB?.let { "$it : " } })
             items = offerStates
-            converter = stringConverter { "Issuing Institue: " + it.state.data.institue.toString() +
+            converter = stringConverter { "Issuing institute: " + it.state.data.institute.toString() +
                     "\n Interest: "+ it.state.data.interestPercent+"%" +
                     "\n Deposited Amount " + it.state.data.depositAmount.toString() +
                     "\n Start Date " + it.state.data.startDate.toString() +

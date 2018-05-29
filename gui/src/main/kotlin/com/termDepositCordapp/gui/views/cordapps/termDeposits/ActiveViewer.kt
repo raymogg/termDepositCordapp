@@ -95,7 +95,7 @@ class ActiveViewer : CordaView("Active Term Deposits") {
         override val root: Parent by fxml("TermDepositStateViewer.fxml")
 
         val stateIdValueLabel: Label by fxid()
-        val institueValueLabel: Label by fxid()
+        val instituteValueLabel: Label by fxid()
         val originatedValueLabel: Label by fxid()
         val interestValueLabel: Label by fxid()
         val depositValueLabel: Label by fxid()
@@ -106,17 +106,17 @@ class ActiveViewer : CordaView("Active Term Deposits") {
 
 
         init {
-            val resolvedIssuer: AbstractParty = stateRow.stateAndRef.state.data.institue
+            val resolvedIssuer: AbstractParty = stateRow.stateAndRef.state.data.institute
             //This sets up the data for each state being viewed -> the formatting is set in the ActiveViwer.fxml file
             stateIdValueLabel.apply {
                 text = stateRow.stateAndRef.ref.toString().substring(0, 16) + "...[${stateRow.stateAndRef.ref.index}]"
                 graphic = identicon(stateRow.stateAndRef.ref.txhash, 30.0)
                 tooltip = identiconToolTip(stateRow.stateAndRef.ref.txhash)
             }
-            institueValueLabel.textProperty().bind(SimpleStringProperty(resolvedIssuer.nameOrNull()?.let {
+            instituteValueLabel.textProperty().bind(SimpleStringProperty(resolvedIssuer.nameOrNull()?.let {
                 PartyNameFormatter.short.format(it)
             } ?: "Anonymous"))
-            institueValueLabel.apply { tooltip(resolvedIssuer.nameOrNull()?.let { PartyNameFormatter.full.format(it) } ?: "Anonymous") }
+            instituteValueLabel.apply { tooltip(resolvedIssuer.nameOrNull()?.let { PartyNameFormatter.full.format(it) } ?: "Anonymous") }
             interestValueLabel.text = stateRow.stateAndRef.state.data.interestPercent.toString()
             depositValueLabel.text = stateRow.stateAndRef.state.data.depositAmount.toString()
             startDateValueLabel.text = stateRow.stateAndRef.state.data.startDate.toString()
@@ -148,7 +148,7 @@ class ActiveViewer : CordaView("Active Term Deposits") {
                 /**
                  * First we group the states based on the exchange. [memberStates] is all states holding stock issued by [exchange]
                  */
-                AggregatedList(searchField.filteredData, { it.state.data.institue }) { exchange, memberStates ->
+                AggregatedList(searchField.filteredData, { it.state.data.institute }) { exchange, memberStates ->
                     /**
                      * Next we create subgroups based on holding. [memberStates] here is all states holding stock [stock] issued by [exchange] above.
                      * Note that these states will not be displayed in the TreeTable, but rather in the side pane if the user clicks on the row.

@@ -90,7 +90,7 @@ class DepositsAPI(private val rpcOps: CordaRPCOps) {
     fun getDeposits(): Map<String, List<Map<String, Any>>> {
         val states =  rpcOps.vaultQueryBy<TermDeposit.State>().states
         //return mapOf("states" to states.map { it.state.data.toString() })
-        return mapOf("states" to states.map { mapOf("from" to it.state.data.institue, "to" to it.state.data.owner,
+        return mapOf("states" to states.map { mapOf("from" to it.state.data.institute, "to" to it.state.data.owner,
                 "percent" to it.state.data.interestPercent, "startDate" to it.state.data.startDate.toLocalDate().toString(),
                 "endDate" to it.state.data.endDate.toLocalDate().toString(), "client" to it.state.data.clientIdentifier, "amount" to it.state.data.depositAmount.toString(),
                 "internalState" to it.state.data.internalState) })
@@ -106,7 +106,7 @@ class DepositsAPI(private val rpcOps: CordaRPCOps) {
     fun getOffers() : Map<String, List<Map<String, Any>>> {
         val offers = rpcOps.vaultQueryBy<TermDepositOffer.State>().states
         return mapOf("offers" to offers.map { mapOf("validTill" to it.state.data.validTill.toLocalDate().toString(), "interest" to it.state.data.interestPercent,
-                "duration" to it.state.data.duration, "issuingInstitute" to it.state.data.institue) })
+                "duration" to it.state.data.duration, "issuingInstitute" to it.state.data.institute) })
     }
 
     /** Post Call to issue a term deposit from the node
@@ -114,12 +114,12 @@ class DepositsAPI(private val rpcOps: CordaRPCOps) {
      */
     @POST
     @Path("issue_td")
-    fun issueTD(@QueryParam("td_value") tdValue: Float, @QueryParam("offering_institute") offeringInstitue:String,
+    fun issueTD(@QueryParam("td_value") tdValue: Float, @QueryParam("offering_institute") offeringinstitute:String,
                 @QueryParam("interest_percent") interestPercent: Float, @QueryParam("duration") duration: Int,
                 @QueryParam("customer_fname") firstName: String, @QueryParam("customer_lname") lastName: String,
                 @QueryParam("customer_anum") accountNum: String) : Response {
         val startDate = LocalDateTime.now()
-        val issuingInstitute = rpcOps.networkMapSnapshot().filter { it.legalIdentities.first().name.organisation == offeringInstitue }.first().legalIdentities.first()
+        val issuingInstitute = rpcOps.networkMapSnapshot().filter { it.legalIdentities.first().name.organisation == offeringinstitute }.first().legalIdentities.first()
         val kyc = KYC.KYCNameData(firstName, lastName, accountNum)
         //TODO use actual dates, for testing we use LocalDateTime.MIN for now
         val dateData = TermDeposit.DateData(LocalDateTime.MIN, duration)
@@ -141,13 +141,13 @@ class DepositsAPI(private val rpcOps: CordaRPCOps) {
      */
     @POST
     @Path("activate_td")
-    fun activateTD(@QueryParam("td_value") tdValue: Float, @QueryParam("offering_institute") offeringInstitue:String,
+    fun activateTD(@QueryParam("td_value") tdValue: Float, @QueryParam("offering_institute") offeringinstitute:String,
                 @QueryParam("interest_percent") interestPercent: Float, @QueryParam("duration") duration: Int,
                 @QueryParam("customer_fname") firstName: String, @QueryParam("customer_lname") lastName: String,
                 @QueryParam("customer_anum") accountNum: String, @QueryParam("start_date") startDate: String,
                    @QueryParam("client") client:String) : Response {
 
-        val issuingInstitute = rpcOps.networkMapSnapshot().filter { it.legalIdentities.first().name.organisation == offeringInstitue }.first().legalIdentities.first()
+        val issuingInstitute = rpcOps.networkMapSnapshot().filter { it.legalIdentities.first().name.organisation == offeringinstitute }.first().legalIdentities.first()
         val clientParty = rpcOps.networkMapSnapshot().filter { it.legalIdentities.first().name.organisation == client }.first().legalIdentities.first()
         val kyc = KYC.KYCNameData(firstName, lastName, accountNum)
         val startDateActual = LocalDateTime.parse(startDate+"T00:00:00")
@@ -171,12 +171,12 @@ class DepositsAPI(private val rpcOps: CordaRPCOps) {
      */
     @POST
     @Path("redeem_td")
-    fun redeemTD(@QueryParam("td_value") tdValue: Float, @QueryParam("offering_institute") offeringInstitue:String,
+    fun redeemTD(@QueryParam("td_value") tdValue: Float, @QueryParam("offering_institute") offeringinstitute:String,
                    @QueryParam("interest_percent") interestPercent: Float, @QueryParam("duration") duration: Int,
                    @QueryParam("customer_fname") firstName: String, @QueryParam("customer_lname") lastName: String,
                    @QueryParam("customer_anum") accountNum: String, @QueryParam("start_date") startDate: String) : Response {
 
-        val issuingInstitute = rpcOps.networkMapSnapshot().filter { it.legalIdentities.first().name.organisation == offeringInstitue }.first().legalIdentities.first()
+        val issuingInstitute = rpcOps.networkMapSnapshot().filter { it.legalIdentities.first().name.organisation == offeringinstitute }.first().legalIdentities.first()
         val kyc = KYC.KYCNameData(firstName, lastName, accountNum)
         val startDateActual = LocalDateTime.parse(startDate+"T00:00:00")
         val dateData = TermDeposit.DateData(startDateActual, duration)
@@ -193,19 +193,19 @@ class DepositsAPI(private val rpcOps: CordaRPCOps) {
         }
     }
 
-    /** Post call to Rollover a TD - requires date data, interest, issuing institue, deposit amount, rollover terms and kyc name data
+    /** Post call to Rollover a TD - requires date data, interest, issuing institute, deposit amount, rollover terms and kyc name data
      * Rollover terms requires a new interest percent, institute, duration, and with interest boolean
      */
     @POST
     @Path("rollover_td")
-    fun rolloverTD(@QueryParam("td_value") tdValue: Float, @QueryParam("offering_institute") offeringInstitue:String,
+    fun rolloverTD(@QueryParam("td_value") tdValue: Float, @QueryParam("offering_institute") offeringinstitute:String,
                  @QueryParam("interest_percent") interestPercent: Float, @QueryParam("duration") duration: Int,
                  @QueryParam("customer_fname") firstName: String, @QueryParam("customer_lname") lastName: String,
                  @QueryParam("customer_anum") accountNum: String, @QueryParam("start_date") startDate: String,
                    @QueryParam("new_interest") newInterest: Float, @QueryParam("new_institute") newInstitute: String,
                    @QueryParam("new_duration") newDuration: Int, @QueryParam("with_interest") withInterest: Boolean) : Response {
 
-        val issuingInstitute = rpcOps.networkMapSnapshot().filter { it.legalIdentities.first().name.organisation == offeringInstitue }.first().legalIdentities.first()
+        val issuingInstitute = rpcOps.networkMapSnapshot().filter { it.legalIdentities.first().name.organisation == offeringinstitute }.first().legalIdentities.first()
         val newInstituteParty = rpcOps.networkMapSnapshot().filter { it.legalIdentities.first().name.organisation == newInstitute }.first().legalIdentities.first()
         val rolloverTerms = TermDeposit.RolloverTerms(newInterest, newInstituteParty, newDuration, withInterest)
         val kyc = KYC.KYCNameData(firstName, lastName, accountNum)

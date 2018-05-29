@@ -21,7 +21,7 @@ import net.corda.core.serialization.CordaSerializable
  * Flow for retrieving TD's from the nodes vault. Queries based on start date, end date, interest percentage and offering
  * institute. Optionally, a field can be supplied to filter by the TD's current internal state (i.e active, tentative, eg).
  *
- * There is no restriction on this flow to retrieve only one TD (i.e a TD with the exact same terms from the same institue
+ * There is no restriction on this flow to retrieve only one TD (i.e a TD with the exact same terms from the same institute
  * is possible)
  *
  * Another query option is also provided to query based on a term deposits linear ID if required. The same optional internal
@@ -39,7 +39,7 @@ object TDRetreivalFlows {
         override fun call(): List<StateAndRef<TermDeposit.State>> {
             //Query the vault for unconsumed states and then for Security loan states
             println("Retrieval Start ${dateData.startDate}  Amount ${depositAmount} Client Ref ${clientIdentifier} \n" +
-                    "Duration ${dateData.duration} Interest ${interest} Institue ${offeringInstitute}")
+                    "Duration ${dateData.duration} Interest ${interest} institute ${offeringInstitute}")
             val criteria = QueryCriteria.VaultQueryCriteria(status = Vault.StateStatus.UNCONSUMED)
             val offerStates = serviceHub.vaultService.queryBy<TermDeposit.State>(criteria)
             val filteredStates: List<StateAndRef<TermDeposit.State>>
@@ -50,7 +50,7 @@ object TDRetreivalFlows {
                     //it.state.data.endDate.isAfter(LocalDateTime.now()) &&
                             it.state.data.startDate == dateData.startDate &&
                             //it.state.data.endDate == dateData.endDate && //for now dont do this -> because of duration being added into the tdo state
-                            it.state.data.institue == offeringInstitute &&
+                            it.state.data.institute == offeringInstitute &&
                             it.state.data.interestPercent == interest &&
                             it.state.data.internalState == TermDeposit.internalState.active &&
                             it.state.data.depositAmount == depositAmount &&
@@ -64,7 +64,7 @@ object TDRetreivalFlows {
                     //it.state.data.endDate.isAfter(LocalDateTime.now()) &&
                             it.state.data.startDate == dateData.startDate &&
                             it.state.data.endDate == dateData.startDate.plusMonths(dateData.duration.toLong()) &&
-                            it.state.data.institue == offeringInstitute &&
+                            it.state.data.institute == offeringInstitute &&
                             it.state.data.interestPercent == interest &&
                             it.state.data.internalState == TermDeposit.internalState.pending &&
                             it.state.data.depositAmount == depositAmount &&
@@ -79,7 +79,7 @@ object TDRetreivalFlows {
                     //it.state.data.endDate.minusDays(3) == LocalDateTime.now() &&
                     it.state.data.startDate == dateData.startDate &&
                             it.state.data.endDate == dateData.startDate.plusMonths(dateData.duration.toLong()) &&
-                            it.state.data.institue == offeringInstitute &&
+                            it.state.data.institute == offeringInstitute &&
                             it.state.data.interestPercent == interest &&
                             it.state.data.internalState == TermDeposit.internalState.active &&
                             it.state.data.depositAmount == depositAmount &&
@@ -94,7 +94,7 @@ object TDRetreivalFlows {
                     //it.state.data.endDate.isBefore(LocalDateTime.now()) &&
                     it.state.data.startDate == dateData.startDate &&
                             it.state.data.endDate == dateData.startDate.plusMonths(dateData.duration.toLong()) &&
-                            it.state.data.institue == offeringInstitute &&
+                            it.state.data.institute == offeringInstitute &&
                             it.state.data.interestPercent == interest &&
                             it.state.data.depositAmount == depositAmount &&
                             it.state.data.clientIdentifier == clientIdentifier
